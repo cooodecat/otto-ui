@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
 import type { User as ApiUser } from "@/types/api";
 import { setApiToken, useApi } from "@/lib/api";
@@ -11,28 +11,26 @@ export default function UserProfile() {
   const [user, setUser] = useState<User | null>(null);
   const [apiUser, setApiUser] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
   const supabase = createClient();
   const api = useApi();
 
   // 백엔드에서 사용자 프로필 가져오기
-  const fetchUserProfile = async (sessionToken: string) => {
+  const fetchUserProfile = useCallback(async (sessionToken: string) => {
     try {
-      setProfileLoading(true);
       setApiToken(sessionToken);
       const { data: profileData, error } = await api.getUserProfile();
 
       if (error) {
+        // eslint-disable-next-line no-console
         console.error("프로필 가져오기 실패:", error);
       } else {
         setApiUser(profileData || null);
       }
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error("프로필 API 호출 실패:", err);
-    } finally {
-      setProfileLoading(false);
     }
-  };
+  }, [api]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -70,7 +68,7 @@ export default function UserProfile() {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase.auth, fetchUserProfile]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
