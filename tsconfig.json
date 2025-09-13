@@ -8,6 +8,7 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
@@ -23,14 +24,11 @@
       }
     ],
     "paths": {
-      "@/styles/*": [
-        "styles/*"
-      ],
-      "@/components/*": [
-        "components/*"
+      "@/*": [
+        "./*"
       ]
     },
-    "baseUrl": "src/"
+    "baseUrl": "."
   },
   "include": [
     "next-env.d.ts",
