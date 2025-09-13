@@ -3,22 +3,10 @@
 
 import type {
   User,
-  Pipeline,
-  PipelineStep,
   ApiResponse,
   GetUserProfileResponse,
   UpdateUserProfileRequest,
   UpdateUserProfileResponse,
-  GetPipelinesResponse,
-  GetPipelineResponse,
-  CreatePipelineRequest,
-  CreatePipelineResponse,
-  UpdatePipelineRequest,
-  UpdatePipelineResponse,
-  DeletePipelineResponse,
-  GetPipelineStepsResponse,
-  UpdatePipelineStepsRequest,
-  UpdatePipelineStepsResponse,
   ApiError,
 } from "@/types/api";
 
@@ -106,101 +94,6 @@ class ApiClient {
     }
     return { error: response.error };
   }
-
-  // 파이프라인 관련 API
-  async getPipelines(): Promise<ApiResponse<Pipeline[]>> {
-    const response = await this.request<GetPipelinesResponse>("/api/pipelines");
-    if (response.data) {
-      return { data: response.data.pipelines };
-    }
-    return { error: response.error };
-  }
-
-  async getPipeline(id: string): Promise<ApiResponse<Pipeline>> {
-    const response = await this.request<GetPipelineResponse>(
-      `/api/pipelines/${id}`
-    );
-    if (response.data) {
-      return { data: response.data.pipeline };
-    }
-    return { error: response.error };
-  }
-
-  async createPipeline(
-    request: CreatePipelineRequest
-  ): Promise<ApiResponse<Pipeline>> {
-    const response = await this.request<CreatePipelineResponse>(
-      "/api/pipelines",
-      {
-        method: "POST",
-        body: JSON.stringify(request),
-      }
-    );
-    if (response.data) {
-      return { data: response.data.pipeline };
-    }
-    return { error: response.error };
-  }
-
-  async updatePipeline(
-    id: string,
-    updates: UpdatePipelineRequest
-  ): Promise<ApiResponse<Pipeline>> {
-    const response = await this.request<UpdatePipelineResponse>(
-      `/api/pipelines/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(updates),
-      }
-    );
-    if (response.data) {
-      return { data: response.data.pipeline };
-    }
-    return { error: response.error };
-  }
-
-  async deletePipeline(id: string): Promise<ApiResponse<void>> {
-    const response = await this.request<DeletePipelineResponse>(
-      `/api/pipelines/${id}`,
-      {
-        method: "DELETE",
-      }
-    );
-    if (response.data) {
-      return { data: undefined };
-    }
-    return { error: response.error };
-  }
-
-  // 파이프라인 스텝 관련 API
-  async getPipelineSteps(
-    pipelineId: string
-  ): Promise<ApiResponse<PipelineStep[]>> {
-    const response = await this.request<GetPipelineStepsResponse>(
-      `/api/pipelines/${pipelineId}/steps`
-    );
-    if (response.data) {
-      return { data: response.data.steps };
-    }
-    return { error: response.error };
-  }
-
-  async updatePipelineSteps(
-    pipelineId: string,
-    request: UpdatePipelineStepsRequest
-  ): Promise<ApiResponse<PipelineStep[]>> {
-    const response = await this.request<UpdatePipelineStepsResponse>(
-      `/api/pipelines/${pipelineId}/steps`,
-      {
-        method: "PUT",
-        body: JSON.stringify(request),
-      }
-    );
-    if (response.data) {
-      return { data: response.data.steps };
-    }
-    return { error: response.error };
-  }
 }
 
 // 싱글톤 인스턴스
@@ -212,19 +105,6 @@ export const useApi = () => {
     getUserProfile: () => apiClient.getUserProfile(),
     updateUserProfile: (updates: UpdateUserProfileRequest) =>
       apiClient.updateUserProfile(updates),
-    getPipelines: () => apiClient.getPipelines(),
-    getPipeline: (id: string) => apiClient.getPipeline(id),
-    createPipeline: (request: CreatePipelineRequest) =>
-      apiClient.createPipeline(request),
-    updatePipeline: (id: string, updates: UpdatePipelineRequest) =>
-      apiClient.updatePipeline(id, updates),
-    deletePipeline: (id: string) => apiClient.deletePipeline(id),
-    getPipelineSteps: (pipelineId: string) =>
-      apiClient.getPipelineSteps(pipelineId),
-    updatePipelineSteps: (
-      pipelineId: string,
-      request: UpdatePipelineStepsRequest
-    ) => apiClient.updatePipelineSteps(pipelineId, request),
   };
 };
 

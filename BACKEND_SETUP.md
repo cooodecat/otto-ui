@@ -1,78 +1,202 @@
-# 프론트엔드 설정 가이드
+# Otto 프로젝트 백엔드 연동 가이드
 
-이 가이드는 Otto UI 프론트엔드 프로젝트를 `otto-handler` 백엔드(NestJS)와 연결하는 방법을 설명합니다.
+이 문서는 **백엔드 개발자**를 위한 `otto-handler` (NestJS) 프로젝트 구현 가이드입니다.  
+프론트엔드 `otto-ui` (Next.js)와의 연동을 위한 모든 필요한 정보를 포함합니다.
 
-## 아키텍처 개요
+## 📋 **프로젝트 개요**
+
+### 🏗️ **아키텍처**
+
+```
+┌─────────────────┐    JWT Token    ┌─────────────────┐
+│   otto-ui       │ ──────────────► │   otto-handler  │
+│   (Next.js)     │                 │   (NestJS)      │
+│                 │                 │                 │
+│ • Supabase Auth │                 │ • API Server    │
+│ • UI Components │                 │ • JWT Verify    │
+│ • API Client    │                 │ • Business Logic│
+└─────────────────┘                 └─────────────────┘
+         │                                   │
+         │                                   │
+         ▼                                   ▼
+┌─────────────────┐                 ┌─────────────────┐
+│   Supabase      │                 │   PostgreSQL    │
+│   (Auth Only)   │                 │   (Data)        │
+└─────────────────┘                 └─────────────────┘
+```
 
 ### 🔐 **인증 흐름**
 
-1. **Supabase OAuth** → GitHub 로그인
-2. **JWT 토큰** → 프론트엔드에서 백엔드 API 호출 시 사용
-3. **NestJS 미들웨어** → JWT 토큰 검증 및 인증 처리
+1. **사용자** → GitHub OAuth 로그인
+2. **Supabase** → JWT 토큰 발급
+3. **프론트엔드** → JWT 토큰으로 백엔드 API 호출
+4. **백엔드** → JWT 토큰 검증 후 비즈니스 로직 실행
 
 ### 📁 **역할 분리**
 
-- **프론트엔드 (otto-ui)**: UI/UX, Supabase 인증, 백엔드 API 호출
-- **백엔드 (otto-handler)**: NestJS API, JWT 검증, 비즈니스 로직, 데이터 관리
+| 구분       | otto-ui (프론트엔드)             | otto-handler (백엔드)                            |
+| ---------- | -------------------------------- | ------------------------------------------------ |
+| **책임**   | UI/UX, Supabase 인증, API 호출   | NestJS API, JWT 검증, 비즈니스 로직, 데이터 관리 |
+| **기술**   | Next.js 15, React 19, TypeScript | NestJS, PostgreSQL, TypeScript                   |
+| **인증**   | Supabase OAuth (GitHub)          | JWT 토큰 검증                                    |
+| **데이터** | API 호출만                       | 직접 DB 접근                                     |
 
-## 1. Supabase 프로젝트 생성
+## 🚀 **현재 프론트엔드 구현 상태**
 
-1. [Supabase](https://supabase.com)에 가입하고 새 프로젝트를 생성합니다.
-2. 프로젝트 설정에서 다음 정보를 확인합니다:
-   - Project URL
-   - Project API Keys (anon public)
+### ✅ **이미 구현된 것들**
 
-## 2. 환경 변수 설정
+1. **Supabase 인증 설정**
 
-프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 추가합니다:
+   - GitHub OAuth 로그인 구현
+   - JWT 토큰 관리
+   - 인증 상태 관리 (`AuthProvider`)
+
+2. **API 클라이언트 구현**
+
+   - `lib/api.ts`: 백엔드 API 호출용 HTTP 클라이언트
+   - `types/api.ts`: API 요청/응답 타입 정의
+   - JWT 토큰 자동 헤더 설정
+
+3. **UI 컴포넌트**
+   - 랜딩 페이지 (`app/landing/`)
+   - 인증 컴포넌트 (`components/auth/`)
+   - 대시보드 페이지 (`app/dashboard/`)
+
+### 📋 **백엔드에서 가져가야 할 정보**
+
+#### 1. **환경 변수 (프론트엔드용)**
 
 ```env
 # Supabase 설정 (인증용)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # 백엔드 API 설정
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 ```
 
-**예시:**
+#### 2. **Supabase 프로젝트 정보**
+
+- **Project URL**: `https://your-project.supabase.co`
+- **API Key (anon)**: Supabase 대시보드에서 확인
+- **JWT Secret**: Supabase 대시보드 → Settings → API에서 확인
+
+#### 3. **GitHub OAuth 설정**
+
+- **Client ID**: GitHub OAuth App의 Client ID
+- **Client Secret**: GitHub OAuth App의 Client Secret
+- **Callback URL**: `https://your-project.supabase.co/auth/v1/callback`
+
+## 🎯 **백엔드 개발자가 해야 할 일**
+
+### 📋 **1단계: NestJS 프로젝트 초기 설정**
+
+```bash
+# NestJS 프로젝트 생성
+nest new otto-handler
+cd otto-handler
+
+# 필요한 패키지 설치
+npm install @nestjs/jwt @nestjs/passport passport passport-jwt
+npm install @supabase/supabase-js
+npm install class-validator class-transformer
+```
+
+### 📋 **2단계: 환경 변수 설정**
+
+백엔드 프로젝트 루트에 `.env` 파일 생성:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+# Supabase 설정
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_JWT_SECRET=your_jwt_secret
+
+# 데이터베이스 설정
+DATABASE_URL=postgresql://username:password@localhost:5432/otto_db
+
+# 서버 설정
+PORT=4000
+NODE_ENV=development
+
+# CORS 설정
+FRONTEND_URL=http://localhost:3000
 ```
 
-## 3. 백엔드 프로젝트 설정
+### 📋 **3단계: JWT 인증 가드 구현**
 
-**⚠️ 중요: DB 스키마와 API는 `otto-handler` 백엔드 프로젝트에서 관리됩니다.**
+```typescript
+// src/auth/jwt-auth.guard.ts
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { createClient } from "@supabase/supabase-js";
 
-### 백엔드 프로젝트에서 해야 할 일:
+@Injectable()
+export class JwtAuthGuard implements CanActivate {
+  private supabase;
 
-1. **NestJS API 서버 설계 및 구현**
+  constructor(private jwtService: JwtService) {
+    this.supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY
+    );
+  }
 
-   - 인증된 사용자만 접근 가능한 API 라우트
-   - JWT 토큰 검증 미들웨어
-   - 비즈니스 로직 및 데이터 관리
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const token = request.headers.authorization?.replace("Bearer ", "");
 
-2. **JWT 토큰 검증 및 인증 미들웨어 작성**
+    if (!token) {
+      throw new UnauthorizedException("No token provided");
+    }
 
-   - Supabase JWT 토큰 검증
-   - 토큰 만료/무효 시 요청 거부
+    try {
+      // Supabase JWT 토큰 검증
+      const {
+        data: { user },
+        error,
+      } = await this.supabase.auth.getUser(token);
 
-3. **Supabase 인증 연동**
-   - Supabase OAuth 기능을 백엔드에서 신뢰
-   - 필요시 Supabase REST API 호출
+      if (error || !user) {
+        throw new UnauthorizedException("Invalid token");
+      }
 
-### 프론트엔드에서는 다음만 필요:
+      request.user = user;
+      return true;
+    } catch (error) {
+      throw new UnauthorizedException("Token verification failed");
+    }
+  }
+}
+```
 
-- **Supabase 클라이언트 설정** (인증용)
-- **JWT 토큰 기반 백엔드 API 호출** (`lib/api.ts`)
-- **타입 안전한 API 클라이언트** (`types/api.ts`)
+### 📋 **4단계: 필요한 API 엔드포인트 구현**
 
-### 참고용 스키마 (백엔드에서 구현해야 함):
+프론트엔드에서 호출할 API들을 구현해야 합니다:
 
-Supabase 대시보드의 SQL Editor에서 다음 스키마를 실행합니다:
+#### **사용자 관련 API**
+
+- `GET /api/user/profile` - 사용자 프로필 조회
+- `PUT /api/user/profile` - 사용자 프로필 업데이트
+
+#### **파이프라인 관련 API**
+
+- `GET /api/pipelines` - 사용자의 모든 파이프라인 조회
+- `POST /api/pipelines` - 새 파이프라인 생성
+- `GET /api/pipelines/:id` - 특정 파이프라인 조회
+- `PUT /api/pipelines/:id` - 파이프라인 업데이트
+- `DELETE /api/pipelines/:id` - 파이프라인 삭제
+- `GET /api/pipelines/:id/steps` - 파이프라인 스텝 조회
+- `PUT /api/pipelines/:id/steps` - 파이프라인 스텝 상태 업데이트
+
+### 📋 **5단계: 데이터베이스 스키마 설정**
+
+PostgreSQL 데이터베이스에 다음 스키마를 생성합니다:
 
 ```sql
 -- Enable Row Level Security
@@ -218,161 +342,262 @@ CREATE TRIGGER update_pipeline_steps_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 ```
 
-## 4. GitHub OAuth 설정
+### 📋 **6단계: CORS 설정**
 
-### Supabase에서 GitHub OAuth 설정:
-
-1. Supabase 대시보드 → Authentication → Providers
-2. GitHub 제공자를 활성화
-3. GitHub OAuth App 정보 입력:
-   - **Client ID**: GitHub OAuth App의 Client ID
-   - **Client Secret**: GitHub OAuth App의 Client Secret
-
-### GitHub에서 OAuth App 생성:
-
-1. GitHub → Settings → Developer settings → OAuth Apps
-2. "New OAuth App" 클릭
-3. 다음 정보 입력:
-   - **Application name**: Otto UI
-   - **Homepage URL**: `http://localhost:3000` (개발용)
-   - **Authorization callback URL**: `https://your-supabase-project.supabase.co/auth/v1/callback`
-
-## 5. API 엔드포인트
-
-**⚠️ 중요: 다음 API들은 `otto-handler` 백엔드 프로젝트에서 구현됩니다.**
-
-### 백엔드에서 구현해야 할 API들:
-
-#### 사용자 관련
-
-- `GET /api/user/profile` - 사용자 프로필 조회
-- `PUT /api/user/profile` - 사용자 프로필 업데이트
-
-#### 파이프라인 관련
-
-- `GET /api/pipelines` - 사용자의 모든 파이프라인 조회
-- `POST /api/pipelines` - 새 파이프라인 생성
-- `GET /api/pipelines/[id]` - 특정 파이프라인 조회
-- `PUT /api/pipelines/[id]` - 파이프라인 업데이트
-- `DELETE /api/pipelines/[id]` - 파이프라인 삭제
-- `GET /api/pipelines/[id]/steps` - 파이프라인 스텝 조회
-- `PUT /api/pipelines/[id]/steps` - 파이프라인 스텝 상태 업데이트
-
-#### 인증 관련
-
-- `POST /api/auth/logout` - 로그아웃 (프론트엔드에서 구현됨)
-
-### 프론트엔드에서 구현된 API:
-
-- `POST /api/auth/logout` - Supabase 로그아웃 처리
-
-## 6. JWT 토큰 사용 방법
-
-### 프론트엔드에서 백엔드 API 호출 시:
+NestJS에서 프론트엔드 도메인을 허용하도록 설정:
 
 ```typescript
-import { setApiToken, useApi } from "@/lib/api";
+// main.ts
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // CORS 설정
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+  });
+
+  await app.listen(process.env.PORT || 4000);
+}
+bootstrap();
+```
+
+### 📋 **7단계: API 응답 형식 통일**
+
+프론트엔드에서 기대하는 응답 형식을 맞춰야 합니다:
+
+```typescript
+// 응답 인터페이스
+interface ApiResponse<T> {
+  data?: T;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+// 성공 응답 예시
+{
+  "data": {
+    "id": "uuid",
+    "name": "Pipeline Name",
+    "status": "running"
+  }
+}
+
+// 에러 응답 예시
+{
+  "error": {
+    "message": "Pipeline not found",
+    "code": "PIPELINE_NOT_FOUND"
+  }
+}
+```
+
+## 🔧 **프론트엔드 연동 정보**
+
+### **API 클라이언트 사용법**
+
+프론트엔드에서는 다음과 같이 백엔드 API를 호출합니다:
+
+```typescript
+// 1. JWT 토큰 설정
+import { setApiToken } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
-// 1. Supabase에서 JWT 토큰 가져오기
 const supabase = createClient();
 const {
   data: { session },
 } = await supabase.auth.getSession();
 
-// 2. API 클라이언트에 토큰 설정
 if (session?.access_token) {
-  setApiToken(session.access_token);
+  setApiToken(session.access_token); // 백엔드에서 이 토큰을 검증해야 함
 }
 
-// 3. 백엔드 API 호출
+// 2. API 호출
+import { useApi } from "@/lib/api";
 const api = useApi();
+
 const { data: pipelines, error } = await api.getPipelines();
 ```
 
-### 백엔드에서 JWT 토큰 검증:
-
-```typescript
-// NestJS 미들웨어 예시
-@Injectable()
-export class JwtAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
-
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const token = request.headers.authorization?.replace("Bearer ", "");
-
-    if (!token) {
-      throw new UnauthorizedException("No token provided");
-    }
-
-    try {
-      const payload = this.jwtService.verify(token);
-      request.user = payload;
-      return true;
-    } catch (error) {
-      throw new UnauthorizedException("Invalid token");
-    }
-  }
-}
-```
-
-## 7. 테스트
-
-설정이 완료되면 다음을 테스트해보세요:
-
-1. 개발 서버 실행: `pnpm dev`
-2. `http://localhost:3000` 접속
-3. "GitHub으로 로그인" 버튼 클릭
-4. GitHub 인증 후 대시보드 페이지로 리다이렉트되는지 확인
-5. 사용자 프로필이 올바르게 표시되는지 확인
-
-## 7. 보안 고려사항
-
-- `.env.local` 파일은 절대 버전 관리에 포함하지 마세요
-- 프로덕션 환경에서는 GitHub OAuth App의 callback URL을 실제 도메인으로 변경하세요
-- Supabase의 Row Level Security (RLS)가 활성화되어 있어 사용자는 자신의 데이터만 접근할 수 있습니다
-
-## 8. 문제 해결
-
-### 일반적인 문제들:
-
-1. **환경 변수 오류**: `.env.local` 파일이 올바른 위치에 있고 값이 정확한지 확인
-2. **OAuth 오류**: GitHub OAuth App의 callback URL이 Supabase 설정과 일치하는지 확인
-3. **데이터베이스 오류**: SQL 스키마가 올바르게 실행되었는지 확인
-4. **권한 오류**: Supabase 프로젝트의 API 키가 올바른지 확인
-
-### 로그 확인:
-
-- 브라우저 개발자 도구의 콘솔
-- Next.js 개발 서버의 터미널 출력
-- Supabase 대시보드의 로그 섹션
-
-## 9. 향후 개선사항
-
-### 권장하는 프로젝트 구조:
+### **요청 헤더 형식**
 
 ```
-otto-backend/          # 백엔드 전용 프로젝트
-├── supabase/
-│   ├── migrations/    # DB 마이그레이션
-│   ├── functions/     # Edge Functions
-│   └── config.toml    # Supabase 설정
-├── types/
-│   └── database.ts    # DB 타입 정의
-└── README.md
-
-otto-ui/               # 프론트엔드 전용 프로젝트
-├── app/
-├── components/
-├── lib/
-│   └── supabase/      # 클라이언트만
-└── types/
-    └── database.ts    # 백엔드에서 생성된 타입 복사
+Authorization: Bearer <supabase_jwt_token>
+Content-Type: application/json
 ```
 
-이렇게 하면:
+### **기대하는 엔드포인트**
 
-- 백엔드와 프론트엔드의 책임이 명확히 분리됩니다
-- 각 프로젝트를 독립적으로 배포할 수 있습니다
-- 팀 개발 시 역할 분담이 쉬워집니다
+프론트엔드에서 호출하는 모든 API는 `http://localhost:4000/api/` 경로로 시작해야 합니다.
+
+## 📚 **상세 API 명세**
+
+### **사용자 관련 API**
+
+#### `GET /api/user/profile`
+
+- **목적**: 현재 로그인한 사용자의 프로필 정보 조회
+- **인증**: JWT 토큰 필요
+- **응답**: 사용자 정보 (id, email, name, avatar_url 등)
+
+#### `PUT /api/user/profile`
+
+- **목적**: 사용자 프로필 정보 업데이트
+- **인증**: JWT 토큰 필요
+- **요청 본문**: `{ name?: string, avatar_url?: string }`
+
+### **파이프라인 관련 API**
+
+#### `GET /api/pipelines`
+
+- **목적**: 현재 사용자의 모든 파이프라인 목록 조회
+- **인증**: JWT 토큰 필요
+- **응답**: 파이프라인 배열
+
+#### `POST /api/pipelines`
+
+- **목적**: 새 파이프라인 생성
+- **인증**: JWT 토큰 필요
+- **요청 본문**: `{ name: string, description?: string }`
+
+#### `GET /api/pipelines/:id`
+
+- **목적**: 특정 파이프라인 상세 정보 조회
+- **인증**: JWT 토큰 필요
+- **응답**: 파이프라인 상세 정보
+
+#### `PUT /api/pipelines/:id`
+
+- **목적**: 파이프라인 정보 업데이트
+- **인증**: JWT 토큰 필요
+- **요청 본문**: `{ name?: string, description?: string, status?: string }`
+
+#### `DELETE /api/pipelines/:id`
+
+- **목적**: 파이프라인 삭제
+- **인증**: JWT 토큰 필요
+
+#### `GET /api/pipelines/:id/steps`
+
+- **목적**: 파이프라인의 모든 스텝 조회
+- **인증**: JWT 토큰 필요
+- **응답**: 파이프라인 스텝 배열
+
+#### `PUT /api/pipelines/:id/steps`
+
+- **목적**: 파이프라인 스텝 상태 업데이트
+- **인증**: JWT 토큰 필요
+- **요청 본문**: 스텝 업데이트 정보
+
+## 🧪 **테스트 및 검증**
+
+### **1단계: 백엔드 서버 테스트**
+
+```bash
+# 백엔드 서버 실행
+cd otto-handler
+npm run start:dev
+
+# 서버가 4000 포트에서 실행되는지 확인
+curl http://localhost:4000/api/user/profile
+# 응답: {"error":{"message":"No token provided"}} (정상)
+```
+
+### **2단계: 프론트엔드 연동 테스트**
+
+```bash
+# 프론트엔드 서버 실행
+cd otto-ui
+pnpm dev
+
+# 브라우저에서 http://localhost:3000 접속
+# GitHub 로그인 후 대시보드로 이동되는지 확인
+```
+
+### **3단계: API 호출 테스트**
+
+브라우저 개발자 도구에서 다음을 확인:
+
+1. **네트워크 탭**: API 호출이 `http://localhost:4000/api/`로 가는지 확인
+2. **콘솔**: 에러 메시지가 없는지 확인
+3. **Application 탭**: JWT 토큰이 저장되어 있는지 확인
+
+## 🚨 **문제 해결 가이드**
+
+### **자주 발생하는 문제들**
+
+#### 1. **CORS 에러**
+
+```
+Access to fetch at 'http://localhost:4000/api/pipelines'
+from origin 'http://localhost:3000' has been blocked by CORS policy
+```
+
+**해결방법**: 백엔드에서 CORS 설정 확인
+
+#### 2. **JWT 토큰 검증 실패**
+
+```
+{"error":{"message":"Invalid token"}}
+```
+
+**해결방법**:
+
+- Supabase JWT Secret이 올바른지 확인
+- 토큰 만료 시간 확인
+
+#### 3. **API 엔드포인트 404**
+
+```
+{"error":{"message":"Cannot GET /api/pipelines"}}
+```
+
+**해결방법**: NestJS 라우터 설정 확인
+
+### **디버깅 팁**
+
+1. **백엔드 로그 확인**:
+
+   ```bash
+   # NestJS 서버 로그에서 요청/응답 확인
+   npm run start:dev
+   ```
+
+2. **프론트엔드 네트워크 탭**:
+
+   - 요청 헤더에 `Authorization: Bearer <token>` 있는지 확인
+   - 응답 상태 코드 확인 (200, 401, 404 등)
+
+3. **Supabase 대시보드**:
+   - Authentication → Users에서 사용자 정보 확인
+   - Logs에서 인증 관련 로그 확인
+
+## 📋 **체크리스트**
+
+백엔드 개발 완료 후 확인사항:
+
+- [ ] NestJS 서버가 4000 포트에서 실행됨
+- [ ] JWT 토큰 검증이 정상 작동함
+- [ ] 모든 API 엔드포인트가 구현됨
+- [ ] CORS 설정이 프론트엔드 도메인을 허용함
+- [ ] 데이터베이스 스키마가 생성됨
+- [ ] API 응답 형식이 프론트엔드와 일치함
+- [ ] 에러 처리가 적절히 구현됨
+
+## 🔄 **협업 워크플로우**
+
+1. **프론트엔드 개발자**: API 클라이언트 구현 완료
+2. **백엔드 개발자**: 이 문서를 참고하여 NestJS 서버 구현
+3. **통합 테스트**: 양쪽 서버를 동시에 실행하여 연동 테스트
+4. **배포**: 각각 독립적으로 배포 가능
+
+## 📞 **지원 및 문의**
+
+- **프론트엔드 관련**: `otto-ui` 프로젝트 담당자
+- **백엔드 관련**: `otto-handler` 프로젝트 담당자
+- **인증 관련**: Supabase 설정 문제 시 공동 해결

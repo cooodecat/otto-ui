@@ -1,6 +1,6 @@
-import Header from "@/components/Header";
-import WorkflowSection from "@/components/WorkflowSection";
-import Footer from "@/components/Footer";
+import Header from "@/components/landing/Header";
+import WorkflowSection from "@/components/landing/WorkflowSection";
+import Footer from "@/components/landing/Footer";
 
 export default function Landing() {
   return (

@@ -11,27 +11,6 @@ export interface User {
   updated_at: string;
 }
 
-export interface Pipeline {
-  id: string;
-  user_id: string;
-  name: string;
-  description: string | null;
-  status: "pending" | "running" | "success" | "failed";
-  created_at: string;
-  updated_at: string;
-  pipeline_steps?: PipelineStep[];
-}
-
-export interface PipelineStep {
-  id: string;
-  pipeline_id: string;
-  name: string;
-  status: "pending" | "running" | "success" | "failed";
-  order_index: number;
-  created_at: string;
-  updated_at: string;
-}
-
 // API 요청/응답 타입들
 export interface ApiResponse<T> {
   data?: T;
@@ -51,52 +30,6 @@ export interface UpdateUserProfileRequest {
 
 export interface UpdateUserProfileResponse {
   user: User;
-}
-
-// 파이프라인 관련 API
-export interface GetPipelinesResponse {
-  pipelines: Pipeline[];
-}
-
-export interface GetPipelineResponse {
-  pipeline: Pipeline;
-}
-
-export interface CreatePipelineRequest {
-  name: string;
-  description?: string;
-  steps: { name: string }[];
-}
-
-export interface CreatePipelineResponse {
-  pipeline: Pipeline;
-}
-
-export interface UpdatePipelineRequest {
-  name?: string;
-  description?: string;
-  status?: "pending" | "running" | "success" | "failed";
-}
-
-export interface UpdatePipelineResponse {
-  pipeline: Pipeline;
-}
-
-export interface DeletePipelineResponse {
-  message: string;
-}
-
-// 파이프라인 스텝 관련 API
-export interface GetPipelineStepsResponse {
-  steps: PipelineStep[];
-}
-
-export interface UpdatePipelineStepsRequest {
-  steps: { id: string; status: string }[];
-}
-
-export interface UpdatePipelineStepsResponse {
-  steps: PipelineStep[];
 }
 
 // JWT 토큰 관련 타입
