@@ -152,25 +152,25 @@ export default function WorkflowSection() {
   };
 
   return (
-    <section className='py-24 bg-gradient-to-b from-gray-50 to-white'>
+    <section className='py-24 bg-transparent'>
       <div className='container mx-auto px-6 max-w-7xl'>
         {/* Header */}
         <AnimatedSection>
           <div className='text-center mb-20'>
-            <div className='inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-200/50 rounded-full px-4 py-2 mb-6'>
-              <Play className='w-4 h-4 text-blue-500' />
-              <span className='text-sm font-medium text-blue-700'>워크플로우</span>
+            <div className='inline-flex items-center gap-2 bg-white/5 border border-white/20 rounded-full px-4 py-2 mb-6 backdrop-blur-sm'>
+              <Play className='w-4 h-4 text-purple-400' />
+              <span className='text-sm font-medium text-gray-300'>워크플로우</span>
             </div>
 
-            <h2 className='text-4xl sm:text-5xl font-bold mb-6 text-gray-900'>
-              <span className='bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
+            <h2 className='text-4xl sm:text-5xl font-bold mb-6 text-white'>
+              <span className='bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent'>
                 스마트한 자동화
               </span>
               <br />
               워크플로우
             </h2>
 
-            <p className='text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed'>
+            <p className='text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed'>
               트리거가 발생하면 Otto가 조건을 판단하여 필요한 파이프라인만 실행합니다. 각 단계별로
               상세한 로그와 실시간 상태를 확인할 수 있습니다.
             </p>
@@ -193,15 +193,15 @@ export default function WorkflowSection() {
                     onClick={() => handleStepClick(step.id, index)}
                     className={`relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-500 ${
                       isActive
-                        ? 'border-blue-200 bg-blue-50/50 shadow-lg scale-105'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                        ? 'border-purple-500/50 bg-purple-900/20 shadow-lg shadow-purple-500/20 scale-105'
+                        : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 backdrop-blur-sm'
                     }`}
                   >
                     {/* Connection Line */}
                     {index < workflowSteps.length - 1 && (
-                      <div className='absolute left-9 top-full w-0.5 h-4 bg-gray-200 overflow-hidden'>
+                      <div className='absolute left-9 top-full w-0.5 h-4 bg-white/20 overflow-hidden'>
                         <div
-                          className={`absolute inset-0 w-full bg-gradient-to-b from-blue-500 to-emerald-500 transition-all duration-1000 ${
+                          className={`absolute inset-0 w-full bg-gradient-to-b from-purple-500 to-purple-700 transition-all duration-1000 ${
                             index < currentStepIndex
                               ? 'translate-y-0 opacity-100'
                               : 'translate-y-full opacity-0'
@@ -228,7 +228,7 @@ export default function WorkflowSection() {
                       {/* Content */}
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-center gap-3 mb-2'>
-                          <h3 className='text-lg font-bold text-gray-900'>{step.title}</h3>
+                          <h3 className='text-lg font-bold text-white'>{step.title}</h3>
                           <div
                             className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${
                               statusConfig[step.status as keyof typeof statusConfig].color
@@ -238,7 +238,7 @@ export default function WorkflowSection() {
                             {statusConfig[step.status as keyof typeof statusConfig].label}
                           </div>
                         </div>
-                        <p className='text-gray-600 mb-3'>{step.description}</p>
+                        <p className='text-gray-300 mb-3'>{step.description}</p>
 
                         {/* Details */}
                         {step.details && (
@@ -246,7 +246,7 @@ export default function WorkflowSection() {
                             {step.details.map((detail, detailIndex) => (
                               <div
                                 key={detailIndex}
-                                className='flex items-center gap-2 text-sm text-gray-500'
+                                className='flex items-center gap-2 text-sm text-gray-400'
                               >
                                 <CheckCircle className='w-4 h-4 text-emerald-500' />
                                 {detail}
@@ -259,7 +259,7 @@ export default function WorkflowSection() {
                       {/* Arrow */}
                       <ArrowRight
                         className={`w-5 h-5 transition-transform duration-300 ${
-                          isActive ? 'text-blue-500 rotate-90' : 'text-gray-400'
+                          isActive ? 'text-purple-400 rotate-90' : 'text-gray-500'
                         }`}
                       />
                     </div>
@@ -272,13 +272,13 @@ export default function WorkflowSection() {
           {/* Right: Real-time Status Panel */}
           <AnimatedSection delay={400}>
             <div className='sticky top-8'>
-              <div className='bg-white rounded-2xl border border-gray-200 shadow-xl p-8'>
+              <div className='bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-8'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-lg font-bold text-gray-900'>실시간 실행 상태</h3>
-                  <div className='flex items-center gap-2 text-sm text-gray-500'>
+                  <h3 className='text-lg font-bold text-white'>실시간 실행 상태</h3>
+                  <div className='flex items-center gap-2 text-sm text-gray-400'>
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        isAutoPlaying ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
+                        isAutoPlaying ? 'bg-purple-500 animate-pulse' : 'bg-gray-500'
                       }`}
                     ></div>
                     {isAutoPlaying ? '자동 재생' : '일시 정지'}
@@ -299,34 +299,34 @@ export default function WorkflowSection() {
                           <div
                             className={`relative flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
                               isCompleted
-                                ? 'bg-green-100 border-2 border-green-300'
+                                ? 'bg-green-500/20 border-2 border-green-500/50'
                                 : isActive
                                 ? `bg-gradient-to-r ${
                                     colorClasses[step.color as keyof typeof colorClasses]
                                   } shadow-lg scale-110`
-                                : 'bg-gray-100'
+                                : 'bg-white/10'
                             }`}
                           >
                             <Icon
                               className={`w-5 h-5 transition-all duration-300 ${
                                 isCompleted
-                                  ? 'text-green-600'
+                                  ? 'text-green-400'
                                   : isActive
                                   ? 'text-white'
-                                  : 'text-gray-400'
+                                  : 'text-gray-500'
                               }`}
                             />
 
                             {/* Animation Effect */}
                             {isActive && (
-                              <div className='absolute inset-0 rounded-full border-2 border-blue-400 animate-ping'></div>
+                              <div className='absolute inset-0 rounded-full border-2 border-purple-400 animate-ping'></div>
                             )}
 
                             {/* Status Icon */}
-                            <div className='absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm'>
+                            <div className='absolute -top-1 -right-1 w-4 h-4 bg-black/80 rounded-full flex items-center justify-center shadow-sm border border-white/20'>
                               <StatusIcon
                                 className={`w-3 h-3 ${
-                                  isCompleted ? 'text-green-500' : isActive ? 'text-blue-500' : 'text-gray-400'
+                                  isCompleted ? 'text-green-400' : isActive ? 'text-purple-400' : 'text-gray-500'
                                 }`}
                               />
                             </div>
@@ -337,24 +337,24 @@ export default function WorkflowSection() {
                             <div className='flex items-center justify-between'>
                               <span
                                 className={`font-medium ${
-                                  isActive ? 'text-gray-900' : 'text-gray-600'
+                                  isActive ? 'text-white' : 'text-gray-300'
                                 }`}
                               >
                                 {step.title}
                               </span>
-                              <span className='text-xs text-gray-400'>
+                              <span className='text-xs text-gray-500'>
                                 {isActive && step.status === 'running'
                                   ? '실행 중...'
                                   : statusConfig[step.status as keyof typeof statusConfig].label}
                               </span>
                             </div>
-                            <div className='mt-2 h-1 bg-gray-100 rounded-full overflow-hidden'>
+                            <div className='mt-2 h-1 bg-white/20 rounded-full overflow-hidden'>
                               <div
                                 className={`h-full transition-all duration-1000 ${
                                   isCompleted
-                                    ? 'w-full bg-green-500'
+                                    ? 'w-full bg-green-400'
                                     : isActive && step.status === 'running'
-                                    ? 'w-3/4 bg-blue-500 animate-pulse'
+                                    ? 'w-3/4 bg-purple-500 animate-pulse'
                                     : 'w-0'
                                 }`}
                               ></div>
@@ -364,9 +364,9 @@ export default function WorkflowSection() {
 
                         {/* Connection Line */}
                         {index < workflowSteps.length - 1 && (
-                          <div className='absolute left-5 top-12 w-0.5 h-6 bg-gray-200 overflow-hidden'>
+                          <div className='absolute left-5 top-12 w-0.5 h-6 bg-white/20 overflow-hidden'>
                             <div
-                              className={`absolute inset-0 w-full bg-gradient-to-b from-blue-500 to-emerald-500 transition-all duration-1000 ${
+                              className={`absolute inset-0 w-full bg-gradient-to-b from-purple-500 to-purple-700 transition-all duration-1000 ${
                                 isCompleted
                                   ? 'translate-y-0 opacity-100'
                                   : 'translate-y-full opacity-0'
@@ -380,17 +380,17 @@ export default function WorkflowSection() {
                 </div>
 
                 {/* Overall Progress */}
-                <div className='mt-8 pt-6 border-t border-gray-200'>
+                <div className='mt-8 pt-6 border-t border-white/20'>
                   <div className='flex items-center justify-between text-sm mb-4'>
-                    <span className='text-gray-600'>전체 진행률</span>
-                    <span className='font-medium text-gray-900'>
+                    <span className='text-gray-400'>전체 진행률</span>
+                    <span className='font-medium text-white'>
                       {Math.round((currentStepIndex / workflowSteps.length) * 100)}% ({currentStepIndex}/
                       {workflowSteps.length} 완료)
                     </span>
                   </div>
-                  <div className='h-2 bg-gray-100 rounded-full overflow-hidden mb-4'>
+                  <div className='h-2 bg-white/20 rounded-full overflow-hidden mb-4'>
                     <div
-                      className='h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-1000'
+                      className='h-full bg-gradient-to-r from-purple-500 to-purple-700 rounded-full transition-all duration-1000'
                       style={{ width: `${(currentStepIndex / workflowSteps.length) * 100}%` }}
                     ></div>
                   </div>
@@ -401,14 +401,14 @@ export default function WorkflowSection() {
                       onClick={() => setIsAutoPlaying(!isAutoPlaying)}
                       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                         isAutoPlaying
-                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                          : 'bg-white/10 text-gray-300 hover:bg-white/20'
                       }`}
                     >
                       <Play className={`w-3 h-3 ${isAutoPlaying ? 'animate-pulse' : ''}`} />
                       {isAutoPlaying ? '자동 재생 중' : '자동 재생 시작'}
                     </button>
-                    <span className='text-xs text-gray-500'>3초마다 자동 진행</span>
+                    <span className='text-xs text-gray-400'>3초마다 자동 진행</span>
                   </div>
                 </div>
               </div>
@@ -419,14 +419,17 @@ export default function WorkflowSection() {
 
         <AnimatedSection delay={600}>
           <div className='flex justify-center mt-16 mb-8'>
-            <button
-              onClick={handleGetStarted}
-              className='group bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 shadow-2xl hover:shadow-blue-500/25 flex items-center gap-3 transform hover:scale-105'
-            >
-              <Zap className='w-5 h-5' />
-              지금 시작하기
-              <ArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
-            </button>
+            <div className='relative group'>
+              <div className='absolute -inset-1 bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200' />
+              <button
+                onClick={handleGetStarted}
+                className='relative group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 flex items-center gap-3 transform hover:scale-105'
+              >
+                <Zap className='w-5 h-5' />
+                지금 시작하기
+                <ArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
+              </button>
+            </div>
           </div>
         </AnimatedSection>
       </div>

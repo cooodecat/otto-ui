@@ -22,7 +22,7 @@ export default function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
         scrolled &&
-          "bg-white/95 backdrop-blur-2xl border-b border-zinc-200/50 shadow-lg shadow-purple-500/5"
+          "bg-black/80 backdrop-blur-2xl border-b border-white/10 shadow-lg shadow-purple-500/25"
       )}
     >
       <div className="container mx-auto px-8">
@@ -31,7 +31,7 @@ export default function Header() {
             <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 p-3 rounded-2xl shadow-lg shadow-purple-500/25 ring-2 ring-white/10">
               <Cpu className="w-7 h-7 text-white" />
             </div>
-            <span className="text-2xl font-black bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 bg-clip-text text-transparent tracking-tight">
+            <span className="text-2xl font-black bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent tracking-tight">
               Otto
             </span>
           </div>
@@ -46,7 +46,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-zinc-600 hover:text-purple-600 p-3 rounded-xl hover:bg-purple-50 transition-all duration-200"
+            className="md:hidden text-gray-300 hover:text-white p-3 rounded-xl hover:bg-white/10 transition-all duration-200"
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -59,9 +59,9 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white/98 backdrop-blur-2xl border-t border-zinc-200/50 shadow-lg">
+        <div className="md:hidden bg-black/95 backdrop-blur-2xl border-t border-white/10 shadow-lg">
           <nav className="flex flex-col space-y-2 p-6">
-            <div className="border-t border-zinc-200 pt-4 mt-4 space-y-3">
+            <div className="border-t border-white/10 pt-4 mt-4 space-y-3">
               <LoginButton />
             </div>
           </nav>
