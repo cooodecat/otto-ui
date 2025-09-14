@@ -25,14 +25,14 @@ export default function UserProfile() {
       const { data: profileData, error } = await api.getUserProfile();
 
       if (error) {
-        console.error("프로필 가져오기 실패:", error);
+        // 프로필 가져오기 실패 처리
       } else {
         setApiUser(profileData || null);
       }
-    } catch (err) {
-      console.error("프로필 API 호출 실패:", err);
+    } catch {
+      // 프로필 API 호출 실패 처리
     }
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -68,14 +68,14 @@ export default function UserProfile() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchUserProfile, router, supabase.auth]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
 
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error("Logout error:", error.message);
+      // Logout error handling
       setIsLoggingOut(false);
       alert("로그아웃 중 오류가 발생했습니다.");
     }

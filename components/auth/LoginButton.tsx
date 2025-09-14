@@ -29,11 +29,11 @@ export default function LoginButton({
       });
 
       if (error) {
-        console.error('Login error:', error.message);
+        // Login error handling
         alert('로그인 중 오류가 발생했습니다: ' + error.message);
       }
-    } catch (error) {
-      console.error('Unexpected error:', error);
+    } catch {
+      // Unexpected error handling
       alert('예상치 못한 오류가 발생했습니다.');
     } finally {
       setLoading(false);

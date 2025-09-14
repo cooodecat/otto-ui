@@ -1,7 +1,6 @@
 "use client";
 
 import { Cpu, Zap, ArrowRight } from "lucide-react";
-import LoginButton from "@/components/auth/LoginButton";
 import Link from "next/link";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 
