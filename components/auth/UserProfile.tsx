@@ -14,25 +14,34 @@ export default function UserProfile() {
   const [apiUser, setApiUser] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const supabase = createClient();
   const api = useApi();
   const router = useRouter();
 
   // 백엔드에서 사용자 프로필 가져오기
   const fetchUserProfile = useCallback(async (sessionToken: string) => {
+    // 이미 에러가 발생했으면 재시도하지 않음
+    if (hasError) return;
+
     try {
       setApiToken(sessionToken);
       const { data: profileData, error } = await api.getUserProfile();
 
       if (error) {
         // 프로필 가져오기 실패 처리
+        console.error("Profile fetch error:", error);
+        setHasError(true); // 에러 상태 설정하여 재시도 방지
       } else {
         setApiUser(profileData || null);
+        setHasError(false);
       }
-    } catch {
+    } catch (err) {
       // 프로필 API 호출 실패 처리
+      console.error("Profile API call failed:", err);
+      setHasError(true); // 에러 상태 설정하여 재시도 방지
     }
-  }, [api]);
+  }, [api, hasError]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -68,7 +77,8 @@ export default function UserProfile() {
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchUserProfile, router, supabase.auth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 의존성 배열을 빈 배열로 변경 - 컴포넌트 마운트 시 한 번만 실행
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
