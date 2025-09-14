@@ -38,16 +38,25 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // 인증된 사용자가 회원가입 페이지 접근 시 대시보드로 리다이렉트
+  // 홈페이지(/)는 누구나 접근 가능
+  if (user && request.nextUrl.pathname === "/signup") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // 인증되지 않은 사용자가 보호된 페이지 접근 시 홈으로 리다이렉트
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/auth") &&
     !request.nextUrl.pathname.startsWith("/api/auth") &&
-    !request.nextUrl.pathname.startsWith("/landing") &&
-    request.nextUrl.pathname !== "/"
+    request.nextUrl.pathname !== "/" &&
+    request.nextUrl.pathname !== "/signup" &&
+    request.nextUrl.pathname !== "/landing"
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
-    url.pathname = "/landing";
+    url.pathname = "/signup";
     return NextResponse.redirect(url);
   }
 

@@ -58,7 +58,7 @@
    - JWT 토큰 자동 헤더 설정
 
 3. **UI 컴포넌트**
-   - 랜딩 페이지 (`app/landing/`)
+   - 랜딩 페이지 (`app/page.tsx` - 루트 경로)
    - 인증 컴포넌트 (`components/auth/`)
    - 대시보드 페이지 (`app/dashboard/`)
 

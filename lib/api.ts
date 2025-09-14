@@ -70,11 +70,12 @@ class ApiClient {
 
   // 사용자 관련 API
   async getUserProfile(): Promise<ApiResponse<User>> {
-    const response = await this.request<GetUserProfileResponse>(
-      "/api/user/profile"
+    const response = await this.request<any>(
+      "/api/v1/auth/profile"
     );
     if (response.data) {
-      return { data: response.data.user };
+      // 백엔드 응답 형식에 맞게 수정
+      return { data: response.data.data?.user || response.data.user };
     }
     return { error: response.error };
   }
@@ -83,7 +84,7 @@ class ApiClient {
     updates: UpdateUserProfileRequest
   ): Promise<ApiResponse<User>> {
     const response = await this.request<UpdateUserProfileResponse>(
-      "/api/user/profile",
+      "/api/v1/auth/profile",
       {
         method: "PUT",
         body: JSON.stringify(updates),
