@@ -34,7 +34,7 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 노드 컴포넌트
    */
-  component: ComponentType<NodeProps<T>>;
+  component: ComponentType<NodeProps>;
 
   /**
    * 노드 카테고리

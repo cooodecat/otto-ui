@@ -1,4 +1,5 @@
-import { NodeTypes } from "@xyflow/react";
+import { ComponentType } from "react";
+import { NodeTypes, NodeProps } from "@xyflow/react";
 import { NodeRegistry } from "@/types/node-config.types";
 import {
   StartNodeData,
@@ -30,7 +31,7 @@ export const nodeRegistry: NodeRegistry = {
     icon: "▶️",
     colorClass: "bg-blue-500",
     colorHex: "#3b82f6",
-    component: StartNode,
+    component: StartNode as ComponentType<NodeProps>,
     category: "trigger",
     description: "Workflow starting point",
     minWidth: 280,
@@ -48,7 +49,7 @@ export const nodeRegistry: NodeRegistry = {
     icon: "🤖",
     colorClass: "bg-purple-500",
     colorHex: "#a855f7",
-    component: AgentNode,
+    component: AgentNode as ComponentType<NodeProps>,
     category: "action",
     description: "AI Agent for processing",
     defaultData: {
@@ -64,7 +65,7 @@ export const nodeRegistry: NodeRegistry = {
     icon: "🔗",
     colorClass: "bg-blue-500",
     colorHex: "#3b82f6",
-    component: ApiNode,
+    component: ApiNode as ComponentType<NodeProps>,
     category: "action",
     description: "External API call",
     defaultData: {
@@ -80,7 +81,7 @@ export const nodeRegistry: NodeRegistry = {
     icon: "🔶",
     colorClass: "bg-orange-500",
     colorHex: "#f97316",
-    component: ConditionNode,
+    component: ConditionNode as ComponentType<NodeProps>,
     category: "control",
     description: "Conditional branching",
     minWidth: 320,
@@ -101,7 +102,7 @@ export const nodeRegistry: NodeRegistry = {
     icon: "</>",
     colorClass: "bg-red-500",
     colorHex: "#ef4444",
-    component: FunctionNode,
+    component: FunctionNode as ComponentType<NodeProps>,
     category: "action",
     description: "Custom function",
     defaultData: {
@@ -117,7 +118,7 @@ export const nodeRegistry: NodeRegistry = {
     icon: "🧠",
     colorClass: "bg-teal-500",
     colorHex: "#14b8a6",
-    component: KnowledgeNode,
+    component: KnowledgeNode as ComponentType<NodeProps>,
     category: "data",
     description: "Knowledge base query",
     defaultData: {
@@ -133,7 +134,7 @@ export const nodeRegistry: NodeRegistry = {
     icon: "👨‍💻",
     colorClass: "bg-green-500",
     colorHex: "#10b981",
-    component: DeveloperNode,
+    component: DeveloperNode as ComponentType<NodeProps>,
     category: "custom",
     description: "Developer assignment",
     defaultData: {
