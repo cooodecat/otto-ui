@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from "next/link";
 
 export default function AuthCodeError() {
   return (
@@ -36,5 +36,5 @@ export default function AuthCodeError() {
         </Link>
       </div>
     </div>
-  )
+  );
 }
