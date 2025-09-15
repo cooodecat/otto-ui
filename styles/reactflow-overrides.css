@@ -1,0 +1,97 @@
+/* ReactFlow Handle 납작한 직사각형 스타일 */
+.react-flow__handle {
+  background: #d1d5db !important;
+  border: none !important;
+  border-radius: 2px !important;
+}
+
+/* 연결 중일 때만 약간 강조 */
+.react-flow__handle-connecting {
+  background: #9ca3af !important;
+}
+
+.react-flow__handle-valid {
+  background: #9ca3af !important;
+}
+
+/* 노드 선택 비활성화 */
+.react-flow__node.selected {
+  box-shadow: none !important;
+}
+
+.react-flow__node:focus {
+  outline: none !important;
+}
+
+/* 노드 커서 스타일 - grab 커서 */
+.react-flow__node {
+  cursor: grab !important;
+}
+
+.react-flow__node:active {
+  cursor: grabbing !important;
+}
+
+.react-flow__node.dragging {
+  cursor: grabbing !important;
+}
+
+/* 노드 내부 버튼들은 포인터 커서 유지 */
+.react-flow__node button {
+  cursor: pointer !important;
+}
+
+.react-flow__node input,
+.react-flow__node select {
+  cursor: text !important;
+}
+
+/* Edge(연결선) 스타일 - 점선 애니메이션 */
+.react-flow__edge-path {
+  stroke: #9ca3af;
+  stroke-width: 2;
+  stroke-dasharray: 8 4;
+  animation: flowDash 1s linear infinite;
+}
+
+/* Edge 선택 스타일 - AnimatedDashedEdge 컴포넌트에서 처리 */
+.react-flow__edge.selected .react-flow__edge-path {
+  /* 스타일은 AnimatedDashedEdge 컴포넌트에서 inline으로 처리 */
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #6b7280 !important; /* 호버 시 진한 회색 */
+}
+
+.react-flow__edge:focus {
+  outline: none !important;
+}
+
+/* 간선 선택 가능 커서 */
+.react-flow__edge {
+  cursor: pointer !important;
+}
+
+/* 연결 중인 라인도 점선으로 */
+.react-flow__connection-path {
+  stroke: #9ca3af !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: 8 4 !important;
+  animation: flowDash 1s linear infinite !important;
+}
+
+/* 점선 흐름 애니메이션 */
+@keyframes flowDash {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+/* 부드러운 커브 */
+.react-flow__edge.smoothstep {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

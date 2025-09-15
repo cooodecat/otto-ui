@@ -33,7 +33,7 @@ export default function Home() {
       <main className="relative z-10 flex-1 flex items-center justify-center px-8">
         <div className="text-center max-w-4xl mx-auto">
           {/* Title */}
-          <AnimatedSection delay={100}>
+          <AnimatedSection delay={50}>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-6 tracking-tight">
               <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-indigo-500 bg-clip-text text-transparent">
                 CI/CD 파이프라인
@@ -44,7 +44,7 @@ export default function Home() {
           </AnimatedSection>
 
           {/* Description */}
-          <AnimatedSection delay={200}>
+          <AnimatedSection delay={100}>
             <p className="text-xl sm:text-2xl text-gray-400 mb-12 leading-relaxed max-w-3xl mx-auto">
               답답한 타이핑에서 벗어나세요.
               <br className="hidden sm:block" />
@@ -53,7 +53,7 @@ export default function Home() {
           </AnimatedSection>
 
           {/* CTA Button */}
-          <AnimatedSection delay={300}>
+          <AnimatedSection delay={150}>
             <div className="relative inline-block group">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse" />
               <Link
@@ -68,7 +68,7 @@ export default function Home() {
           </AnimatedSection>
 
           {/* Additional Info */}
-          <AnimatedSection delay={400}>
+          <AnimatedSection delay={200}>
             <div className="mt-16 flex items-center justify-center gap-8 text-sm text-gray-500">
               {/* <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -88,7 +88,7 @@ export default function Home() {
       </main>
 
       {/* Simple Footer */}
-      <AnimatedSection delay={500} className="relative z-10">
+      <AnimatedSection delay={400} direction="up" className="relative z-10">
         <footer className="py-6 text-center text-gray-600 text-sm">
           <p>&copy; 2024 Otto. All rights reserved.</p>
         </footer>
