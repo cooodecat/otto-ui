@@ -61,8 +61,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const router = useRouter();
 
   const fetchUserProfile = useCallback(async (sessionToken: string) => {
-    if (hasError) return;
-
     try {
       setApiToken(sessionToken);
       const { data: profileData, error } = await api.getUserProfile();
@@ -78,7 +76,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       console.error("Profile API call failed:", err);
       setHasError(true);
     }
-  }, [api, hasError]);
+  }, [api]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -88,7 +86,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(user);
 
-      if (session?.access_token) {
+      if (session?.access_token && !hasError) {
         await fetchUserProfile(session.access_token);
       }
 
@@ -100,7 +98,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.access_token) {
         setUser(session.user);
-        await fetchUserProfile(session.access_token);
+        if (!hasError) {
+          await fetchUserProfile(session.access_token);
+        }
         setLoading(false);
       } else if (event === "SIGNED_OUT") {
         router.push("/");
@@ -108,7 +108,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [isOpen, supabase.auth, fetchUserProfile, router]);
+  }, [isOpen]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
