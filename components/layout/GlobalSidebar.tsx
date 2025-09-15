@@ -68,7 +68,20 @@ interface PipelineItem {
 }
 
 /**
- * 캔버스 레이아웃이 필요한 경로 패턴 체크
+ * 캔버스 레이아웃이 필요한 경로 패턴 확인 함수
+ *
+ * 파이프라인 에디터와 파이프라인 상세 페이지에서 사이드바가 floating 모드로
+ * 작동해야 하는지 결정합니다.
+ *
+ * @param pathname - 현재 경로 문자열
+ * @returns 캔버스 레이아웃을 사용해야 하는 경로인지 여부
+ *
+ * @example
+ * ```typescript
+ * isCanvasLayoutPath('/pipelines') // true
+ * isCanvasLayoutPath('/projects/123/pipelines/456') // true
+ * isCanvasLayoutPath('/dashboard') // false
+ * ```
  */
 const isCanvasLayoutPath = (pathname: string): boolean => {
   if (pathname === '/pipelines') return true;
@@ -203,30 +216,58 @@ const GlobalSidebar = () => {
 
   /**
    * 블록의 드래그 시작 이벤트를 처리합니다
-   * 캔버스에 블록을 드롭할 수 있도록 드래그 데이터를 설정합니다
    *
-   * @param e - 드래그 이벤트
-   * @param blockType - 드래그되는 블록의 타입 (소문자 블록 이름)
+   * 팔레트에서 블록을 드래그할 때 캔버스에 드롭할 수 있도록
+   * 드래그 데이터를 설정합니다. React Flow와 호환되는 형태로
+   * 데이터를 전달합니다.
+   *
+   * @param e - React 드래그 이벤트 객체
+   * @param blockType - 드래그되는 블록의 타입 (대소문자 구분 없음)
+   *
+   * @example
+   * ```typescript
+   * handleBlockDragStart(event, 'Agent') // 'agent'로 변환되어 전달
+   * ```
+   *
+   * @see {@link https://reactflow.dev/docs/guides/drag-and-drop/} React Flow 드래그 앤 드롭 가이드
    */
   const handleBlockDragStart = (e: React.DragEvent<HTMLDivElement>, blockType: string) => {
     e.dataTransfer.setData('application/reactflow', blockType.toLowerCase());
   };
 
   /**
-   * 파이프라인 선택을 처리합니다
-   * 현재 선택된 파이프라인 상태를 업데이트합니다
+   * 파이프라인 선택 이벤트를 처리합니다
    *
-   * @param pipelineId - 선택할 파이프라인의 ID
+   * 사용자가 파이프라인 목록에서 특정 파이프라인을 클릭했을 때
+   * 해당 파이프라인을 활성 상태로 설정합니다.
+   *
+   * @param pipelineId - 선택할 파이프라인의 고유 식별자
+   *
+   * @example
+   * ```typescript
+   * handlePipelineSelect('pipeline_123')
+   * ```
    */
   const handlePipelineSelect = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
   };
 
   /**
-   * 프로젝트 선택을 처리합니다
-   * 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옵니다
+   * 프로젝트 선택 이벤트를 처리합니다
    *
-   * @param projectId - 선택할 프로젝트의 ID
+   * 워크스페이스 드롭다운에서 프로젝트를 선택했을 때 호출되며,
+   * 선택된 프로젝트를 전역 상태에 저장하고 해당 프로젝트의
+   * 파이프라인들을 자동으로 로드합니다.
+   *
+   * @param projectId - 선택할 프로젝트의 고유 식별자
+   *
+   * @example
+   * ```typescript
+   * handleProjectSelect('project_456')
+   * ```
+   *
+   * @see {@link useProjectStore} - 프로젝트 상태 관리
+   * @see {@link usePipelineStore} - 파이프라인 상태 관리
    */
   const handleProjectSelect = (projectId: string) => {
     setSelectedProject(projectId);
@@ -234,16 +275,36 @@ const GlobalSidebar = () => {
   };
 
   /**
-   * 워크스페이스 드롭다운 토글을 처리합니다
+   * 워크스페이스 드롭다운의 열림/닫힘 상태를 토글합니다
+   *
+   * 사용자가 프로젝트 이름 영역을 클릭했을 때 드롭다운 메뉴를
+   * 표시하거나 숨깁니다.
+   *
+   * @example
+   * ```typescript
+   * // 드롭다운이 닫혀있으면 열고, 열려있으면 닫음
+   * handleWorkspaceDropdownToggle()
+   * ```
    */
   const handleWorkspaceDropdownToggle = () => {
     setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen);
   };
 
   /**
-   * 현재 선택된 프로젝트를 반환합니다
+   * 현재 선택된 프로젝트 정보를 가져옵니다
    *
-   * @returns 현재 선택된 프로젝트 객체 또는 null
+   * 전역 상태에서 현재 활성화된 프로젝트의 상세 정보를 조회합니다.
+   * 프로젝트가 선택되지 않은 경우 null을 반환합니다.
+   *
+   * @returns 선택된 프로젝트 객체 (name, githubOwner, githubRepoName 등 포함) 또는 null
+   *
+   * @example
+   * ```typescript
+   * const project = getSelectedProjectInfo()
+   * if (project) {
+   *   console.log(`Project: ${project.name} by ${project.githubOwner}`)
+   * }
+   * ```
    */
   const getSelectedProjectInfo = () => {
     return getSelectedProject();
@@ -268,27 +329,59 @@ const GlobalSidebar = () => {
   }
 
   /**
-   * 검색 쿼리를 기반으로 블록들을 필터링합니다
-   * 검색어와 일치하는 블록들을 반환합니다 (대소문자 구분 안함)
+   * 검색 쿼리를 기반으로 블록 팔레트를 필터링합니다
    *
-   * @returns 검색 쿼리와 일치하는 필터링된 블록 배열
+   * 사용자가 입력한 검색어에 따라 블록 목록을 실시간으로 필터링합니다.
+   * 검색은 대소문자를 구분하지 않으며, 블록 이름의 일부분만 일치해도
+   * 결과에 포함됩니다.
+   *
+   * @returns 검색 조건에 맞는 블록들의 필터링된 배열
+   *
+   * @example
+   * ```typescript
+   * // searchBlocks = 'ag' 일 때
+   * getFilteredBlocks() // [{ name: 'Agent', icon: '🤖', ... }]
+   *
+   * // searchBlocks = '' 일 때 (빈 문자열)
+   * getFilteredBlocks() // 모든 블록 반환
+   * ```
    */
   const getFilteredBlocks = (): Block[] => {
     return blocks.filter((block) => block.name.toLowerCase().includes(searchBlocks.toLowerCase()));
   };
 
   /**
-   * Settings 버튼 클릭을 처리하여 Settings 모달을 열어줍니다.
-   * 모달 상태를 true로 설정하여 SettingsModal 컴포넌트를 표시합니다.
+   * 설정 버튼 클릭 이벤트를 처리합니다
+   *
+   * 하단 네비게이션의 설정 아이콘을 클릭했을 때 설정 모달을
+   * 화면에 표시합니다. 모달은 React Portal을 통해 전체 화면에
+   * 오버레이로 렌더링됩니다.
+   *
+   * @example
+   * ```typescript
+   * // 설정 아이콘 클릭 시 자동으로 호출됨
+   * handleSettingsClick()
+   * ```
+   *
+   * @see {@link SettingsModal} - 설정 모달 컴포넌트
    */
   const handleSettingsClick = () => {
     setIsSettingsModalOpen(true);
   };
 
   /**
-   * Settings 모달 닫기를 처리합니다.
-   * 모달 상태를 false로 설정하여 SettingsModal 컴포넌트를 숨깁니다.
-   * ESC 키 누름, 백드롭 클릭, 또는 닫기 버튼 클릭 시 호출됩니다.
+   * 설정 모달 닫기 이벤트를 처리합니다
+   *
+   * 다양한 사용자 액션에 의해 설정 모달을 닫습니다:
+   * - ESC 키 누름
+   * - 모달 외부 영역(백드롭) 클릭
+   * - 모달 내부의 닫기 버튼 클릭
+   *
+   * @example
+   * ```typescript
+   * // SettingsModal의 onClose prop으로 전달됨
+   * <SettingsModal onClose={handleSettingsModalClose} />
+   * ```
    */
   const handleSettingsModalClose = () => {
     setIsSettingsModalOpen(false);

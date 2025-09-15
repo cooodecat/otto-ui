@@ -4,18 +4,38 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import GlobalSidebar from './GlobalSidebar';
 
+/**
+ * GlobalLayout 컴포넌트의 props 인터페이스
+ */
 interface GlobalLayoutProps {
+  /** 레이아웃 내부에 렌더링될 React 노드 */
   children: React.ReactNode;
 }
 
 /**
  * 사이드바가 표시되지 않아야 하는 경로들
+ * 로그인, 회원가입, 온보딩 등 인증 관련 페이지와 랜딩 페이지에서는 사이드바를 숨김
+ *
+ * @constant
+ * @type {string[]}
  */
-const SIDEBAR_EXCLUDED_PATHS = ['/', '/signin', '/callback', '/signup', '/projects/onboarding'];
+const SIDEBAR_EXCLUDED_PATHS = ['/', '/signin'];
 
 /**
- * 캔버스 레이아웃이 필요한 경로 패턴
- * 파이프라인 상세 페이지에서 전체 화면 캔버스 위에 사이드바가 floating
+ * 캔버스 레이아웃이 필요한 경로 패턴 확인 함수
+ *
+ * 파이프라인 에디터와 파이프라인 상세 페이지에서는 전체 화면 캔버스가 필요하며,
+ * 사이드바가 캔버스 위에 floating 형태로 표시됩니다.
+ *
+ * @param pathname - 현재 경로 문자열
+ * @returns 캔버스 레이아웃을 사용해야 하는 경로인지 여부
+ *
+ * @example
+ * ```typescript
+ * isCanvasLayoutPath('/pipelines') // true - 파이프라인 에디터
+ * isCanvasLayoutPath('/projects/123/pipelines/456') // true - 파이프라인 상세
+ * isCanvasLayoutPath('/dashboard') // false - 일반 페이지
+ * ```
  */
 const isCanvasLayoutPath = (pathname: string): boolean => {
   // /pipelines 페이지 (파이프라인 에디터)
@@ -28,9 +48,40 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
 
 /**
  * 전역 레이아웃 컴포넌트
- * 경로에 따라 두 가지 레이아웃을 제공:
- * 1. 캔버스 레이아웃: 파이프라인 상세 페이지 - 사이드바가 캔버스 위에 floating
- * 2. 표준 레이아웃: 그 외 페이지 - 사이드바와 콘텐츠가 화면을 분할
+ *
+ * 애플리케이션의 메인 레이아웃을 담당하며, 현재 경로에 따라
+ * 세 가지 다른 레이아웃 모드를 제공합니다:
+ *
+ * **1. 사이드바 없는 레이아웃 (No Sidebar)**
+ * - 랜딩 페이지, 로그인, 회원가입, 온보딩 페이지
+ * - 전체 화면을 콘텐츠가 차지
+ *
+ * **2. 캔버스 레이아웃 (Canvas Layout)**
+ * - 파이프라인 에디터 및 상세 페이지
+ * - 사이드바가 전체 화면 캔버스 위에 floating (z-50)
+ * - 배경 콘텐츠는 전체 화면 사용
+ *
+ * **3. 표준 레이아웃 (Standard Layout)**
+ * - 일반적인 대시보드 및 관리 페이지
+ * - 사이드바(320px)와 메인 콘텐츠가 화면을 수평 분할
+ * - 사이드바는 sticky positioning으로 고정
+ *
+ * @component
+ * @param props - GlobalLayout props
+ * @param props.children - 메인 콘텐츠 영역에 렌더링될 React 노드
+ *
+ * @returns 현재 경로에 적합한 레이아웃 구조를 가진 JSX 엘리먼트
+ *
+ * @example
+ * ```tsx
+ * // Next.js app/layout.tsx에서 사용
+ * <GlobalLayout>
+ *   <HomePage /> // 또는 다른 페이지 컴포넌트
+ * </GlobalLayout>
+ * ```
+ *
+ * @see {@link GlobalSidebar} - 사이드바 컴포넌트
+ * @see {@link AuthProvider} - 인증 상태 관리 컴포넌트
  */
 const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const pathname = usePathname();

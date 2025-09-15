@@ -4,7 +4,35 @@ import React from 'react';
 
 /**
  * 사이드바 로딩 스켈레톤 컴포넌트
- * sim 프로젝트의 스켈레톤 패턴을 참고하여 구현
+ *
+ * GlobalSidebar가 데이터를 로드하는 동안 사용자에게 표시되는 로딩 UI입니다.
+ * 실제 사이드바의 레이아웃과 동일한 구조를 가지며, 내용 대신
+ * 회색 플레이스홀더를 표시하여 연속적인 사용자 경험을 제공합니다.
+ *
+ * **주요 영역:**
+ * - 워크스페이스 헤더 (프로젝트 이름, 검색박스)
+ * - 파이프라인 목록 섹션
+ * - 블록 팔레트 영역
+ * - 하단 네비게이션 아이콘
+ *
+ * **애니메이션:**
+ * Tailwind CSS의 `animate-pulse` 유틸리티를 사용하여
+ * 자연스러운 로딩 효과를 제공합니다.
+ *
+ * @component
+ * @returns 사이드바의 로딩 상태를 나타내는 JSX 엘리먼트
+ *
+ * @example
+ * ```tsx
+ * // GlobalSidebar에서 데이터 로딩 중일 때
+ * {isLoading && projects.length === 0 ? (
+ *   <SidebarSkeleton />
+ * ) : (
+ *   <div>// 실제 사이드바 콘텐츠</div>
+ * )}
+ * ```
+ *
+ * @see {@link GlobalSidebar} - 실제 사이드바 컴포넌트
  */
 export const SidebarSkeleton = () => {
   return (
@@ -83,7 +111,36 @@ export const SidebarSkeleton = () => {
 };
 
 /**
- * 워크스페이스 드롭다운 스켈레톤
+ * 워크스페이스 드롭다운 스켈레톤 컴포넌트
+ *
+ * 워크스페이스 드롭다운 메뉴가 열리고 프로젝트 데이터를
+ * 로드하는 동안 표시되는 전용 스켈레톤입니다.
+ * 드롭다운 내부에 3개의 프로젝트 아이템 스켈레톤을 표시합니다.
+ *
+ * **스켈레톤 구성:**
+ * - 프로젝트 이름 플레이스홀더 (75% 너비)
+ * - GitHub 저장소 정보 플레이스홀더 (50% 너비)
+ * - 드롭다운 스타일링 유지 (border, padding, max-height)
+ *
+ * @component
+ * @returns 드롭다운 메뉴의 로딩 상태를 나타내는 JSX 엘리먼트
+ *
+ * @example
+ * ```tsx
+ * // GlobalSidebar에서 드롭다운이 열리고 프로젝트 로딩 중
+ * {isWorkspaceDropdownOpen && (
+ *   <div className="absolute top-full...">
+ *     {isProjectsLoading ? (
+ *       <WorkspaceDropdownSkeleton />
+ *     ) : (
+ *       // 실제 프로젝트 목록
+ *     )}
+ *   </div>
+ * )}
+ * ```
+ *
+ * @see {@link SidebarSkeleton} - 전체 사이드바 스켈레톤
+ * @see {@link GlobalSidebar} - 사이드바 메인 컴포넌트
  */
 export const WorkspaceDropdownSkeleton = () => {
   return (
