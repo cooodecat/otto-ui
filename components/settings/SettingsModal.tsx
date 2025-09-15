@@ -1,8 +1,15 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, User, Bell, Palette, Shield, HelpCircle } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { User as ApiUser } from '@/types/api';
+import { setApiToken, useApi } from '@/lib/api';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 /**
  * SettingsModal 컴포넌트의 Props 인터페이스
@@ -43,6 +50,76 @@ interface SettingSection {
  * @returns 설정 모달을 나타내는 JSX 엘리먼트 또는 null
  */
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+  const [selectedTab, setSelectedTab] = useState('profile');
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [apiUser, setApiUser] = useState<ApiUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const supabase = createClient();
+  const api = useApi();
+  const router = useRouter();
+
+  const fetchUserProfile = useCallback(async (sessionToken: string) => {
+    if (hasError) return;
+
+    try {
+      setApiToken(sessionToken);
+      const { data: profileData, error } = await api.getUserProfile();
+
+      if (error) {
+        console.error("Profile fetch error:", error);
+        setHasError(true);
+      } else {
+        setApiUser(profileData || null);
+        setHasError(false);
+      }
+    } catch (err) {
+      console.error("Profile API call failed:", err);
+      setHasError(true);
+    }
+  }, [api, hasError]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(user);
+
+      if (session?.access_token) {
+        await fetchUserProfile(session.access_token);
+      }
+
+      setLoading(false);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.access_token) {
+        setUser(session.user);
+        await fetchUserProfile(session.access_token);
+        setLoading(false);
+      } else if (event === "SIGNED_OUT") {
+        router.push("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [isOpen, supabase.auth, fetchUserProfile, router]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setIsLoggingOut(false);
+      alert("로그아웃 중 오류가 발생했습니다.");
+    }
+  };
+
   // ESC 키 이벤트 처리
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
@@ -156,11 +233,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               {settingSections.map((section) => (
                 <button
                   key={section.id}
-                  className="w-full flex items-start space-x-3 p-3 text-left rounded-lg hover:bg-gray-50 transition-colors group"
-                  onClick={() => {
-                    // TODO: 섹션별 설정 페이지 구현
-                    console.log(`${section.title} 설정 페이지로 이동`);
-                  }}
+                  className={`w-full flex items-start space-x-3 p-3 text-left rounded-lg transition-colors group ${
+                    selectedTab === section.id
+                      ? 'bg-blue-50 border border-blue-200 text-blue-700'
+                      : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() => setSelectedTab(section.id)}
                 >
                   <section.icon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
@@ -179,25 +257,108 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           {/* 메인 콘텐츠 영역 */}
           <div className="flex-1 p-6 overflow-y-auto">
             <div className="max-w-2xl">
-              {/* 임시 콘텐츠 - 실제 설정 페이지로 대체 예정 */}
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-gray-400" />
+              {selectedTab === 'profile' ? (
+                // 프로필 탭 - 대시보드 UserProfile 내용
+                <div>
+                  {loading ? (
+                    <div className="flex items-center justify-center p-4">
+                      <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                    </div>
+                  ) : !user ? null : (
+                    <div className="relative bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
+                      {/* 로그아웃 중 오버레이 */}
+                      {isLoggingOut && (
+                        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+                          <div className="text-center">
+                            <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto mb-2"></div>
+                            <p className="text-sm text-gray-600 font-medium">로그아웃 중...</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-4 mb-4">
+                        {user.user_metadata?.avatar_url && (
+                          <Image
+                            src={user.user_metadata.avatar_url}
+                            alt="Profile"
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 rounded-full"
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-semibold text-lg text-gray-900">
+                            {user.user_metadata?.full_name || user.email}
+                          </h3>
+                          {user.user_metadata?.user_name && (
+                            <p className="text-gray-600">@{user.user_metadata.user_name}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 mb-4 text-sm text-gray-600">
+                        <p>
+                          <span className="font-medium">이메일:</span> {user.email}
+                        </p>
+                        {apiUser?.name && (
+                          <p>
+                            <span className="font-medium">이름:</span> {apiUser.name}
+                          </p>
+                        )}
+                        {user.user_metadata?.user_name && (
+                          <p>
+                            <span className="font-medium">GitHub:</span>{" "}
+                            {user.user_metadata.user_name}
+                          </p>
+                        )}
+                        <p>
+                          <span className="font-medium">로그인:</span>{" "}
+                          {new Date(user.last_sign_in_at || "").toLocaleString("ko-KR")}
+                        </p>
+                        {apiUser?.created_at && (
+                          <p>
+                            <span className="font-medium">가입:</span>{" "}
+                            {new Date(apiUser.created_at).toLocaleString("ko-KR")}
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className={cn(
+                          "w-full bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200",
+                          isLoggingOut
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-red-700"
+                        )}
+                      >
+                        {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  설정 페이지 준비 중
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  좌측 메뉴에서 설정할 항목을 선택하세요.<br />
-                  각 섹션별 상세 설정 페이지가 곧 추가될 예정입니다.
-                </p>
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  닫기
-                </button>
-              </div>
+              ) : (
+                // 다른 탭들
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    설정 페이지 준비 중
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    좌측 메뉴에서 설정할 항목을 선택하세요.<br />
+                    각 섹션별 상세 설정 페이지가 곧 추가될 예정입니다.
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    닫기
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
