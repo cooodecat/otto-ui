@@ -193,13 +193,13 @@ export const getLogPreview = (logs: string[], maxLines: number = 10): string[] =
 
 export const exportLogs = (logs: Record<string, unknown>[], filename: string = 'pipeline-logs') => {
   const data = logs.map(log => ({
-    timestamp: (log.trigger as any)?.time || '',
+    timestamp: (log.trigger as { time?: string })?.time || '',
     pipeline: log.pipelineName as string,
     status: log.status as string,
     branch: log.branch as string,
-    commit: (log.commit as any)?.sha || '',
+    commit: (log.commit as { sha?: string })?.sha || '',
     duration: log.duration as string,
-    author: (log.commit as any)?.author || (log.trigger as any)?.author || '',
+    author: (log.commit as { author?: string })?.author || (log.trigger as { author?: string })?.author || '',
   }));
   
   const csv = [
@@ -251,4 +251,87 @@ export const parseURLFilters = (searchParams: URLSearchParams) => {
     branch: searchParams.get('branch') || 'all-branches',
     author: searchParams.get('author') || 'all-authors',
   };
+};
+
+// Mock Data Utils
+// ============================================================================
+
+import { LogData } from '@/types/logs';
+
+const mockLogData: Record<string, LogData> = {
+  'test-build-123': {
+    id: 'test-build-123',
+    name: 'Test Build Pipeline',
+    status: 'running',
+    logs: [
+      {
+        id: '5',
+        status: 'success',
+        pipelineName: 'E2E Tests',
+        trigger: { type: 'Push to develop', author: 'dev-team', time: '1s ago' },
+        branch: 'develop',
+        commit: { message: 'test: Update checkout flow tests', sha: 'e5f6789', author: 'Dev Team' },
+        duration: '15m 0s',
+        isNew: true,
+      },
+      {
+        id: '4',
+        status: 'pending',
+        pipelineName: 'Mobile App Build',
+        trigger: { type: 'Scheduled build', author: 'system', time: '50m ago' },
+        branch: 'release/v2.1',
+        commit: { message: 'release: Prepare v2.1.0 release', sha: 'd4e5f67', author: 'Release Bot' },
+        duration: '-',
+        isNew: false,
+      },
+      {
+        id: '3',
+        status: 'failed',
+        pipelineName: 'Database Migration',
+        trigger: { type: 'Manual trigger', author: 'admin', time: '5h ago' },
+        branch: 'migration-v2',
+        commit: {
+          message: 'migration: Add user preferences table',
+          sha: 'c3d4e5f',
+          author: 'Admin User',
+        },
+        duration: '3m 0s',
+        isNew: false,
+      },
+      {
+        id: '2',
+        status: 'success',
+        pipelineName: 'Backend API',
+        trigger: { type: 'PR #123 merged', author: 'jane-smith', time: '3h ago' },
+        branch: 'develop',
+        commit: {
+          message: 'fix: Resolve authentication middleware issue',
+          sha: 'b2c3d44',
+          author: 'Jane Smith',
+        },
+        duration: '7m 0s',
+        isNew: false,
+      },
+      {
+        id: '1',
+        status: 'running',
+        pipelineName: 'Frontend Build',
+        trigger: { type: 'Push to main', author: 'john-doe', time: '2h ago' },
+        branch: 'main',
+        commit: {
+          message: 'feat: Add new component library integration',
+          sha: 'a1b2c34',
+          author: 'John Doe',
+        },
+        duration: '8m 32s',
+        isNew: false,
+      },
+    ],
+    total: 5,
+    hasNext: false,
+  },
+};
+
+export const getMockData = (buildId: string): LogData | null => {
+  return mockLogData[buildId] || null;
 };

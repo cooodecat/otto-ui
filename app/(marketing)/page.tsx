@@ -70,8 +70,8 @@ export default function Home() {
           {/* Pipeline Logs Demo Links */}
           <AnimatedSection delay={200}>
             <div className="mt-16 space-y-6">
-              <p className="text-lg text-gray-400 mb-6">🧪 Pipeline Logs 데모 (Phase 1-4 완료)</p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <p className="text-lg text-gray-400 mb-6">🧪 Pipeline Logs 데모 (Phase 1-5 완료)</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
                 <Link
                   href="/logs"
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105"
@@ -90,9 +90,15 @@ export default function Home() {
                 >
                   🚀 Combined Test
                 </Link>
+                <Link
+                  href="/test-real-api"
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-red-500/25 transform hover:scale-105"
+                >
+                  🔴 Real API Test
+                </Link>
               </div>
               <div className="text-xs text-gray-600 mt-4">
-                완전한 UI, 목업 데이터, 키보드 단축키, 무한 스크롤, 실시간 필터링 모든 기능 포함
+                완전한 UI, 목업 데이터, 키보드 단축키, 무한 스크롤, 실시간 필터링 + 실제 API 연동 및 SSE 스트리밍
               </div>
             </div>
           </AnimatedSection>

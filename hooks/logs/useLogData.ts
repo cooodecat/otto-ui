@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
-import { LogData } from '@/types/logs';
+import { LogData, LogItem } from '@/types/logs';
+import { fetchLogData, logsApi, LogsApiError } from '@/lib/api/logs-api';
 
 interface UseLogDataResult {
   logData: LogData | null;
   loading: boolean;
   error: string | null;
   refetch: () => void;
+  isCollecting: boolean;
+  startCollection: () => Promise<void>;
+  stopCollection: () => Promise<void>;
 }
 
 interface UseLogDataOptions {
   // API 호출 함수 (새 프로젝트에서 구현)
-  fetchLogData?: (buildId: string) => Promise<LogData>;
+  fetchLogData?: (buildId: string) => Promise<LogItem[]>;
   // 모킹 데이터 함수 (개발용)
   getMockData?: (buildId: string) => LogData | null;
   // 로딩 딜레이 (개발용)
   simulateDelay?: number;
+  // 실제 API 사용 여부
+  useRealApi?: boolean;
 }
 
 export const useLogData = (
@@ -22,24 +28,52 @@ export const useLogData = (
   options: UseLogDataOptions = {}
 ): UseLogDataResult => {
   const { 
-    fetchLogData, 
+    fetchLogData: customFetchLogData, 
     getMockData, 
-    simulateDelay = 1000 
+    simulateDelay = 1000,
+    useRealApi = false
   } = options;
   
   const [logData, setLogData] = useState<LogData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCollecting, setIsCollecting] = useState(false);
+
+  // 로그 수집 상태 확인
+  const checkCollectionStatus = async () => {
+    if (!useRealApi) return;
+    
+    try {
+      const status = await logsApi.getLogStatus(buildId);
+      setIsCollecting(status.isActive);
+    } catch (err) {
+      console.warn('Failed to check collection status:', err);
+    }
+  };
 
   const loadLogData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // API 호출 함수가 제공된 경우
-      if (fetchLogData) {
-        const data = await fetchLogData(buildId);
-        setLogData(data);
+      // 실제 API 사용하는 경우
+      if (useRealApi) {
+        const logItems = customFetchLogData 
+          ? await customFetchLogData(buildId)
+          : await fetchLogData(buildId);
+        
+        // LogItem[] 배열을 LogData 형식으로 변환
+        const logData: LogData = {
+          id: buildId,
+          name: `Pipeline ${buildId}`,
+          status: 'running',
+          logs: logItems,
+          total: logItems.length,
+          hasNext: false // SSE로 실시간 업데이트되므로 페이지네이션 불필요
+        };
+        
+        setLogData(logData);
+        await checkCollectionStatus();
         return;
       }
 
@@ -63,9 +97,50 @@ export const useLogData = (
       throw new Error('No data source provided for useLogData hook');
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch log data');
+      const errorMessage = err instanceof LogsApiError 
+        ? `API Error (${err.status}): ${err.message}`
+        : err instanceof Error 
+        ? err.message 
+        : 'Failed to fetch log data';
+      setError(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 로그 수집 시작
+  const startCollection = async () => {
+    if (!useRealApi) return;
+    
+    try {
+      setError(null);
+      await logsApi.startLogCollection(buildId);
+      setIsCollecting(true);
+      console.log(`🚀 Started log collection for build: ${buildId}`);
+    } catch (err) {
+      const errorMessage = err instanceof LogsApiError
+        ? `Failed to start collection: ${err.message}`
+        : 'Failed to start log collection';
+      setError(errorMessage);
+      throw err;
+    }
+  };
+
+  // 로그 수집 중지
+  const stopCollection = async () => {
+    if (!useRealApi) return;
+    
+    try {
+      setError(null);
+      await logsApi.stopLogCollection(buildId);
+      setIsCollecting(false);
+      console.log(`⏹️ Stopped log collection for build: ${buildId}`);
+    } catch (err) {
+      const errorMessage = err instanceof LogsApiError
+        ? `Failed to stop collection: ${err.message}`
+        : 'Failed to stop log collection';
+      setError(errorMessage);
+      throw err;
     }
   };
 
@@ -77,12 +152,15 @@ export const useLogData = (
     if (buildId) {
       loadLogData();
     }
-  }, [buildId]);
+  }, [buildId, useRealApi]);
 
   return {
     logData,
     loading,
     error,
     refetch,
+    isCollecting,
+    startCollection,
+    stopCollection,
   };
 };
