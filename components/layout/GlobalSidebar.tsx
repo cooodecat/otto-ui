@@ -114,7 +114,7 @@ const GlobalSidebar = () => {
   const [searchBlocks, setSearchBlocks] = useState<string>("");
 
   /** 현재 선택된 파이프라인 ID */
-  const [_selectedPipelineId, setSelectedPipelineId] = useState<string | null>(
+  const [_selectedPipelineId, _setSelectedPipelineId] = useState<string | null>(
     null
   );
 
@@ -319,7 +319,7 @@ const GlobalSidebar = () => {
 
   // 로딩 상태 확인
   const isLoading = isProjectsLoading || isPipelinesLoading;
-  const _hasError = projectsError || pipelinesError;
+  // const _hasError = projectsError || pipelinesError; // 추후 에러 처리 시 사용 예정
 
   // 레이아웃 모드에 따라 다른 positioning 사용
   const containerClassName = isCanvasLayout

@@ -180,7 +180,7 @@ interface BasicFlowCanvasProps {
   pipelineId: string;
 }
 
-function FlowCanvasWithButtons({ projectId, pipelineId }: BasicFlowCanvasProps) {
+function FlowCanvasWithButtons({ projectId: _projectId, pipelineId: _pipelineId }: BasicFlowCanvasProps) {
   const [handleInitialize, setHandleInitialize] = useState<(() => void) | null>(null);
 
   const onInitializeReady = useCallback((fn: () => void) => {
