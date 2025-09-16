@@ -44,19 +44,6 @@ import "@/styles/reactflow-overrides.css";
 import { nodeTypes, createNodeInstance } from "./nodes/node-registry";
 import { edgeTypes, cicdEdgeOptions } from "./edges";
 
-/**
- * 노드 ID 생성기
- * 하이드레이션 에러를 방지하기 위해 서버/클라이언트 환경을 구분하여 ID 생성
- */
-let nodeId = 0;
-const getId = () => {
-  if (typeof window !== 'undefined') {
-    // 클라이언트 환경: 증가하는 카운터 사용
-    return `cicd_node_${++nodeId}`;
-  }
-  // 서버 환경: 랜덤 문자열 사용
-  return `cicd_node_${Math.random().toString(36).substr(2, 9)}`;
-};
 
 /**
  * 초기 노드 구성 - 빈 캔버스에서 시작
@@ -85,6 +72,8 @@ function CICDDropZone({
         try {
           const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedData);
           console.log(`📁 Loading pipeline from localStorage (${storageKey}):`, { nodes: savedNodes.length, edges: savedEdges.length });
+          
+          
           setNodes(savedNodes);
           setEdges(savedEdges);
         } catch (error) {
@@ -105,8 +94,7 @@ function CICDDropZone({
     console.log("🏁 Creating default Pipeline Start node...");
     const pipelineStartNode = createNodeInstance(
       'pipeline_start', 
-      { x: 100, y: 100 }, 
-      'pipeline-start-1'
+      { x: 100, y: 100 }
     );
     
     // 삭제 불가능하도록 설정
@@ -117,15 +105,20 @@ function CICDDropZone({
     setNodes([pipelineStartNode]);
   };
 
-  // localStorage에 자동 저장
-  useEffect(() => {
-    if (initializedRef.current && projectId && (nodes.length > 0 || edges.length > 0)) {
+  // localStorage 저장 함수
+  const saveToLocalStorage = useCallback((currentNodes: Node[], currentEdges: Edge[]) => {
+    if (initializedRef.current && projectId && (currentNodes.length > 0 || currentEdges.length > 0)) {
       const storageKey = `pipeline-${projectId}`;
-      const pipelineData = { nodes, edges };
+      const pipelineData = { nodes: currentNodes, edges: currentEdges };
       localStorage.setItem(storageKey, JSON.stringify(pipelineData));
-      console.log(`💾 Auto-saved to localStorage (${storageKey}):`, { nodes: nodes.length, edges: edges.length });
+      console.log(`💾 Saved to localStorage (${storageKey}):`, { nodes: currentNodes.length, edges: currentEdges.length });
     }
-  }, [nodes, edges, projectId]);
+  }, [projectId]);
+
+  // localStorage에 자동 저장 (상태 변경 감지)
+  useEffect(() => {
+    saveToLocalStorage(nodes, edges);
+  }, [nodes, edges, saveToLocalStorage]);
 
   // Ref 등록
   React.useEffect(() => {
@@ -141,12 +134,16 @@ function CICDDropZone({
   }, [onRef, nodes, edges]);
 
   const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    (changes) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
     []
   );
 
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    (changes) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+    },
     []
   );
 
@@ -234,7 +231,7 @@ function CICDDropZone({
       });
 
       try {
-        const newNode = createNodeInstance(type, position, getId());
+        const newNode = createNodeInstance(type, position);
         setNodes((nds) => nds.concat(newNode));
       } catch (error) {
         console.error("Failed to create node:", error);
