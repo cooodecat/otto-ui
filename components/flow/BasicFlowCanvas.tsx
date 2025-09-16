@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
+import { RotateCcw, Play } from "lucide-react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -42,10 +43,19 @@ const initialNodes: Node[] = [
   },
 ];
 
-function DropZone() {
+function DropZone({ onInitializeReady }: { onInitializeReady: (fn: () => void) => void }) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { screenToFlowPosition } = useReactFlow();
+
+  const handleInitialize = useCallback(() => {
+    setNodes(initialNodes);
+    setEdges([]);
+  }, []);
+
+  React.useEffect(() => {
+    onInitializeReady(handleInitialize);
+  }, [handleInitialize, onInitializeReady]);
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -160,12 +170,42 @@ function DropZone() {
   );
 }
 
+function FlowCanvasWithButtons() {
+  const [handleInitialize, setHandleInitialize] = useState<(() => void) | null>(null);
+
+  const onInitializeReady = useCallback((fn: () => void) => {
+    setHandleInitialize(() => fn);
+  }, []);
+
+  return (
+    <div className="h-screen w-full relative">
+      <div className="absolute top-6 right-6 z-10 flex gap-3">
+        <button
+          onClick={handleInitialize || (() => {})}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm font-medium text-sm"
+          title="파이프라인 초기화"
+        >
+          <RotateCcw className="w-4 h-6" />
+        </button>
+        <button
+          onClick={() => {
+            alert("Pipeline triggered!");
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 shadow-sm font-medium text-sm"
+          title="파이프라인 실행"
+        >
+          <Play className="w-4 h-6" />
+        </button>
+      </div>
+      <DropZone onInitializeReady={onInitializeReady} />
+    </div>
+  );
+}
+
 export default function BasicFlowCanvas() {
   return (
-    <div className="h-screen w-full">
-      <ReactFlowProvider>
-        <DropZone />
-      </ReactFlowProvider>
-    </div>
+    <ReactFlowProvider>
+      <FlowCanvasWithButtons />
+    </ReactFlowProvider>
   );
 }
