@@ -96,7 +96,7 @@ export default function Home() {
       {/* Simple Footer */}
       <AnimatedSection delay={400} direction="up" className="relative z-10">
         <footer className="py-6 text-center text-gray-600 text-sm">
-          <p>&copy; 2024 Otto. All rights reserved.</p>
+          <p>&copy; 2025 Otto. All rights reserved.</p>
         </footer>
       </AnimatedSection>
     </div>
