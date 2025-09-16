@@ -24,12 +24,15 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 노드 색상 (Tailwind 클래스)
    */
-  colorClass: string;
+  // snake_case 우선, camelCase는 호환용
+  color_class?: string;
+  colorClass?: string;
 
   /**
    * 노드 색상 (Hex)
    */
-  colorHex: string;
+  color_hex?: string;
+  colorHex?: string;
 
   /**
    * 노드 컴포넌트
@@ -39,7 +42,18 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 노드 카테고리
    */
-  category: 'trigger' | 'action' | 'control' | 'data' | 'custom';
+  category:
+    | 'trigger'
+    | 'action'
+    | 'control'
+    | 'data'
+    | 'custom'
+    | 'cicd-prebuild'
+    | 'cicd-build'
+    | 'cicd-test'
+    | 'cicd-deploy'
+    | 'cicd-notification'
+    | 'cicd-utility';
 
   /**
    * 노드 설명
@@ -49,6 +63,7 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 최소 너비
    */
+  min_width?: number;
   minWidth?: number;
 
   /**
@@ -59,6 +74,7 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 기본 데이터
    */
+  default_data?: Partial<T>;
   defaultData?: Partial<T>;
 
   /**

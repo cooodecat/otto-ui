@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import BasicFlowCanvas from "@/components/flow/BasicFlowCanvas";
+import DashboardClient from "@/components/dashboard/DashboardClient";
 
 export default async function Dashboard() {
   const supabase = await createClient();
@@ -13,5 +13,5 @@ export default async function Dashboard() {
     redirect("/");
   }
 
-  return <BasicFlowCanvas />;
+  return <DashboardClient />;
 }

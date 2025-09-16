@@ -14,6 +14,7 @@ import {
   Home,
   Check,
 } from 'lucide-react';
+import { cicdCategories } from '@/components/flow/nodes/node-registry';
 import SettingsModal from '../settings/SettingsModal';
 import { useProjectStore } from '@/lib/projectStore';
 import { usePipelineStore } from '@/lib/pipelineStore';
@@ -181,16 +182,11 @@ const GlobalSidebar = () => {
   }, [selectedProjectId, setCurrentProject]);
 
   /**
-   * 팔레트에서 사용 가능한 블록들의 설정
-   * 각 블록은 드래그하여 워크플로 노드를 생성할 수 있습니다
+   * CI/CD 노드 카테고리에서 검색을 위해 플랫 목록 생성
    */
-  const blocks: Block[] = [
-    { name: 'Agent', icon: '🤖', color: 'bg-purple-500' },
-    { name: 'API', icon: '🔗', color: 'bg-blue-500' },
-    { name: 'Condition', icon: '🔶', color: 'bg-orange-500' },
-    { name: 'Function', icon: '</>', color: 'bg-red-500' },
-    { name: 'Knowledge', icon: '🧠', color: 'bg-teal-500' },
-  ];
+  const getAllCicdNodes = () => {
+    return Object.values(cicdCategories).flatMap((category) => category.nodes);
+  };
 
   // 현재 선택된 프로젝트의 파이프라인들을 변환
   const currentPipelines: PipelineItem[] = selectedProjectId 
@@ -231,8 +227,9 @@ const GlobalSidebar = () => {
    *
    * @see {@link https://reactflow.dev/docs/guides/drag-and-drop/} React Flow 드래그 앤 드롭 가이드
    */
-  const handleBlockDragStart = (e: React.DragEvent<HTMLDivElement>, blockType: string) => {
-    e.dataTransfer.setData('application/reactflow', blockType.toLowerCase());
+  const handleBlockDragStart = (e: React.DragEvent<HTMLDivElement>, nodeType: string) => {
+    // node-registry에서 정의된 타입 문자열을 그대로 전달해야 함
+    e.dataTransfer.setData('application/reactflow', nodeType);
   };
 
   /**
@@ -346,8 +343,12 @@ const GlobalSidebar = () => {
    * getFilteredBlocks() // 모든 블록 반환
    * ```
    */
-  const getFilteredBlocks = (): Block[] => {
-    return blocks.filter((block) => block.name.toLowerCase().includes(searchBlocks.toLowerCase()));
+  const getFilteredNodes = () => {
+    const query = searchBlocks.toLowerCase();
+    if (!query) return [];
+    return getAllCicdNodes().filter((n) =>
+      n.label.toLowerCase().includes(query) || n.type.toLowerCase().includes(query)
+    );
   };
 
   /**
@@ -547,23 +548,60 @@ const GlobalSidebar = () => {
             />
           </div>
         </div>
-
-        <div className='flex-1 overflow-y-auto space-y-2 pr-1'>
-          {getFilteredBlocks().map((block) => (
-            <div
-              key={block.name}
-              className='flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm'
-              draggable
-              onDragStart={(e) => handleBlockDragStart(e, block.name)}
-            >
-              <div
-                className={`w-8 h-8 ${block.color} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}
-              >
-                <span className='text-white text-sm font-medium'>{block.icon}</span>
-              </div>
-              <span className='text-sm font-medium text-gray-900'>{block.name}</span>
+        <div className='flex-1 overflow-y-auto space-y-4 pr-1'>
+          {/* 검색어가 있으면 결과 리스트만 표시 */}
+          {searchBlocks ? (
+            <div className='space-y-2'>
+              {getFilteredNodes().map((node) => (
+                <div
+                  key={node.type}
+                  className='flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm'
+                  draggable
+                  onDragStart={(e) => handleBlockDragStart(e, node.type)}
+                >
+                  <div className={`w-8 h-8 ${node.colorClass} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}>
+                    <span className='text-white text-sm font-medium'>{node.icon}</span>
+                  </div>
+                  <div className='min-w-0'>
+                    <div className='text-sm font-medium text-gray-900 truncate'>{node.label}</div>
+                    <div className='text-xs text-gray-500 truncate'>{node.description}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            // 검색어가 없으면 카테고리별 표시 (CICD와 동일 스타일)
+            <>
+              {Object.entries(cicdCategories).map(([key, category]) => (
+                <div key={key} className='space-y-2'>
+                  <div className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}>
+                    <span className='text-base'>{category.icon}</span>
+                    <h3 className={`text-sm font-medium ${category.textClass}`}>{category.name}</h3>
+                    <span className={`text-xs ${category.textClass} opacity-70`}>({category.nodes.length})</span>
+                  </div>
+
+                  <div className='space-y-1 ml-2'>
+                    {category.nodes.map((node) => (
+                      <div
+                        key={node.type}
+                        className='flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow'
+                        draggable
+                        onDragStart={(e) => handleBlockDragStart(e, node.type)}
+                      >
+                        <div className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}>
+                          <span className='text-white text-sm'>{node.icon}</span>
+                        </div>
+                        <div className='flex-1 min-w-0 ml-3'>
+                          <div className='text-sm font-medium text-gray-900 truncate'>{node.label}</div>
+                          <div className='text-xs text-gray-500 truncate'>{node.description}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       </div>
 

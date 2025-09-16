@@ -1,3 +1,32 @@
+/**
+ * Base Node Component
+ * 
+ * 모든 플로우 노드의 기본 컴포넌트로, 다음과 같은 기능을 제공합니다:
+ * 
+ * 주요 기능:
+ * - 표준화된 노드 UI 레이아웃 (헤더, 콘텐츠, 핸들)
+ * - 삭제 기능
+ * - 입력/출력 핸들 관리
+ * - CI/CD 전용 success/failed 출력 핸들 지원
+ * 
+ * 핸들 시스템:
+ * - 입력 핸들: 상단 중앙에 위치
+ * - 기본 출력 핸들: 하단 중앙에 위치
+ * - 다중 출력 핸들: Condition 노드 등을 위한 커스텀 위치
+ * - CICD 출력 핸들: success(초록)/failed(빨간) 2개 핸들
+ * 
+ * 사용 방법:
+ * ```tsx
+ * <BaseNode
+ *   data={nodeData}
+ *   id={id}
+ *   colorClass="bg-blue-500"
+ *   useCICDOutputs={true}
+ * >
+ *   <NodeContent />
+ * </BaseNode>
+ * ```
+ */
 "use client";
 
 import { memo, ReactNode } from "react";
@@ -59,6 +88,11 @@ export interface BaseNodeProps<T extends BaseNodeData = BaseNodeData> {
     position: Position;
     style?: React.CSSProperties;
   }>;
+
+  /**
+   * CI/CD 노드의 success/failed 출력 사용 여부
+   */
+  useCICDOutputs?: boolean;
 }
 
 /**
@@ -76,12 +110,59 @@ const BaseNode = <T extends BaseNodeData = BaseNodeData>({
   showInput = true,
   showOutput = true,
   outputHandles,
+  useCICDOutputs = false,
 }: BaseNodeProps<T>) => {
   const { deleteElements } = useReactFlow();
 
   const handleDelete = () => {
     deleteElements({ nodes: [{ id }] });
   };
+
+  // CI/CD 노드의 성공/실패 출력 핸들
+  // Environment 블록은 실패할 가능성이 낮아 success만 제공
+  const isEnvironmentNode = data.label?.includes('Environment');
+  
+  const cicdOutputHandles = useCICDOutputs ? (
+    isEnvironmentNode ? [
+      {
+        id: "success-output",
+        position: Position.Bottom,
+        style: { 
+          left: "50%", // 중앙에 위치
+          backgroundColor: "#10b981", // 초록색
+          width: "12px", 
+          height: "12px",
+          borderRadius: "50%",
+          bottom: "-6px"
+        }
+      }
+    ] : [
+      {
+        id: "success-output",
+        position: Position.Bottom,
+        style: { 
+          left: "30%", 
+          backgroundColor: "#10b981", // 초록색
+          width: "12px", 
+          height: "12px",
+          borderRadius: "50%",
+          bottom: "-6px"
+        }
+      },
+      {
+        id: "failed-output", 
+        position: Position.Bottom,
+        style: { 
+          left: "70%", 
+          backgroundColor: "#ef4444", // 빨간색
+          width: "12px",
+          height: "12px", 
+          borderRadius: "50%",
+          bottom: "-6px"
+        }
+      }
+    ]
+  ) : undefined;
 
   return (
     <div
@@ -129,7 +210,7 @@ const BaseNode = <T extends BaseNodeData = BaseNodeData>({
       )}
 
       {/* Output Handles */}
-      {showOutput && !outputHandles && (
+      {showOutput && !outputHandles && !useCICDOutputs && (
         <Handle
           type="source"
           position={Position.Bottom}
@@ -146,6 +227,18 @@ const BaseNode = <T extends BaseNodeData = BaseNodeData>({
           type="source"
           position={handle.position}
           className="!w-2 !h-12 !bg-gray-300 !rounded-sm !border-none hover:!bg-gray-400 !cursor-crosshair transition-colors duration-150"
+          style={handle.style}
+        />
+      ))}
+
+      {/* CI/CD Success/Failed Output Handles */}
+      {cicdOutputHandles?.map((handle) => (
+        <Handle
+          key={handle.id}
+          id={handle.id}
+          type="source"
+          position={handle.position}
+          className="!border-2 !border-white hover:!scale-110 !cursor-crosshair transition-all duration-150"
           style={handle.style}
         />
       ))}
