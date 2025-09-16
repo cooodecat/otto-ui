@@ -67,21 +67,33 @@ export default function Home() {
             </div>
           </AnimatedSection>
 
-          {/* Additional Info */}
+          {/* Pipeline Logs Demo Links */}
           <AnimatedSection delay={200}>
-            <div className="mt-16 flex items-center justify-center gap-8 text-sm text-gray-500">
-              {/* <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span>무료로 시작</span>
-              </div> */}
-              {/* <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span>GitHub 연동</span>
-              </div> */}
-              {/* <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span>5분 내 설정 완료</span>
-              </div> */}
+            <div className="mt-16 space-y-6">
+              <p className="text-lg text-gray-400 mb-6">🧪 Pipeline Logs 데모 (Phase 1-4 완료)</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/logs"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105"
+                >
+                  📊 Pipeline Logs
+                </Link>
+                <Link
+                  href="/test-filters"
+                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-green-500/25 transform hover:scale-105"
+                >
+                  🔍 Filter Panel Test
+                </Link>
+                <Link
+                  href="/test-combined"
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
+                >
+                  🚀 Combined Test
+                </Link>
+              </div>
+              <div className="text-xs text-gray-600 mt-4">
+                완전한 UI, 목업 데이터, 키보드 단축키, 무한 스크롤, 실시간 필터링 모든 기능 포함
+              </div>
             </div>
           </AnimatedSection>
         </div>
