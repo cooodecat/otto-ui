@@ -39,8 +39,8 @@ export function mapPipelineId(numericId: string): string {
  */
 export function reverseMapId(mockId: string): string {
   // proj_ 또는 pipe_ prefix 제거
-  if (mockId.startsWith('proj_') || mockId.startsWith('pipe_')) {
-    return mockId.split('_')[1];
+  if (mockId.startsWith("proj_") || mockId.startsWith("pipe_")) {
+    return mockId.split("_")[1];
   }
 
   // 이미 숫자인 경우 그대로 반환

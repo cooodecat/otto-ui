@@ -3,7 +3,7 @@
  * DEPLOY 블록은 제외됨
  */
 
-import { CICDBlockType, CICDBlockGroup } from './cicd-node.types';
+import { CICDBlockType, CICDBlockGroup } from "./cicd-node.types";
 
 // 기본 블록 구조
 export interface PipelineBlock {
@@ -22,7 +22,7 @@ export interface PipelineBlock {
 export interface PipelineStartBlock extends PipelineBlock {
   blockType: CICDBlockType.PIPELINE_START;
   groupType: CICDBlockGroup.START;
-  triggerType?: 'manual' | 'schedule' | 'webhook' | 'push' | 'pullRequest';
+  triggerType?: "manual" | "schedule" | "webhook" | "push" | "pullRequest";
   triggerConfig?: {
     schedule?: string; // cron expression
     branchPatterns?: string[];
@@ -34,7 +34,7 @@ export interface PipelineStartBlock extends PipelineBlock {
 export interface OSPackagePipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.OS_PACKAGE;
   groupType: CICDBlockGroup.PREBUILD;
-  packageManager: 'apt' | 'yum' | 'dnf' | 'apk' | 'zypper' | 'pacman' | 'brew';
+  packageManager: "apt" | "yum" | "dnf" | "apk" | "zypper" | "pacman" | "brew";
   installPackages: string[];
   updatePackageList?: boolean;
 }
@@ -43,7 +43,7 @@ export interface NodeVersionPipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.NODE_VERSION;
   groupType: CICDBlockGroup.PREBUILD;
   version: string;
-  packageManager?: 'npm' | 'yarn' | 'pnpm';
+  packageManager?: "npm" | "yarn" | "pnpm";
 }
 
 export interface EnvironmentSetupPipelineBlock extends PipelineBlock {
@@ -57,7 +57,7 @@ export interface EnvironmentSetupPipelineBlock extends PipelineBlock {
 export interface InstallNodePackagePipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.INSTALL_MODULE_NODE;
   groupType: CICDBlockGroup.BUILD;
-  packageManager: 'npm' | 'yarn' | 'pnpm';
+  packageManager: "npm" | "yarn" | "pnpm";
   installPackages?: string[];
   installDevDependencies?: boolean;
   productionOnly?: boolean;
@@ -68,7 +68,7 @@ export interface BuildWebpackPipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.BUILD_WEBPACK;
   groupType: CICDBlockGroup.BUILD;
   configFile?: string;
-  mode: 'development' | 'production';
+  mode: "development" | "production";
   outputPath?: string;
   additionalOptions?: string[];
 }
@@ -77,7 +77,7 @@ export interface BuildVitePipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.BUILD_VITE;
   groupType: CICDBlockGroup.BUILD;
   configFile?: string;
-  mode: 'development' | 'production';
+  mode: "development" | "production";
   basePath?: string;
   outputDir?: string;
 }
@@ -85,7 +85,7 @@ export interface BuildVitePipelineBlock extends PipelineBlock {
 export interface BuildCustomPipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.BUILD_CUSTOM;
   groupType: CICDBlockGroup.BUILD;
-  packageManager: 'npm' | 'yarn' | 'pnpm';
+  packageManager: "npm" | "yarn" | "pnpm";
   scriptName?: string;
   customCommands?: string[];
   workingDirectory?: string;
@@ -108,7 +108,7 @@ export interface TestMochaPipelineBlock extends PipelineBlock {
   groupType: CICDBlockGroup.TEST;
   testFiles?: string[];
   configFile?: string;
-  reporter?: 'spec' | 'json' | 'html' | 'tap' | 'dot';
+  reporter?: "spec" | "json" | "html" | "tap" | "dot";
   timeout?: number;
   grep?: string;
 }
@@ -120,7 +120,7 @@ export interface TestVitestPipelineBlock extends PipelineBlock {
   coverage?: boolean;
   ui?: boolean;
   watchMode?: boolean;
-  environment?: 'node' | 'jsdom' | 'happy-dom';
+  environment?: "node" | "jsdom" | "happy-dom";
 }
 
 export interface TestPlaywrightPipelineBlock extends PipelineBlock {
@@ -130,13 +130,13 @@ export interface TestPlaywrightPipelineBlock extends PipelineBlock {
   project?: string;
   headed?: boolean;
   debug?: boolean;
-  browsers?: ('chromium' | 'firefox' | 'webkit')[];
+  browsers?: ("chromium" | "firefox" | "webkit")[];
 }
 
 export interface TestCustomPipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.TEST_CUSTOM;
   groupType: CICDBlockGroup.TEST;
-  packageManager: 'npm' | 'yarn' | 'pnpm';
+  packageManager: "npm" | "yarn" | "pnpm";
   scriptName?: string;
   customCommands?: string[];
   generateReports?: boolean;
@@ -174,7 +174,7 @@ export interface NotificationEmailPipelineBlock extends PipelineBlock {
 export interface ConditionBranchPipelineBlock extends PipelineBlock {
   blockType: CICDBlockType.CONDITION_BRANCH;
   groupType: CICDBlockGroup.UTILITY;
-  conditionType: 'environment' | 'fileExists' | 'commandOutput' | 'custom';
+  conditionType: "environment" | "fileExists" | "commandOutput" | "custom";
   conditionConfig: {
     environmentVar?: string;
     expectedValue?: string;
@@ -201,13 +201,13 @@ export interface CustomCommandPipelineBlock extends PipelineBlock {
   groupType: CICDBlockGroup.UTILITY;
   commands: string[];
   workingDirectory?: string;
-  shell?: 'bash' | 'sh' | 'zsh' | 'fish';
+  shell?: "bash" | "sh" | "zsh" | "fish";
   environmentVariables?: Record<string, string>;
   ignoreErrors?: boolean;
 }
 
 // 모든 파이프라인 블록 유니온 타입 (DEPLOY 제외)
-export type AnyPipelineBlock = 
+export type AnyPipelineBlock =
   | PipelineStartBlock
   | OSPackagePipelineBlock
   | NodeVersionPipelineBlock
@@ -251,7 +251,7 @@ export interface RunPipelineResponse {
 export interface PipelineExecutionStatus {
   executionId: string;
   pipelineId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: "pending" | "running" | "completed" | "failed";
   currentBlock?: string;
   completedBlocks: string[];
   failedBlocks: string[];
@@ -260,7 +260,7 @@ export interface PipelineExecutionStatus {
   logs: {
     blockId: string;
     timestamp: string;
-    level: 'info' | 'warn' | 'error';
+    level: "info" | "warn" | "error";
     message: string;
   }[];
 }

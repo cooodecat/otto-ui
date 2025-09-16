@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 /**
  * 파이프라인 정보 인터페이스
@@ -13,7 +13,7 @@ export interface Pipeline {
   /** 파이프라인 설명 */
   description?: string;
   /** 파이프라인 상태 */
-  status: 'active' | 'inactive' | 'draft';
+  status: "active" | "inactive" | "draft";
   /** 생성일 */
   createdAt?: string;
   /** 수정일 */
@@ -95,7 +95,9 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
     const { pipelines } = get();
 
     // 이미 해당 프로젝트의 파이프라인이 로드되어 있는지 확인
-    const existingPipelines = pipelines.filter(p => p.projectId === projectId);
+    const existingPipelines = pipelines.filter(
+      (p) => p.projectId === projectId
+    );
     if (existingPipelines.length > 0) {
       // 이미 로드된 경우 중복 호출 방지
       return;
@@ -106,79 +108,82 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
     try {
       // TODO: 실제 API 호출로 대체
       // 현재는 mock 데이터 사용
-      await new Promise(resolve => setTimeout(resolve, 800)); // 가짜 로딩
+      await new Promise((resolve) => setTimeout(resolve, 800)); // 가짜 로딩
 
       // NOTE: 데이터베이스에서도 동일한 규칙 적용 예정
       // 파이프라인 ID는 프로젝트별로 1부터 시작 (proj_1: pipe_1,pipe_2 / proj_2: pipe_1 / proj_3: pipe_1,pipe_2)
       const mockPipelines: Pipeline[] = [
         // proj_1의 파이프라인들
         {
-          pipelineId: 'pipe_1',
-          name: 'CI/CD Pipeline',
-          projectId: 'proj_1',
-          description: 'Continuous integration and deployment',
-          status: 'active',
-          createdAt: '2024-01-15',
-          updatedAt: '2024-01-20',
-          lastRunAt: '2024-01-22'
+          pipelineId: "pipe_1",
+          name: "CI/CD Pipeline",
+          projectId: "proj_1",
+          description: "Continuous integration and deployment",
+          status: "active",
+          createdAt: "2024-01-15",
+          updatedAt: "2024-01-20",
+          lastRunAt: "2024-01-22",
         },
         {
-          pipelineId: 'pipe_2',
-          name: 'Data Processing',
-          projectId: 'proj_1',
-          description: 'Daily data processing pipeline',
-          status: 'active',
-          createdAt: '2024-01-16',
-          updatedAt: '2024-01-21',
-          lastRunAt: '2024-01-23'
+          pipelineId: "pipe_2",
+          name: "Data Processing",
+          projectId: "proj_1",
+          description: "Daily data processing pipeline",
+          status: "active",
+          createdAt: "2024-01-16",
+          updatedAt: "2024-01-21",
+          lastRunAt: "2024-01-23",
         },
         // proj_2의 파이프라인
         {
-          pipelineId: 'pipe_1',
-          name: 'Testing Pipeline',
-          projectId: 'proj_2',
-          description: 'Automated testing workflow',
-          status: 'active',
-          createdAt: '2024-01-20',
-          updatedAt: '2024-01-25'
+          pipelineId: "pipe_1",
+          name: "Testing Pipeline",
+          projectId: "proj_2",
+          description: "Automated testing workflow",
+          status: "active",
+          createdAt: "2024-01-20",
+          updatedAt: "2024-01-25",
         },
         // proj_3의 파이프라인들 (가장 최신 프로젝트)
         {
-          pipelineId: 'pipe_1',
-          name: 'Staging Pipeline',
-          projectId: 'proj_3',
-          description: 'Staging environment deployment',
-          status: 'active',
-          createdAt: '2024-01-25',
-          updatedAt: '2024-01-28'
+          pipelineId: "pipe_1",
+          name: "Staging Pipeline",
+          projectId: "proj_3",
+          description: "Staging environment deployment",
+          status: "active",
+          createdAt: "2024-01-25",
+          updatedAt: "2024-01-28",
         },
         {
-          pipelineId: 'pipe_2',
-          name: 'Production Pipeline',
-          projectId: 'proj_3',
-          description: 'Production deployment automation',
-          status: 'active',
-          createdAt: '2024-01-26',
-          updatedAt: '2024-01-30'
-        }
+          pipelineId: "pipe_2",
+          name: "Production Pipeline",
+          projectId: "proj_3",
+          description: "Production deployment automation",
+          status: "active",
+          createdAt: "2024-01-26",
+          updatedAt: "2024-01-30",
+        },
       ];
 
       // 요청된 프로젝트의 파이프라인만 필터링
-      const projectPipelines = mockPipelines.filter(pipeline => pipeline.projectId === projectId);
+      const projectPipelines = mockPipelines.filter(
+        (pipeline) => pipeline.projectId === projectId
+      );
 
-      set(state => ({
+      set((state) => ({
         pipelines: [
           // 다른 프로젝트의 파이프라인은 유지하고, 현재 프로젝트 파이프라인만 업데이트
-          ...state.pipelines.filter(p => p.projectId !== projectId),
-          ...projectPipelines
+          ...state.pipelines.filter((p) => p.projectId !== projectId),
+          ...projectPipelines,
         ],
         isLoading: false,
-        currentProjectId: projectId
+        currentProjectId: projectId,
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to fetch pipelines',
-        isLoading: false
+        error:
+          error instanceof Error ? error.message : "Failed to fetch pipelines",
+        isLoading: false,
       });
     }
   },
@@ -201,20 +206,22 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
 
   getPipelinesByProject: (projectId: string) => {
     const { pipelines } = get();
-    return pipelines.filter(pipeline => pipeline.projectId === projectId);
+    return pipelines.filter((pipeline) => pipeline.projectId === projectId);
   },
 
   getLatestPipelineByProject: (projectId: string) => {
     const { pipelines } = get();
-    const projectPipelines = pipelines.filter(pipeline => pipeline.projectId === projectId);
+    const projectPipelines = pipelines.filter(
+      (pipeline) => pipeline.projectId === projectId
+    );
 
     if (projectPipelines.length === 0) return null;
 
     // NOTE: 데이터베이스에서도 동일한 로직 적용 예정
     // 숫자가 클수록 최신 파이프라인 (pipe_4 > pipe_3 > pipe_2 > pipe_1)
     return projectPipelines.sort((a, b) => {
-      const numA = parseInt(a.pipelineId.replace('pipe_', ''));
-      const numB = parseInt(b.pipelineId.replace('pipe_', ''));
+      const numA = parseInt(a.pipelineId.replace("pipe_", ""));
+      const numB = parseInt(b.pipelineId.replace("pipe_", ""));
       return numB - numA; // 내림차순 정렬
     })[0];
   },
@@ -226,40 +233,49 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
     // NOTE: 데이터베이스에서도 동일한 로직 적용 예정
     // 전체 파이프라인 중 숫자가 가장 큰 것 (pipe_4 > pipe_3 > pipe_2 > pipe_1)
     return pipelines.sort((a, b) => {
-      const numA = parseInt(a.pipelineId.replace('pipe_', ''));
-      const numB = parseInt(b.pipelineId.replace('pipe_', ''));
+      const numA = parseInt(a.pipelineId.replace("pipe_", ""));
+      const numB = parseInt(b.pipelineId.replace("pipe_", ""));
       return numB - numA; // 내림차순 정렬
     })[0];
   },
 
   getSelectedPipeline: () => {
     const { pipelines, selectedPipelineId } = get();
-    return pipelines.find(pipeline => pipeline.pipelineId === selectedPipelineId) || null;
+    return (
+      pipelines.find(
+        (pipeline) => pipeline.pipelineId === selectedPipelineId
+      ) || null
+    );
   },
 
   addPipeline: (pipeline: Pipeline) => {
-    set(state => ({
-      pipelines: [...state.pipelines, pipeline]
+    set((state) => ({
+      pipelines: [...state.pipelines, pipeline],
     }));
   },
 
   updatePipeline: (pipelineId: string, updates: Partial<Pipeline>) => {
-    set(state => ({
-      pipelines: state.pipelines.map(pipeline =>
+    set((state) => ({
+      pipelines: state.pipelines.map((pipeline) =>
         pipeline.pipelineId === pipelineId
           ? { ...pipeline, ...updates }
           : pipeline
-      )
+      ),
     }));
   },
 
   removePipeline: (pipelineId: string) => {
-    set(state => {
-      const newPipelines = state.pipelines.filter(pipeline => pipeline.pipelineId !== pipelineId);
+    set((state) => {
+      const newPipelines = state.pipelines.filter(
+        (pipeline) => pipeline.pipelineId !== pipelineId
+      );
       return {
         pipelines: newPipelines,
         // 삭제된 파이프라인이 선택되어 있었다면 선택 해제
-        selectedPipelineId: state.selectedPipelineId === pipelineId ? null : state.selectedPipelineId
+        selectedPipelineId:
+          state.selectedPipelineId === pipelineId
+            ? null
+            : state.selectedPipelineId,
       };
     });
   },
@@ -270,5 +286,5 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
 
   setLoading: (loading: boolean) => {
     set({ isLoading: loading });
-  }
+  },
 }));

@@ -69,7 +69,7 @@ class ApiClient {
 
   // 사용자 관련 API
   async getUserProfile(): Promise<ApiResponse<User>> {
-    const response = await this.request<{ data?: { user: User }, user?: User }>(
+    const response = await this.request<{ data?: { user: User }; user?: User }>(
       "/api/v1/auth/profile"
     );
     if (response.data) {

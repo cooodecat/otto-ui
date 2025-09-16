@@ -3,9 +3,12 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { InstallNodePackageNodeData, CICD_GROUP_COLORS } from "@/types/cicd-node.types";
+import {
+  InstallNodePackageNodeData,
+  CICD_GROUP_COLORS,
+} from "@/types/cicd-node.types";
 import { Package } from "lucide-react";
-import {CICDBlockGroup} from "@/types/block-enum";
+import { CICDBlockGroup } from "@/types/block-enum";
 
 const InstallPackagesNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as InstallNodePackageNodeData;
@@ -61,5 +64,3 @@ const InstallPackagesNode = memo(({ data, id }: NodeProps) => {
 InstallPackagesNode.displayName = "InstallPackagesNode";
 
 export default InstallPackagesNode;
-
-

@@ -3,7 +3,11 @@
 import { memo, useState } from "react";
 import { NodeProps, Position } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { ConditionBranchNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import {
+  ConditionBranchNodeData,
+  CICD_GROUP_COLORS,
+  CICDBlockGroup,
+} from "@/types/cicd-node.types";
 import { GitBranch, Settings, CheckCircle, XCircle } from "lucide-react";
 
 const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
@@ -14,21 +18,31 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
 
   const getConditionTypeIcon = (type: string) => {
     switch (type) {
-      case 'environment': return '🌍';
-      case 'file_exists': return '📁';
-      case 'command_output': return '💻';
-      case 'custom': return '🔧';
-      default: return '❓';
+      case "environment":
+        return "🌍";
+      case "file_exists":
+        return "📁";
+      case "command_output":
+        return "💻";
+      case "custom":
+        return "🔧";
+      default:
+        return "❓";
     }
   };
 
   const getConditionTypeLabel = (type: string) => {
     switch (type) {
-      case 'environment': return 'Environment Variable';
-      case 'file_exists': return 'File Exists';
-      case 'command_output': return 'Command Output';
-      case 'custom': return 'Custom Script';
-      default: return 'Unknown';
+      case "environment":
+        return "Environment Variable";
+      case "file_exists":
+        return "File Exists";
+      case "command_output":
+        return "Command Output";
+      case "custom":
+        return "Custom Script";
+      default:
+        return "Unknown";
     }
   };
 
@@ -37,13 +51,13 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
     {
       id: "success-output",
       position: Position.Right,
-      style: { top: "30%", right: "-8px" }
+      style: { top: "30%", right: "-8px" },
     },
     {
-      id: "failed-output", 
+      id: "failed-output",
       position: Position.Right,
-      style: { top: "70%", right: "-8px" }
-    }
+      style: { top: "70%", right: "-8px" },
+    },
   ];
 
   return (
@@ -60,9 +74,13 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
     >
       <div className="space-y-3">
         {/* 기본 정보 */}
-        <div className={`p-3 rounded ${groupColors.bgClass} ${groupColors.borderClass} border`}>
+        <div
+          className={`p-3 rounded ${groupColors.bgClass} ${groupColors.borderClass} border`}
+        >
           <div className="flex items-center justify-between mb-2">
-            <div className={`text-sm font-medium ${groupColors.textClass} flex items-center gap-2`}>
+            <div
+              className={`text-sm font-medium ${groupColors.textClass} flex items-center gap-2`}
+            >
               <span>{getConditionTypeIcon(nodeData.conditionType)}</span>
               Condition Branch
             </div>
@@ -74,7 +92,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
               <Settings size={14} className="text-gray-500" />
             </button>
           </div>
-          
+
           {/* 조건 타입 */}
           <div className="text-xs text-gray-600 mb-2">
             Type: {getConditionTypeLabel(nodeData.conditionType)}
@@ -98,7 +116,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
                 )}
               </div>
             )}
-            
+
             {nodeData.conditionConfig.filePath && (
               <div className="text-xs">
                 <span className="text-gray-600">File:</span>
@@ -107,7 +125,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
                 </span>
               </div>
             )}
-            
+
             {nodeData.conditionConfig.command && (
               <div className="text-xs">
                 <span className="text-gray-600">Command:</span>
@@ -142,17 +160,22 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
               <div className="p-2 bg-white rounded border space-y-1">
                 <div className="text-xs">
                   <span className="text-gray-600">Type:</span>
-                  <span className="ml-1 font-medium">{getConditionTypeLabel(nodeData.conditionType)}</span>
+                  <span className="ml-1 font-medium">
+                    {getConditionTypeLabel(nodeData.conditionType)}
+                  </span>
                 </div>
-                
-                {Object.entries(nodeData.conditionConfig).map(([key, value]) => (
-                  value && (
-                    <div key={key} className="text-xs">
-                      <span className="text-gray-600">{key}:</span>
-                      <span className="ml-1 font-mono text-gray-800">{value}</span>
-                    </div>
-                  )
-                ))}
+
+                {Object.entries(nodeData.conditionConfig).map(
+                  ([key, value]) =>
+                    value && (
+                      <div key={key} className="text-xs">
+                        <span className="text-gray-600">{key}:</span>
+                        <span className="ml-1 font-mono text-gray-800">
+                          {value}
+                        </span>
+                      </div>
+                    )
+                )}
               </div>
             </div>
 
@@ -164,7 +187,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
                   On TRUE
                 </div>
                 <div className="text-xs font-mono text-gray-800">
-                  {nodeData.onConditionTrue || 'Next step'}
+                  {nodeData.onConditionTrue || "Next step"}
                 </div>
               </div>
               <div className="p-2 bg-white rounded border">
@@ -173,7 +196,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
                   On FALSE
                 </div>
                 <div className="text-xs font-mono text-gray-800">
-                  {nodeData.onConditionFalse || 'Skip or end'}
+                  {nodeData.onConditionFalse || "Skip or end"}
                 </div>
               </div>
             </div>

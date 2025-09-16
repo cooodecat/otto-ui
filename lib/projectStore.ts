@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 /**
  * 프로젝트 정보 인터페이스
@@ -51,7 +51,7 @@ interface ProjectStoreActions {
   /** 프로젝트 추가 */
   addProject: (project: Project) => void;
   /** 프로젝트 생성 */
-  createProject: (project: Omit<Project, 'updatedAt'>) => void;
+  createProject: (project: Omit<Project, "updatedAt">) => void;
   /** 프로젝트 업데이트 */
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   /** 프로젝트 삭제 */
@@ -90,48 +90,50 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       // TODO: 실제 API 호출로 대체
       // 현재는 mock 데이터 사용
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 가짜 로딩
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 가짜 로딩
 
       // NOTE: 데이터베이스에서도 동일한 규칙 적용 예정
       // 숫자가 클수록 최신 프로젝트 (proj_3이 가장 최신)
       const mockProjects: Project[] = [
         {
-          projectId: 'proj_1',
-          name: 'Otto Frontend',
-          githubOwner: 'dbswl030',
-          githubRepoName: 'otto-frontend',
-          createdAt: '2024-01-15',
-          updatedAt: '2024-01-20'
+          projectId: "proj_1",
+          name: "Otto Frontend",
+          githubOwner: "dbswl030",
+          githubRepoName: "otto-frontend",
+          createdAt: "2024-01-15",
+          updatedAt: "2024-01-20",
         },
         {
-          projectId: 'proj_2',
-          name: 'Otto Backend',
-          githubOwner: 'dbswl030',
-          githubRepoName: 'otto-backend',
-          createdAt: '2024-01-20',
-          updatedAt: '2024-01-25'
+          projectId: "proj_2",
+          name: "Otto Backend",
+          githubOwner: "dbswl030",
+          githubRepoName: "otto-backend",
+          createdAt: "2024-01-20",
+          updatedAt: "2024-01-25",
         },
         {
-          projectId: 'proj_3',
-          name: 'Data Pipeline',
-          githubOwner: 'dbswl030',
-          githubRepoName: 'data-pipeline',
-          createdAt: '2024-01-25',
-          updatedAt: '2024-01-30'
-        }
+          projectId: "proj_3",
+          name: "Data Pipeline",
+          githubOwner: "dbswl030",
+          githubRepoName: "data-pipeline",
+          createdAt: "2024-01-25",
+          updatedAt: "2024-01-30",
+        },
       ];
 
       set((state) => ({
         projects: mockProjects,
         isLoading: false,
         // 기존 선택된 프로젝트가 있으면 유지, 없으면 첫 번째 선택
-        selectedProjectId: state.selectedProjectId ||
-          (mockProjects.length > 0 ? mockProjects[0].projectId : null)
+        selectedProjectId:
+          state.selectedProjectId ||
+          (mockProjects.length > 0 ? mockProjects[0].projectId : null),
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to fetch projects',
-        isLoading: false
+        error:
+          error instanceof Error ? error.message : "Failed to fetch projects",
+        isLoading: false,
       });
     }
   },
@@ -142,7 +144,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   getSelectedProject: () => {
     const { projects, selectedProjectId } = get();
-    return projects.find(project => project.projectId === selectedProjectId) || null;
+    return (
+      projects.find((project) => project.projectId === selectedProjectId) ||
+      null
+    );
   },
 
   getLatestProject: () => {
@@ -152,27 +157,27 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     // NOTE: 데이터베이스에서도 동일한 로직 적용 예정
     // 숫자가 클수록 최신 프로젝트 (proj_3 > proj_2 > proj_1)
     return projects.sort((a, b) => {
-      const numA = parseInt(a.projectId.replace('proj_', ''));
-      const numB = parseInt(b.projectId.replace('proj_', ''));
+      const numA = parseInt(a.projectId.replace("proj_", ""));
+      const numB = parseInt(b.projectId.replace("proj_", ""));
       return numB - numA; // 내림차순 정렬
     })[0];
   },
 
   addProject: (project: Project) => {
-    set(state => ({
-      projects: [...state.projects, project]
+    set((state) => ({
+      projects: [...state.projects, project],
     }));
   },
 
-  createProject: (project: Omit<Project, 'updatedAt'>) => {
+  createProject: (project: Omit<Project, "updatedAt">) => {
     const newProject: Project = {
       ...project,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
-    set(state => ({
+    set((state) => ({
       projects: [...state.projects, newProject],
-      selectedProjectId: newProject.projectId // 생성된 프로젝트를 자동 선택
+      selectedProjectId: newProject.projectId, // 생성된 프로젝트를 자동 선택
     }));
 
     // TODO: 실제 API 호출 추가
@@ -180,22 +185,25 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   updateProject: (projectId: string, updates: Partial<Project>) => {
-    set(state => ({
-      projects: state.projects.map(project =>
-        project.projectId === projectId
-          ? { ...project, ...updates }
-          : project
-      )
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.projectId === projectId ? { ...project, ...updates } : project
+      ),
     }));
   },
 
   removeProject: (projectId: string) => {
-    set(state => {
-      const newProjects = state.projects.filter(project => project.projectId !== projectId);
+    set((state) => {
+      const newProjects = state.projects.filter(
+        (project) => project.projectId !== projectId
+      );
       return {
         projects: newProjects,
         // 삭제된 프로젝트가 선택되어 있었다면 선택 해제
-        selectedProjectId: state.selectedProjectId === projectId ? null : state.selectedProjectId
+        selectedProjectId:
+          state.selectedProjectId === projectId
+            ? null
+            : state.selectedProjectId,
       };
     });
   },
@@ -206,5 +214,5 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   setLoading: (loading: boolean) => {
     set({ isLoading: loading });
-  }
+  },
 }));

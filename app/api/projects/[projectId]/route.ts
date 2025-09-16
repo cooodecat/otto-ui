@@ -23,19 +23,18 @@ export async function GET(request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 프로젝트 상세 정보 조회
     const { data: project, error: projectError } = await supabase
       .from("projects")
-      .select(`
+      .select(
+        `
         *,
         pipelines:pipelines(count)
-      `)
+      `
+      )
       .eq("project_id", projectId)
       .eq("user_id", user.id)
       .single();
@@ -57,13 +56,15 @@ export async function GET(request: Request, { params }: RouteParams) {
     // 최근 빌드 이력 조회 (있다면)
     const { data: recentBuilds } = await supabase
       .from("build_histories")
-      .select(`
+      .select(
+        `
         aws_build_id,
         build_execution_status,
         start_time,
         end_time,
         duration_seconds
-      `)
+      `
+      )
       .eq("project_id", projectId)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
@@ -98,10 +99,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 요청 본문 파싱
@@ -135,8 +133,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
 
     // 프로젝트 업데이트
-    const { data: project, error: updateError } = await (supabase
-      .from("projects") as any)
+    const { data: project, error: updateError } = await (
+      supabase.from("projects") as any
+    )
       .update(updateData)
       .eq("project_id", projectId)
       .eq("user_id", user.id)
@@ -183,10 +182,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 프로젝트 삭제 (관련 파이프라인과 빌드 이력은 CASCADE로 자동 삭제)

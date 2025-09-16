@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { FilterState } from '@/types/logs';
+import { useState, useCallback, useEffect } from "react";
+import { FilterState } from "@/types/logs";
 
 interface UseFiltersOptions {
   // 초기 필터 값
@@ -23,20 +23,22 @@ interface UseFiltersResult {
 }
 
 const DEFAULT_FILTERS: FilterState = {
-  timeline: 'all-time',
-  status: 'any-status',
-  trigger: 'all-triggers',
-  branch: 'all-branches',
-  author: 'all-authors'
+  timeline: "all-time",
+  status: "any-status",
+  trigger: "all-triggers",
+  branch: "all-branches",
+  author: "all-authors",
 };
 
-export const useFilters = (options: UseFiltersOptions = {}): UseFiltersResult => {
+export const useFilters = (
+  options: UseFiltersOptions = {}
+): UseFiltersResult => {
   const {
     initialFilters = {},
     syncWithURL = false,
     updateURL,
     parseURLParams,
-    pathname = ''
+    pathname = "",
   } = options;
 
   // 초기 필터 상태 설정
@@ -52,43 +54,49 @@ export const useFilters = (options: UseFiltersOptions = {}): UseFiltersResult =>
   useEffect(() => {
     if (syncWithURL && parseURLParams) {
       const urlFilters = parseURLParams();
-      setFiltersState(prev => ({ ...prev, ...urlFilters }));
+      setFiltersState((prev) => ({ ...prev, ...urlFilters }));
     }
   }, [syncWithURL, parseURLParams]);
 
   // 단일 필터 업데이트
-  const setFilter = useCallback((key: keyof FilterState, value: string) => {
-    setFiltersState(prev => {
-      const newFilters = { ...prev, [key]: value };
-      
-      // URL 업데이트
-      if (syncWithURL && updateURL && pathname) {
-        updateURL(newFilters, pathname);
-      }
-      
-      return newFilters;
-    });
-  }, [syncWithURL, updateURL, pathname]);
+  const setFilter = useCallback(
+    (key: keyof FilterState, value: string) => {
+      setFiltersState((prev) => {
+        const newFilters = { ...prev, [key]: value };
+
+        // URL 업데이트
+        if (syncWithURL && updateURL && pathname) {
+          updateURL(newFilters, pathname);
+        }
+
+        return newFilters;
+      });
+    },
+    [syncWithURL, updateURL, pathname]
+  );
 
   // 다중 필터 업데이트
-  const setFilters = useCallback((newFilters: Partial<FilterState>) => {
-    setFiltersState(prev => {
-      const updatedFilters = { ...prev, ...newFilters };
-      
-      // URL 업데이트
-      if (syncWithURL && updateURL && pathname) {
-        updateURL(updatedFilters, pathname);
-      }
-      
-      return updatedFilters;
-    });
-  }, [syncWithURL, updateURL, pathname]);
+  const setFilters = useCallback(
+    (newFilters: Partial<FilterState>) => {
+      setFiltersState((prev) => {
+        const updatedFilters = { ...prev, ...newFilters };
+
+        // URL 업데이트
+        if (syncWithURL && updateURL && pathname) {
+          updateURL(updatedFilters, pathname);
+        }
+
+        return updatedFilters;
+      });
+    },
+    [syncWithURL, updateURL, pathname]
+  );
 
   // 필터 리셋
   const resetFilters = useCallback(() => {
     const resetFilters = { ...DEFAULT_FILTERS, ...initialFilters };
     setFiltersState(resetFilters);
-    
+
     // URL 업데이트 (기본값으로 리셋)
     if (syncWithURL && updateURL && pathname) {
       updateURL(resetFilters, pathname);
@@ -97,7 +105,9 @@ export const useFilters = (options: UseFiltersOptions = {}): UseFiltersResult =>
 
   // 기본 필터 상태인지 확인
   const isDefaultFilters = Object.keys(DEFAULT_FILTERS).every(
-    key => filters[key as keyof FilterState] === DEFAULT_FILTERS[key as keyof FilterState]
+    (key) =>
+      filters[key as keyof FilterState] ===
+      DEFAULT_FILTERS[key as keyof FilterState]
   );
 
   return {
@@ -105,6 +115,6 @@ export const useFilters = (options: UseFiltersOptions = {}): UseFiltersResult =>
     setFilter,
     setFilters,
     resetFilters,
-    isDefaultFilters
+    isDefaultFilters,
   };
 };

@@ -1,20 +1,20 @@
 /**
  * Base Node Component
- * 
+ *
  * 모든 플로우 노드의 기본 컴포넌트로, 다음과 같은 기능을 제공합니다:
- * 
+ *
  * 주요 기능:
  * - 표준화된 노드 UI 레이아웃 (헤더, 콘텐츠, 핸들)
  * - 삭제 기능
  * - 입력/출력 핸들 관리
  * - CI/CD 전용 success/failed 출력 핸들 지원
- * 
+ *
  * 핸들 시스템:
  * - 입력 핸들: 상단 중앙에 위치
  * - 기본 출력 핸들: 하단 중앙에 위치
  * - 다중 출력 핸들: Condition 노드 등을 위한 커스텀 위치
  * - CICD 출력 핸들: success(초록)/failed(빨간) 2개 핸들
- * 
+ *
  * 사용 방법:
  * ```tsx
  * <BaseNode
@@ -98,8 +98,8 @@ export interface BaseNodeProps<T extends BaseNodeData = BaseNodeData> {
    * CI/CD outputs 세부 제어 옵션
    */
   cicdOutputConfig?: {
-    canOnSuccess?: boolean;  // success-output handle 생성 여부 (기본값: true)
-    canOnFailed?: boolean;   // failed-output handle 생성 여부 (기본값: true)
+    canOnSuccess?: boolean; // success-output handle 생성 여부 (기본값: true)
+    canOnFailed?: boolean; // failed-output handle 생성 여부 (기본값: true)
   };
 }
 
@@ -128,42 +128,44 @@ function BaseNode<T extends BaseNodeData = BaseNodeData>({
   };
 
   // CI/CD 노드의 성공/실패 출력 핸들 (config에 따라 제어)
-  const cicdOutputHandles = useCICDOutputs ? (() => {
-    const handles = [];
-    const { canOnSuccess = true, canOnFailed = true } = cicdOutputConfig;
-    
-    if (canOnSuccess) {
-      handles.push({
-        id: "success-output",
-        position: Position.Bottom,
-        style: { 
-          left: canOnFailed ? "30%" : "50%", // failed가 없으면 중앙에 위치
-          backgroundColor: "#10b981", // 초록색
-          width: "12px", 
-          height: "12px",
-          borderRadius: "50%",
-          bottom: "-6px"
+  const cicdOutputHandles = useCICDOutputs
+    ? (() => {
+        const handles = [];
+        const { canOnSuccess = true, canOnFailed = true } = cicdOutputConfig;
+
+        if (canOnSuccess) {
+          handles.push({
+            id: "success-output",
+            position: Position.Bottom,
+            style: {
+              left: canOnFailed ? "30%" : "50%", // failed가 없으면 중앙에 위치
+              backgroundColor: "#10b981", // 초록색
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              bottom: "-6px",
+            },
+          });
         }
-      });
-    }
-    
-    if (canOnFailed) {
-      handles.push({
-        id: "failed-output", 
-        position: Position.Bottom,
-        style: { 
-          left: canOnSuccess ? "70%" : "50%", // success가 없으면 중앙에 위치
-          backgroundColor: "#ef4444", // 빨간색
-          width: "12px",
-          height: "12px", 
-          borderRadius: "50%",
-          bottom: "-6px"
+
+        if (canOnFailed) {
+          handles.push({
+            id: "failed-output",
+            position: Position.Bottom,
+            style: {
+              left: canOnSuccess ? "70%" : "50%", // success가 없으면 중앙에 위치
+              backgroundColor: "#ef4444", // 빨간색
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              bottom: "-6px",
+            },
+          });
         }
-      });
-    }
-    
-    return handles;
-  })() : [];
+
+        return handles;
+      })()
+    : [];
 
   return (
     <div
@@ -194,11 +196,7 @@ function BaseNode<T extends BaseNodeData = BaseNodeData>({
       </div>
 
       {/* Content */}
-      {children && (
-        <div className="p-4">
-          {children}
-        </div>
-      )}
+      {children && <div className="p-4">{children}</div>}
 
       {/* Input Handle */}
       {showInput && (
