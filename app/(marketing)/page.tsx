@@ -3,6 +3,7 @@
 import { Cpu, Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import CICDFlowVisualization from "@/components/landing/CICDFlowVisualization";
 
 export default function Home() {
   return (
@@ -52,8 +53,13 @@ export default function Home() {
             </p>
           </AnimatedSection>
 
-          {/* CTA Button */}
+          {/* CI/CD Flow Visualization */}
           <AnimatedSection delay={150}>
+            <CICDFlowVisualization />
+          </AnimatedSection>
+
+          {/* CTA Button */}
+          <AnimatedSection delay={200}>
             <div className="relative inline-block group">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse" />
               <Link
@@ -114,7 +120,7 @@ export default function Home() {
       {/* Simple Footer */}
       <AnimatedSection delay={400} direction="up" className="relative z-10">
         <footer className="py-6 text-center text-gray-600 text-sm">
-          <p>&copy; 2024 Otto. All rights reserved.</p>
+          <p>&copy; 2025 Otto. All rights reserved.</p>
         </footer>
       </AnimatedSection>
     </div>
