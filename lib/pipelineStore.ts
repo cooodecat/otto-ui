@@ -52,6 +52,10 @@ interface PipelineStoreActions {
   getPipelinesByProject: (projectId: string) => Pipeline[];
   /** 선택된 파이프라인 정보 가져오기 */
   getSelectedPipeline: () => Pipeline | null;
+  /** 프로젝트별 최신 파이프라인 가져오기 (숫자가 클수록 최신) */
+  getLatestPipelineByProject: (projectId: string) => Pipeline | null;
+  /** 전체에서 가장 최신 파이프라인 가져오기 (숫자가 클수록 최신) */
+  getLatestPipeline: () => Pipeline | null;
   /** 파이프라인 추가 */
   addPipeline: (pipeline: Pipeline) => void;
   /** 파이프라인 업데이트 */
@@ -88,6 +92,15 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
 
   // 액션들
   fetchPipelines: async (projectId: string) => {
+    const { pipelines } = get();
+
+    // 이미 해당 프로젝트의 파이프라인이 로드되어 있는지 확인
+    const existingPipelines = pipelines.filter(p => p.projectId === projectId);
+    if (existingPipelines.length > 0) {
+      // 이미 로드된 경우 중복 호출 방지
+      return;
+    }
+
     set({ isLoading: true, error: null });
 
     try {
@@ -95,7 +108,10 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
       // 현재는 mock 데이터 사용
       await new Promise(resolve => setTimeout(resolve, 800)); // 가짜 로딩
 
+      // NOTE: 데이터베이스에서도 동일한 규칙 적용 예정
+      // 파이프라인 ID는 프로젝트별로 1부터 시작 (proj_1: pipe_1,pipe_2 / proj_2: pipe_1 / proj_3: pipe_1,pipe_2)
       const mockPipelines: Pipeline[] = [
+        // proj_1의 파이프라인들
         {
           pipelineId: 'pipe_1',
           name: 'CI/CD Pipeline',
@@ -114,25 +130,36 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
           status: 'active',
           createdAt: '2024-01-16',
           updatedAt: '2024-01-21',
-          lastRunAt: '2024-01-22'
+          lastRunAt: '2024-01-23'
         },
+        // proj_2의 파이프라인
         {
-          pipelineId: 'pipe_3',
+          pipelineId: 'pipe_1',
           name: 'Testing Pipeline',
           projectId: 'proj_2',
           description: 'Automated testing workflow',
-          status: 'inactive',
-          createdAt: '2024-01-10',
-          updatedAt: '2024-01-18'
+          status: 'active',
+          createdAt: '2024-01-20',
+          updatedAt: '2024-01-25'
+        },
+        // proj_3의 파이프라인들 (가장 최신 프로젝트)
+        {
+          pipelineId: 'pipe_1',
+          name: 'Staging Pipeline',
+          projectId: 'proj_3',
+          description: 'Staging environment deployment',
+          status: 'active',
+          createdAt: '2024-01-25',
+          updatedAt: '2024-01-28'
         },
         {
-          pipelineId: 'pipe_4',
-          name: 'Deployment Pipeline',
+          pipelineId: 'pipe_2',
+          name: 'Production Pipeline',
           projectId: 'proj_3',
           description: 'Production deployment automation',
-          status: 'draft',
-          createdAt: '2024-01-05',
-          updatedAt: '2024-01-15'
+          status: 'active',
+          createdAt: '2024-01-26',
+          updatedAt: '2024-01-30'
         }
       ];
 
@@ -157,7 +184,13 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
   },
 
   setCurrentProject: (projectId: string) => {
-    const { fetchPipelines } = get();
+    const { fetchPipelines, currentProjectId } = get();
+
+    // 이미 동일한 프로젝트가 선택되어 있으면 중복 호출 방지
+    if (currentProjectId === projectId) {
+      return;
+    }
+
     set({ currentProjectId: projectId });
     fetchPipelines(projectId);
   },
@@ -169,6 +202,34 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
   getPipelinesByProject: (projectId: string) => {
     const { pipelines } = get();
     return pipelines.filter(pipeline => pipeline.projectId === projectId);
+  },
+
+  getLatestPipelineByProject: (projectId: string) => {
+    const { pipelines } = get();
+    const projectPipelines = pipelines.filter(pipeline => pipeline.projectId === projectId);
+
+    if (projectPipelines.length === 0) return null;
+
+    // NOTE: 데이터베이스에서도 동일한 로직 적용 예정
+    // 숫자가 클수록 최신 파이프라인 (pipe_4 > pipe_3 > pipe_2 > pipe_1)
+    return projectPipelines.sort((a, b) => {
+      const numA = parseInt(a.pipelineId.replace('pipe_', ''));
+      const numB = parseInt(b.pipelineId.replace('pipe_', ''));
+      return numB - numA; // 내림차순 정렬
+    })[0];
+  },
+
+  getLatestPipeline: () => {
+    const { pipelines } = get();
+    if (pipelines.length === 0) return null;
+
+    // NOTE: 데이터베이스에서도 동일한 로직 적용 예정
+    // 전체 파이프라인 중 숫자가 가장 큰 것 (pipe_4 > pipe_3 > pipe_2 > pipe_1)
+    return pipelines.sort((a, b) => {
+      const numA = parseInt(a.pipelineId.replace('pipe_', ''));
+      const numB = parseInt(b.pipelineId.replace('pipe_', ''));
+      return numB - numA; // 내림차순 정렬
+    })[0];
   },
 
   getSelectedPipeline: () => {

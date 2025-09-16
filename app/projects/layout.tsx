@@ -4,7 +4,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import GlobalSidebar from "@/components/layout/GlobalSidebar";
 
-interface DashboardLayoutProps {
+interface ProjectsLayoutProps {
   children: React.ReactNode;
 }
 
@@ -14,7 +14,7 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
   return pipelineDetailPattern.test(pathname);
 };
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function ProjectsLayout({ children }: ProjectsLayoutProps) {
   const pathname = usePathname();
   const isCanvasLayout = isCanvasLayoutPath(pathname);
 
