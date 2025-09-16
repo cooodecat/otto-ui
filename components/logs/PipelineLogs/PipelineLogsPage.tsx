@@ -1,15 +1,32 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { PipelineLogsPageProps, LogItem, FilterState } from '@/types/logs';
+import { PipelineLogsPageProps, LogItem } from '@/types/logs';
 import { useDebounce } from '@/hooks/logs/useDebounce';
 import { useLogData } from '@/hooks/logs/useLogData';
 import { useSSELogStream } from '@/hooks/logs/useSSELogStream';
 import { getMockData } from '@/lib/logs';
 import { usePipelineLogs } from '@/hooks/logs/usePipelineLogs';
-import PipelineLogsHeader from './components/PipelineLogsHeader';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PipelineLogsTable from './components/PipelineLogsTable';
+import PipelineLogsCards from './components/PipelineLogsCards';
+import PipelineLogsTimeline from './components/PipelineLogsTimeline';
+import { useToast } from '@/hooks/useToast';
+import ConnectionStatus from './components/ConnectionStatus';
+import LogFilters, { LogFilterState } from './components/LogFilters';
+import ViewToggle, { ViewMode } from './components/ViewToggle';
+import LogAnalyticsDashboard from './components/LogAnalyticsDashboard';
+import PreferencesModal from './components/PreferencesModal';
+import { cn } from '@/lib/utils';
+import { useUserPreferences } from '@/hooks/logs/useUserPreferences';
+import { useKeyboardShortcuts } from '@/hooks/logs/useKeyboardShortcuts';
+import { Settings } from 'lucide-react';
+
+// Common button styles
+const buttonStyles = {
+  iconButton: 'p-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors',
+  toggleButton: 'px-4 py-2 rounded-lg border font-medium transition-colors cursor-pointer'
+};
 
 /**
  * Pipeline Logs Page Component
@@ -29,6 +46,8 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   userId
 }) => {
   const { user } = useAuth();
+  const { showSuccess, showError, showInfo } = useToast();
+  const { preferences } = useUserPreferences(user?.id);
   const scopedUserId = user?.id || 'anon';
   const scopedProjectId = _projectId || 'default';
 
@@ -39,7 +58,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   const {
     logs,
     isLoading,
-    error: pipelineError,
+    error: _pipelineError,
     hasMore,
     totalCount,
     loadMore,
@@ -57,7 +76,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   const {
     logData: _logData,
     loading: _apiLoading,
-    error: apiError,
+    error: _apiError,
     refetch: _refetch,
     isCollecting,
     startCollection,
@@ -72,16 +91,22 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   const [displayedLogs, setDisplayedLogs] = useState<LogItem[]>(logs);
   const [isLive, setIsLive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [_filters] = useState<FilterState>({
-    timeline: 'all-time',
-    status: 'any-status',
-    trigger: 'all-triggers',
-    branch: 'all-branches',
-    author: 'all-authors'
+  const [viewMode, setViewMode] = useState<ViewMode>(preferences.defaultView);
+  const [_logFilters, setLogFilters] = useState<LogFilterState>({
+    levels: new Set(
+      Object.entries(preferences.defaultFilters)
+        .filter(([_, enabled]) => enabled)
+        .map(([key]) => key.replace('show', '').toUpperCase())
+    ),
+    statuses: new Set(['success', 'failed', 'running', 'pending']),
+    timeRange: 'all',
+    regex: false
   });
   const [newLogIds, setNewLogIds] = useState<Set<string>>(new Set()); // 새로운 로그 ID 관리
   const [unreadCount, setUnreadCount] = useState(0);
   const [initializedFromCursor, setInitializedFromCursor] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(preferences.showAnalytics);
+  const [showPreferences, setShowPreferences] = useState(false);
 
   // SSE Real-time Log Streaming
   const {
@@ -107,6 +132,16 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
             return newSet;
           });
           setUnreadCount(prev => prev + uniqueNewLogs.length);
+
+          // Toast 알림 표시 (preference에 따라)
+          const firstLog = uniqueNewLogs[0];
+          if (firstLog.status === 'failed' && preferences.showFailureToasts) {
+            showError(`Pipeline Failed: ${firstLog.pipelineName}`, `Build #${firstLog.id} failed`);
+          } else if (firstLog.status === 'success' && preferences.showSuccessToasts) {
+            showSuccess(`Pipeline Succeeded: ${firstLog.pipelineName}`, `Build #${firstLog.id} completed`);
+          } else if (preferences.showInfoToasts) {
+            showInfo(`New logs received`, `${uniqueNewLogs.length} new log entries`);
+          }
 
           return [...uniqueNewLogs, ...prev];
         }
@@ -297,50 +332,157 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     }
   }, [newLogIds]);
 
-  // 필터 변경 처리 (향후 FilterPanel과 연동 시 사용)
-  // const handleFiltersChange = useCallback((newFilters: FilterState) => {
-  //   setFilters(newFilters);
-  // }, []);
+  // Enhanced keyboard shortcuts
+  useKeyboardShortcuts({
+    isOpen: false, // Global shortcuts, not modal
+    viewMode: undefined,
+    onClose: () => {},
+    onFocusSearch: () => {
+      const searchInput = document.querySelector('input[type="text"][placeholder*="Search"]') as HTMLInputElement;
+      searchInput?.focus();
+    },
+    customShortcuts: preferences.keyboardShortcutsEnabled ? [
+      {
+        key: 'l',
+        action: () => handleLiveToggle(!isLive),
+        description: 'Toggle live mode'
+      },
+      {
+        key: 'r',
+        action: handleRefresh,
+        description: 'Refresh logs'
+      },
+      {
+        key: 'v',
+        action: () => {
+          const modes: ViewMode[] = ['cards', 'table', 'timeline'];
+          const currentIndex = modes.indexOf(viewMode);
+          const nextIndex = (currentIndex + 1) % modes.length;
+          setViewMode(modes[nextIndex]);
+        },
+        description: 'Cycle view mode'
+      },
+      {
+        key: 'a',
+        action: () => setShowAnalytics(!showAnalytics),
+        description: 'Toggle analytics'
+      },
+      {
+        key: ',',
+        ctrlKey: true,
+        action: () => setShowPreferences(true),
+        description: 'Open preferences'
+      },
+      {
+        key: ',',
+        metaKey: true,
+        action: () => setShowPreferences(true),
+        description: 'Open preferences (Mac)'
+      }
+    ] : []
+  });
 
   return (
     <div className='space-y-6'>
-      {/* API 에러 표시 */}
-      {(pipelineError || apiError) && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="text-red-600 text-sm">
-              <strong>API Error:</strong> {pipelineError || apiError}
-            </div>
-          </div>
-        </div>
+      {/* Connection Status Component */}
+      {useRealApi && (
+        <ConnectionStatus
+          isConnected={sseConnected}
+          isConnecting={connectionState.isConnecting}
+          error={connectionState.error || (sseHasError ? 'SSE connection issue' : undefined)}
+          reconnectCount={connectionState.reconnectCount}
+          lastMessageTime={connectionState.lastMessageTime}
+          onReconnect={connectSSE}
+        />
       )}
 
-      {/* SSE 연결 상태 표시 (실제 API 사용 시에만) */}
-      {useRealApi && (sseHasError || connectionState.error) && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="text-yellow-800 text-sm">
-              <strong>Connection Status:</strong> {connectionState.error || 'SSE connection issue'}
-              {connectionState.reconnectCount > 0 && (
-                <span className="ml-2">
-                  (Reconnect attempts: {connectionState.reconnectCount})
+      {/* Unified Header with Controls */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex flex-col gap-4">
+          {/* Top Row: Title, Live Mode, Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold text-gray-900">Build Logs</h2>
+              {unreadCount > 0 && (
+                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                  {unreadCount} 새 로그
                 </span>
               )}
             </div>
+            <div className="flex items-center gap-3">
+              {/* Live Mode Toggle */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">실시간</span>
+                <button
+                  onClick={() => handleLiveToggle(!isLive)}
+                  className={cn(
+                    "relative w-11 h-6 rounded-full transition-colors cursor-pointer",
+                    isLive ? "bg-green-500" : "bg-gray-300"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-1 w-4 h-4 bg-white rounded-full transition-transform",
+                      isLive ? "translate-x-6" : "translate-x-1"
+                    )}
+                  />
+                </button>
+              </div>
+              
+              {/* Refresh Button */}
+              <button
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className={cn(buttonStyles.iconButton, isLoading && "opacity-50 cursor-not-allowed")}
+                title="로그 새로고침"
+              >
+                <svg className={cn("w-5 h-5", isLoading && "animate-spin")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+              
+              {/* Analytics Toggle */}
+              <button
+                onClick={() => setShowAnalytics(!showAnalytics)}
+                className={cn(
+                  buttonStyles.toggleButton,
+                  showAnalytics 
+                    ? "bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100" 
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                )}
+              >
+                {showAnalytics ? '분석 숨기기' : '분석 보기'}
+              </button>
+              
+              {/* View Mode Toggle */}
+              <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+              
+              {/* Preferences */}
+              <button
+                onClick={() => setShowPreferences(true)}
+                className={buttonStyles.iconButton}
+                title="환경설정"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
           </div>
+          
+          {/* Bottom Row: Search and Filters */}
+          <LogFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onFilterChange={setLogFilters}
+            totalLogs={totalCount || logs.length}
+            filteredLogs={displayedLogs.length}
+          />
         </div>
-      )}
+      </div>
 
-      {/* 헤더 */}
-      <PipelineLogsHeader
-        isLive={isLive}
-        onLiveToggle={handleLiveToggle}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        unreadCount={unreadCount}
-        onRefresh={handleRefresh}
-        isRefreshing={isLoading}
-      />
+      {/* Analytics Dashboard */}
+      {showAnalytics && displayedLogs.length > 0 && (
+        <LogAnalyticsDashboard logs={displayedLogs} />
+      )}
 
       {/* API 로딩 상태 */}
       {isLoading && !logs.length && (
@@ -348,22 +490,44 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-gray-600">
-              {useRealApi ? 'Loading logs from Supabase...' : 'Loading mock data...'}
+              {useRealApi ? 'Supabase에서 로그를 불러오는 중...' : '모의 데이터를 불러오는 중...'}
             </span>
           </div>
         </div>
       )}
 
-      {/* 로그 테이블 */}
-      <PipelineLogsTable
-        logs={displayedLogs}
-        newLogIds={newLogIds}
-        onLoadMore={loadMoreLogs}
-        hasMore={hasMore}
-        isLoading={isLoading}
-        searchQuery={searchQuery}
-        onMarkAsRead={handleMarkAsRead}
-      />
+      {/* 로그 뷰 (카드, 테이블 또는 타임라인) */}
+      {viewMode === 'cards' ? (
+        <PipelineLogsCards
+          logs={displayedLogs}
+          newLogIds={newLogIds}
+          onLoadMore={loadMoreLogs}
+          hasMore={hasMore}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          onMarkAsRead={handleMarkAsRead}
+        />
+      ) : viewMode === 'timeline' ? (
+        <PipelineLogsTimeline
+          logs={displayedLogs}
+          newLogIds={newLogIds}
+          onLoadMore={loadMoreLogs}
+          hasMore={hasMore}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          onMarkAsRead={handleMarkAsRead}
+        />
+      ) : (
+        <PipelineLogsTable
+          logs={displayedLogs}
+          newLogIds={newLogIds}
+          onLoadMore={loadMoreLogs}
+          hasMore={hasMore}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          onMarkAsRead={handleMarkAsRead}
+        />
+      )}
 
       {/* 개발 모드 디버그 정보 */}
       {process.env.NODE_ENV === 'development' && useRealApi && (
@@ -379,6 +543,13 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
           )}
         </div>
       )}
+
+      {/* Preferences Modal */}
+      <PreferencesModal
+        isOpen={showPreferences}
+        onClose={() => setShowPreferences(false)}
+        userId={user?.id}
+      />
     </div>
   );
 };

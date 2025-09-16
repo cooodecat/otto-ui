@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Maximize2, Minimize2, ExternalLink, Copy, Download, Play, Square, ArrowDownToLine, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { LogDetailsPanelProps, ViewMode } from '@/types/logs';
@@ -112,7 +112,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
                   <span className="text-sm text-gray-500">ID: {buildId}</span>
                   <button
                     onClick={copyBuildId}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="p-1 hover:bg-gray-100 rounded cursor-pointer"
                     title="Copy Build ID"
                   >
                     <Copy className="w-3 h-3 text-gray-400" />
@@ -124,7 +124,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleViewMode}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 title={viewMode === 'summary' ? 'Expand view' : 'Collapse view'}
               >
                 {viewMode === 'summary' ? (
@@ -136,7 +136,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
 
               <button
                 onClick={() => (isLive ? stop() : start())}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 title={isLive ? 'Stop live' : 'Start live'}
               >
                 {isLive ? (
@@ -148,7 +148,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
 
               <button
                 onClick={() => setAutoScroll(!autoScroll)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 title={autoScroll ? 'Autoscroll on' : 'Autoscroll off'}
               >
                 <ArrowDownToLine className={`w-4 h-4 ${autoScroll ? 'text-blue-600' : 'text-gray-600'}`} />
@@ -156,7 +156,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
               
               <button
                 onClick={handleOpenInNewWindow}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 title="Open in new window"
               >
                 <ExternalLink className="w-4 h-4 text-gray-600" />
@@ -164,14 +164,14 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
               
               <button
                 onClick={downloadLogs}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 title="Download logs"
               >
                 <Download className="w-4 h-4 text-gray-600" />
               </button>
               
               <Dialog.Close asChild>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
                   <X className="w-4 h-4 text-gray-600" />
                 </button>
               </Dialog.Close>
@@ -193,7 +193,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
                   <div className="text-red-600 mb-2">{error}</div>
                   <button
                     onClick={reconnect}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
                   >
                     Retry
                   </button>

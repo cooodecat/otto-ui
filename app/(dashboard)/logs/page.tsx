@@ -11,20 +11,12 @@ export default function LogsPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="container mx-auto px-6 py-8">
-        {/* 페이지 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Pipeline Logs</h1>
-          <p className="text-gray-600 mt-2">
-            View and monitor your pipeline build histories and logs
-          </p>
-        </div>
-
         {/* 로그 컨텐츠 */}
         <Suspense fallback={
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center gap-3">
               <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <span className="text-gray-600">Loading pipeline logs...</span>
+              <span className="text-gray-600">파이프라인 로그를 불러오는 중...</span>
             </div>
           </div>
         }>

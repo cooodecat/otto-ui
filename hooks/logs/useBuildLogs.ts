@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { logsApi, LogsApiError } from '@/lib/api/logs-api';
 import type { NormalizedLog, RawLogEvent, SSEPayload, BuildExecStatus } from '@/types/logs';
 
@@ -59,7 +59,7 @@ export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {})
       try {
         const status = await logsApi.getBuildStatus(buildId);
         if (status?.status) setBuildStatus(status.status);
-      } catch (e) {
+      } catch {
         // ignore polling error
       }
     }, idleCheckSeconds * 1000);
@@ -102,7 +102,7 @@ export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {})
     try {
       const cache = await logsApi.getBuildCachedLogs(buildId);
       mergePayload(cache);
-    } catch (e) {
+    } catch {
       const msg = e instanceof LogsApiError ? e.message : 'Failed to load cached logs';
       setError(msg);
     }
@@ -114,7 +114,7 @@ export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {})
       const cutoff = lastTsRef.current || 0;
       const filtered: RawLogEvent[] = (recent.events || []).filter(e => e.timestamp > cutoff);
       mergePayload({ events: filtered, normalized: recent.normalized });
-    } catch (e) {
+    } catch {
       // ignore backfill error
     }
   }, [buildId, mergePayload]);
@@ -171,7 +171,7 @@ export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {})
       // initial cache fetch if empty
       if (logs.length === 0) await refetchCache();
       connect();
-    } catch (e) {
+    } catch {
       const msg = e instanceof LogsApiError ? e.message : 'Failed to start collection';
       setError(msg);
       setIsLive(false);
@@ -182,7 +182,7 @@ export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {})
     try {
       setError(null);
       await logsApi.stopLogCollection(buildId);
-    } catch (e) {
+    } catch {
       // ignore stop error
     } finally {
       setIsLive(false);

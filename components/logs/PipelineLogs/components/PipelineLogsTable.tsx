@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Check, Circle, GitBranch, User, Clock, Hash } from 'lucide-react';
 import { PipelineLogsTableProps } from '@/types/logs';
 import { truncateMessage } from '@/lib/logs';
-import LogDetailsPanel from './LogDetailsPanel';
+import LogDetailsDualPanel from './LogDetailsDualPanel';
 
 /**
  * Pipeline Logs Table Component
@@ -251,10 +251,18 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
 
       {/* 로그 상세보기 모달 */}
       {selectedBuildId && (
-        <LogDetailsPanel
+        <LogDetailsDualPanel
           buildId={selectedBuildId}
           isOpen={isDetailsOpen}
           onClose={handleCloseDetails}
+          buildMetadata={logs.find(l => l.id === selectedBuildId) ? {
+            pipeline: logs.find(l => l.id === selectedBuildId)!.pipelineName,
+            branch: logs.find(l => l.id === selectedBuildId)!.branch,
+            commit: logs.find(l => l.id === selectedBuildId)!.commit.sha,
+            author: logs.find(l => l.id === selectedBuildId)!.commit.author,
+            duration: logs.find(l => l.id === selectedBuildId)!.duration,
+            status: logs.find(l => l.id === selectedBuildId)!.status
+          } : undefined}
         />
       )}
     </>
