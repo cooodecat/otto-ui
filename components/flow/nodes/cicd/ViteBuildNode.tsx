@@ -10,8 +10,8 @@ import {CICDBlockGroup} from "@/types/block-enum";
 const ViteBuildNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as BuildViteNodeData;
   const [mode, setMode] = useState(nodeData.mode || 'production');
-  const [basePath, setBasePath] = useState(nodeData.base_path || '');
-  const [outDir, setOutDir] = useState(nodeData.output_dir || '');
+  const [basePath, setBasePath] = useState(nodeData.basePath || '');
+  const [outDir, setOutDir] = useState(nodeData.outputDir || '');
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.BUILD];
 
   return (

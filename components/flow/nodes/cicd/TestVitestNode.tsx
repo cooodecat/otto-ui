@@ -12,12 +12,12 @@ const TestVitestNode = memo(({ data, id }: NodeProps) => {
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.TEST];
 
   const [env, setEnv] = useState<TestVitestNodeData["environment"]>(nodeData.environment || 'node');
-  const [watch, setWatch] = useState<boolean>(Boolean(nodeData.watch_mode));
+  const [watch, setWatch] = useState<boolean>(Boolean(nodeData.watchMode));
   const [coverage, setCoverage] = useState<boolean>(Boolean(nodeData.coverage));
 
   return (
     <BaseNode
-      data={{ ...nodeData, environment: env, watch_mode: watch, coverage }}
+      data={{ ...nodeData, environment: env, watchMode: watch, coverage }}
       id={id}
       colorClass={groupColors.colorClass}
       icon={<FlaskConical className="w-4 h-4 text-white" />}

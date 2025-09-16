@@ -7,12 +7,51 @@ import { BaseCICDNodeData } from "@/types/cicd-node.types";
 export default function DashboardClient() {
   const flowCanvasRef = useRef<CICDFlowCanvasRef | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [projectId] = useState(() => crypto.randomUUID()); // 임시 프로젝트 ID
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const handleRunPipeline = () => {
+  const handleSavePipeline = async () => {
+    console.log("💾 Save Pipeline button clicked!");
+    
+    if (!flowCanvasRef.current) {
+      console.warn("❌ Flow canvas not ready");
+      return;
+    }
+    
+    const { nodes, edges } = flowCanvasRef.current.getFlowData();
+    
+    const pipelineData = {
+      projectId,
+      name: `Pipeline ${new Date().toLocaleString()}`,
+      description: "Saved pipeline from dashboard",
+      flowData: { nodes, edges }
+    };
+    
+    try {
+      console.log("💾 Saving pipeline to server:", pipelineData);
+      
+      const response = await fetch('/api/pipelines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pipelineData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const savedPipeline = await response.json();
+      console.log("✅ Pipeline saved successfully:", savedPipeline);
+      
+    } catch (error) {
+      console.error("❌ Failed to save pipeline:", error);
+    }
+  };
+
+  const handleRunPipeline = async () => {
     console.log("🔥 Run Pipeline button clicked!");
     
     if (!flowCanvasRef.current) {
@@ -24,12 +63,15 @@ export default function DashboardClient() {
 
     const { nodes, edges } = flowCanvasRef.current.getFlowData();
     
+    // 먼저 서버에 저장
+    await handleSavePipeline();
+    
     // 디버깅: 노드와 엣지 정보 출력
     console.log("🔍 Raw nodes data:", nodes.map(n => ({ 
       id: n.id, 
       type: n.type, 
       label: n.data.label, 
-      block_id: n.data.block_id 
+      blockId: n.data.blockId 
     })));
     console.log("🔍 Raw edges data:", edges.map(e => ({ 
       source: e.source, 
@@ -74,25 +116,24 @@ export default function DashboardClient() {
       const getTargetBlockId = (targetNodeId: string | undefined) => {
         if (!targetNodeId) return null;
         const targetNode = nodes.find(n => n.id === targetNodeId);
-        return targetNode?.data?.block_id || targetNodeId;
+        return targetNode?.data?.blockId || targetNodeId;
       };
 
       // snake_case만 사용하여 구조 생성
       const result: any = {
         label: nodeData.label,
-        block_type: nodeData.block_type,
-        group_type: nodeData.group_type,
-        block_id: nodeData.block_id || node.id,
-        // success/failed 연결 설정 - 타겟 노드의 block_id 사용
-        on_success: getTargetBlockId(successEdge?.target),
-        on_failed: getTargetBlockId(failedEdge?.target),
+        blockType: nodeData.blockType,
+        groupType: nodeData.groupType,
+        blockId: nodeData.blockId || node.id,
+        // success/failed 연결 설정 - 타겟 노드의 blockId 사용
+        onSuccess: getTargetBlockId(successEdge?.target),
+        onFailed: getTargetBlockId(failedEdge?.target),
       };
 
-      // 다른 필드들을 snake_case로 변환
+      // 다른 필드들을 camelCase로 유지
       Object.keys(nodeData).forEach(key => {
-        if (!['label', 'block_type', 'group_type', 'block_id'].includes(key)) {
-          const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-          result[snakeKey] = nodeData[key as keyof BaseCICDNodeData];
+        if (!['label', 'blockType', 'groupType', 'blockId'].includes(key)) {
+          result[key] = nodeData[key as keyof BaseCICDNodeData];
         }
       });
 
@@ -125,7 +166,10 @@ export default function DashboardClient() {
           
           <div className="flex items-center gap-3">
             {/* 파이프라인 액션 버튼들 */}
-            <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button 
+              onClick={handleSavePipeline}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               Save Pipeline
             </button>
             <button 
@@ -141,7 +185,10 @@ export default function DashboardClient() {
       {/* CI/CD 플로우 캔버스 */}
       <div className="h-[calc(100vh-80px)]">
         {isClient ? (
-          <CICDFlowCanvas onRef={(ref) => { flowCanvasRef.current = ref; }} />
+          <CICDFlowCanvas 
+            projectId={projectId}
+            onRef={(ref) => { flowCanvasRef.current = ref; }} 
+          />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
             Loading flow canvas...

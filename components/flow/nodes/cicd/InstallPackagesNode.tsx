@@ -9,9 +9,9 @@ import {CICDBlockGroup} from "@/types/block-enum";
 
 const InstallPackagesNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as InstallNodePackageNodeData;
-  const [manager, setManager] = useState(nodeData.package_manager);
-  const [clean, setClean] = useState(Boolean(nodeData.clean_install));
-  const [prodOnly, setProdOnly] = useState(Boolean(nodeData.production_only));
+  const [manager, setManager] = useState(nodeData.packageManager);
+  const [clean, setClean] = useState(Boolean(nodeData.cleanInstall));
+  const [prodOnly, setProdOnly] = useState(Boolean(nodeData.productionOnly));
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.BUILD];
 
   return (
