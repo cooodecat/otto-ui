@@ -109,8 +109,6 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
 const GlobalSidebar = () => {
   const pathname = usePathname();
   const isCanvasLayout = isCanvasLayoutPath(pathname);
-  /** 글로벌 워크스페이스 검색용 쿼리 */
-  const [searchQuery, setSearchQuery] = useState<string>("");
 
   /** 팔레트에서 블록 필터링을 위한 검색 쿼리 */
   const [searchBlocks, setSearchBlocks] = useState<string>("");
