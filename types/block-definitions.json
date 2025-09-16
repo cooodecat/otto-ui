@@ -11,7 +11,7 @@
     "node_version": {
       "label": "Node Version",
       "icon": "🟢",
-      "group": "prebuild", 
+      "group": "prebuild",
       "description": "Set Node.js version",
       "required_fields": ["version"],
       "optional_fields": ["package_manager"]
@@ -30,7 +30,12 @@
       "group": "build",
       "description": "Install Node.js packages",
       "required_fields": ["package_manager"],
-      "optional_fields": ["install_packages", "install_dev_dependencies", "production_only", "clean_install"]
+      "optional_fields": [
+        "install_packages",
+        "install_dev_dependencies",
+        "production_only",
+        "clean_install"
+      ]
     },
     "build_webpack": {
       "label": "Webpack Build",
@@ -62,15 +67,28 @@
       "group": "test",
       "description": "Run tests using Jest",
       "required_fields": [],
-      "optional_fields": ["config_file", "test_pattern", "coverage", "watch_mode", "max_workers", "additional_options"]
+      "optional_fields": [
+        "config_file",
+        "test_pattern",
+        "coverage",
+        "watch_mode",
+        "max_workers",
+        "additional_options"
+      ]
     },
     "test_mocha": {
-      "label": "Mocha Tests", 
+      "label": "Mocha Tests",
       "icon": "☕",
       "group": "test",
       "description": "Run tests using Mocha",
       "required_fields": [],
-      "optional_fields": ["test_files", "config_file", "reporter", "timeout", "grep"]
+      "optional_fields": [
+        "test_files",
+        "config_file",
+        "reporter",
+        "timeout",
+        "grep"
+      ]
     },
     "test_vitest": {
       "label": "Vitest",
@@ -78,15 +96,27 @@
       "group": "test",
       "description": "Run tests using Vitest",
       "required_fields": [],
-      "optional_fields": ["config_file", "coverage", "ui", "watch_mode", "environment"]
+      "optional_fields": [
+        "config_file",
+        "coverage",
+        "ui",
+        "watch_mode",
+        "environment"
+      ]
     },
     "test_playwright": {
       "label": "Playwright",
       "icon": "🎭",
-      "group": "test", 
+      "group": "test",
       "description": "Run E2E tests using Playwright",
       "required_fields": [],
-      "optional_fields": ["config_file", "project", "headed", "debug", "browsers"]
+      "optional_fields": [
+        "config_file",
+        "project",
+        "headed",
+        "debug",
+        "browsers"
+      ]
     },
     "test_custom": {
       "label": "Custom Tests",
@@ -94,7 +124,12 @@
       "group": "test",
       "description": "Run custom test commands",
       "required_fields": ["package_manager"],
-      "optional_fields": ["script_name", "custom_commands", "generate_reports", "coverage_threshold"]
+      "optional_fields": [
+        "script_name",
+        "custom_commands",
+        "generate_reports",
+        "coverage_threshold"
+      ]
     },
     "notification_slack": {
       "label": "Slack Notify",
@@ -109,7 +144,12 @@
       "icon": "📧",
       "group": "notification",
       "description": "Send email notifications",
-      "required_fields": ["smtp_config", "recipients", "subject_template", "body_template"],
+      "required_fields": [
+        "smtp_config",
+        "recipients",
+        "subject_template",
+        "body_template"
+      ],
       "optional_fields": []
     },
     "condition_branch": {
@@ -117,12 +157,17 @@
       "icon": "🔀",
       "group": "utility",
       "description": "Conditional execution branching",
-      "required_fields": ["condition_type", "condition_config", "on_condition_true", "on_condition_false"],
+      "required_fields": [
+        "condition_type",
+        "condition_config",
+        "on_condition_true",
+        "on_condition_false"
+      ],
       "optional_fields": []
     },
     "parallel_execution": {
       "label": "Parallel",
-      "icon": "⚡", 
+      "icon": "⚡",
       "group": "utility",
       "description": "Execute multiple branches in parallel",
       "required_fields": ["parallel_branches", "on_all_success"],
@@ -131,10 +176,15 @@
     "custom_command": {
       "label": "Custom Command",
       "icon": "💻",
-      "group": "utility", 
+      "group": "utility",
       "description": "Execute custom shell commands",
       "required_fields": ["commands"],
-      "optional_fields": ["working_directory", "shell", "environment_variables", "ignore_errors"]
+      "optional_fields": [
+        "working_directory",
+        "shell",
+        "environment_variables",
+        "ignore_errors"
+      ]
     }
   },
   "groups": {
@@ -146,7 +196,7 @@
     },
     "build": {
       "label": "Build",
-      "color": "#10b981", 
+      "color": "#10b981",
       "icon": "🔨",
       "description": "Code compilation and build processes"
     },
@@ -163,7 +213,7 @@
       "description": "Alerts and notifications"
     },
     "utility": {
-      "label": "Utility", 
+      "label": "Utility",
       "color": "#6b7280",
       "icon": "🔧",
       "description": "Flow control and utility functions"
@@ -175,7 +225,7 @@
       "values": ["npm", "yarn", "pnpm"]
     },
     "os_package_manager": {
-      "type": "enum", 
+      "type": "enum",
       "values": ["apt", "yum", "dnf", "apk", "zypper", "pacman", "brew"]
     },
     "build_mode": {

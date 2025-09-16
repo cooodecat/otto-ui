@@ -98,7 +98,6 @@ export default function CreateProjectModal({
     fetchProjects(); // 프로젝트 목록 새로고침
   };
 
-
   /** 백드롭 클릭 시 모달 닫기 */
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {

@@ -29,52 +29,52 @@ const CICDEdge: React.FC<CICDEdgeProps> = ({
 
   // 성공/실패에 따른 스타일 결정
   const actualSourceHandle = sourceHandle || data?.sourceHandle;
-  const isSuccessPath = actualSourceHandle === 'success-output';
-  const isFailedPath = actualSourceHandle === 'failed-output';
-  
+  const isSuccessPath = actualSourceHandle === "success-output";
+  const isFailedPath = actualSourceHandle === "failed-output";
+
   const getEdgeStyle = () => {
     if (isSuccessPath) {
       return {
-        stroke: '#10b981', // emerald-500
+        stroke: "#10b981", // emerald-500
         strokeWidth: 3,
-        strokeDasharray: '8,4',
+        strokeDasharray: "8,4",
       };
     } else if (isFailedPath) {
       return {
-        stroke: '#ef4444', // red-500
+        stroke: "#ef4444", // red-500
         strokeWidth: 3,
-        strokeDasharray: '8,4',
+        strokeDasharray: "8,4",
       };
     }
     // 기본 스타일
     return {
-      stroke: '#6b7280', // gray-500
+      stroke: "#6b7280", // gray-500
       strokeWidth: 2,
-      strokeDasharray: '8,4',
+      strokeDasharray: "8,4",
     };
   };
 
   const getLabel = () => {
     if (isSuccessPath) {
       return {
-        text: '✅ Success',
-        bgColor: '#10b981',
-        textColor: 'white',
-        icon: <CheckCircle className="w-3 h-3" />
+        text: "✅ Success",
+        bgColor: "#10b981",
+        textColor: "white",
+        icon: <CheckCircle className="w-3 h-3" />,
       };
     } else if (isFailedPath) {
       return {
-        text: '❌ Failed',
-        bgColor: '#ef4444', 
-        textColor: 'white',
-        icon: <XCircle className="w-3 h-3" />
+        text: "❌ Failed",
+        bgColor: "#ef4444",
+        textColor: "white",
+        icon: <XCircle className="w-3 h-3" />,
       };
     }
     return {
-      text: 'Continue',
-      bgColor: '#6b7280',
-      textColor: 'white',
-      icon: null
+      text: "Continue",
+      bgColor: "#6b7280",
+      textColor: "white",
+      icon: null,
     };
   };
 
@@ -116,9 +116,9 @@ const CICDEdge: React.FC<CICDEdgeProps> = ({
         className="animate-pulse"
         style={{
           ...edgeStyle,
-          strokeDasharray: '4,8',
+          strokeDasharray: "4,8",
           opacity: 0.6,
-          animation: 'dash 2s linear infinite',
+          animation: "dash 2s linear infinite",
         }}
       />
 
@@ -126,9 +126,9 @@ const CICDEdge: React.FC<CICDEdgeProps> = ({
       <EdgeLabelRenderer>
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'all',
+            pointerEvents: "all",
           }}
           className="flex items-center gap-1"
         >

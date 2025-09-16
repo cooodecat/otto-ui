@@ -20,28 +20,31 @@ export default function UserProfile() {
   const router = useRouter();
 
   // 백엔드에서 사용자 프로필 가져오기
-  const fetchUserProfile = useCallback(async (sessionToken: string) => {
-    // 이미 에러가 발생했으면 재시도하지 않음
-    if (hasError) return;
+  const fetchUserProfile = useCallback(
+    async (sessionToken: string) => {
+      // 이미 에러가 발생했으면 재시도하지 않음
+      if (hasError) return;
 
-    try {
-      setApiToken(sessionToken);
-      const { data: profileData, error } = await api.getUserProfile();
+      try {
+        setApiToken(sessionToken);
+        const { data: profileData, error } = await api.getUserProfile();
 
-      if (error) {
-        // 프로필 가져오기 실패 처리
-        console.error("Profile fetch error:", error);
+        if (error) {
+          // 프로필 가져오기 실패 처리
+          console.error("Profile fetch error:", error);
+          setHasError(true); // 에러 상태 설정하여 재시도 방지
+        } else {
+          setApiUser(profileData || null);
+          setHasError(false);
+        }
+      } catch (err) {
+        // 프로필 API 호출 실패 처리
+        console.error("Profile API call failed:", err);
         setHasError(true); // 에러 상태 설정하여 재시도 방지
-      } else {
-        setApiUser(profileData || null);
-        setHasError(false);
       }
-    } catch (err) {
-      // 프로필 API 호출 실패 처리
-      console.error("Profile API call failed:", err);
-      setHasError(true); // 에러 상태 설정하여 재시도 방지
-    }
-  }, [api, hasError]);
+    },
+    [api, hasError]
+  );
 
   useEffect(() => {
     const getUser = async () => {
@@ -168,9 +171,7 @@ export default function UserProfile() {
         disabled={isLoggingOut}
         className={cn(
           "w-full bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200",
-          isLoggingOut
-            ? "opacity-50 cursor-not-allowed"
-            : "hover:bg-red-700"
+          isLoggingOut ? "opacity-50 cursor-not-allowed" : "hover:bg-red-700"
         )}
       >
         {isLoggingOut ? "로그아웃 중..." : "로그아웃"}

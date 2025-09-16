@@ -18,9 +18,7 @@ import {
   ConditionBranchNodeData,
   PipelineStartNodeData,
   CICD_GROUP_COLORS,
-
   CICD_BLOCK_CONFIGS,
-
 } from "@/types/cicd-node.types";
 
 // 노드 컴포넌트들 import
@@ -52,7 +50,7 @@ import {
   ConditionBranchNode,
   GenericCICDNode,
 } from "./cicd";
-import {CICDBlockGroup, CICDBlockType } from "@/types/cicd-node.types";
+import { CICDBlockGroup, CICDBlockType } from "@/types/cicd-node.types";
 
 /**
  * 노드 설정 레지스트리
@@ -573,7 +571,8 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorHex,
     component: ConditionBranchNode as ComponentType<NodeProps>,
     category: "cicd-utility",
-    description: "Conditional branching based on environment, files, or commands",
+    description:
+      "Conditional branching based on environment, files, or commands",
     minWidth: 320,
     defaultData: {
       label: "Condition",
@@ -657,15 +656,29 @@ export const nodeCategories = {
   control: Object.values(nodeRegistry).filter((n) => n.category === "control"),
   data: Object.values(nodeRegistry).filter((n) => n.category === "data"),
   custom: Object.values(nodeRegistry).filter((n) => n.category === "custom"),
-  
+
   // CI/CD 카테고리 (그룹별 색상 구분)
-  "cicd-start": Object.values(nodeRegistry).filter((n) => n.category === "cicd-start"),
-  "cicd-prebuild": Object.values(nodeRegistry).filter((n) => n.category === "cicd-prebuild"),
-  "cicd-build": Object.values(nodeRegistry).filter((n) => n.category === "cicd-build"),
-  "cicd-test": Object.values(nodeRegistry).filter((n) => n.category === "cicd-test"),
-  "cicd-deploy": Object.values(nodeRegistry).filter((n) => n.category === "cicd-deploy"),
-  "cicd-notification": Object.values(nodeRegistry).filter((n) => n.category === "cicd-notification"),
-  "cicd-utility": Object.values(nodeRegistry).filter((n) => n.category === "cicd-utility"),
+  "cicd-start": Object.values(nodeRegistry).filter(
+    (n) => n.category === "cicd-start"
+  ),
+  "cicd-prebuild": Object.values(nodeRegistry).filter(
+    (n) => n.category === "cicd-prebuild"
+  ),
+  "cicd-build": Object.values(nodeRegistry).filter(
+    (n) => n.category === "cicd-build"
+  ),
+  "cicd-test": Object.values(nodeRegistry).filter(
+    (n) => n.category === "cicd-test"
+  ),
+  "cicd-deploy": Object.values(nodeRegistry).filter(
+    (n) => n.category === "cicd-deploy"
+  ),
+  "cicd-notification": Object.values(nodeRegistry).filter(
+    (n) => n.category === "cicd-notification"
+  ),
+  "cicd-utility": Object.values(nodeRegistry).filter(
+    (n) => n.category === "cicd-utility"
+  ),
 };
 
 /**
@@ -742,7 +755,7 @@ export const createNodeInstance = (
   }
 
   const nodeData: any = { ...config.defaultData, label: config.label };
-  
+
   // camelCase를 snake_case로 변환 (CI/CD 노드들을 위해)
   if (nodeData.blockType) {
     nodeData.block_type = nodeData.blockType;

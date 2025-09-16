@@ -5,7 +5,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RotateCcw, Play } from "lucide-react";
 import { ReactFlowProvider } from "@xyflow/react";
-import CICDFlowCanvas, { CICDFlowCanvasRef } from "@/components/flow/CICDFlowCanvas";
+import CICDFlowCanvas, {
+  CICDFlowCanvasRef,
+} from "@/components/flow/CICDFlowCanvas";
 import { BaseCICDNodeData } from "@/types/cicd-node.types";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
@@ -30,22 +32,18 @@ function PipelinePageContent() {
   const _pipelineId = mapPipelineId(rawPipelineId);
 
   // 스토어 훅 사용
-  const {
-    fetchProjects,
-    setSelectedProject
-  } = useProjectStore();
+  const { fetchProjects, setSelectedProject } = useProjectStore();
 
-  const {
-    setCurrentProject,
-    fetchPipelines
-  } = usePipelineStore();
+  const { setCurrentProject, fetchPipelines } = usePipelineStore();
 
   useEffect(() => {
     setIsClient(true);
 
     const initializePageData = async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         router.push("/");
@@ -62,7 +60,14 @@ function PipelinePageContent() {
     };
 
     initializePageData();
-  }, [router, projectId, fetchProjects, setSelectedProject, setCurrentProject, fetchPipelines]);
+  }, [
+    router,
+    projectId,
+    fetchProjects,
+    setSelectedProject,
+    setCurrentProject,
+    fetchPipelines,
+  ]);
 
   const handleInitialize = useCallback(() => {
     // TODO: 파이프라인 초기화 로직

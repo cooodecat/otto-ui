@@ -1,8 +1,16 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Search, Filter, X, AlertCircle, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import {
+  Search,
+  Filter,
+  X,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LogFiltersProps {
   searchQuery: string;
@@ -24,13 +32,13 @@ const LogFilters: React.FC<LogFiltersProps> = ({
   onSearchChange,
   onFilterChange,
   totalLogs,
-  filteredLogs
+  filteredLogs,
 }) => {
   const [filters, setFilters] = useState<LogFilterState>({
-    levels: new Set(['ERROR', 'WARN', 'INFO', 'DEBUG']),
-    statuses: new Set(['success', 'failed', 'running', 'pending']),
-    timeRange: 'all',
-    regex: false
+    levels: new Set(["ERROR", "WARN", "INFO", "DEBUG"]),
+    statuses: new Set(["success", "failed", "running", "pending"]),
+    timeRange: "all",
+    regex: false,
   });
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -59,25 +67,59 @@ const LogFilters: React.FC<LogFiltersProps> = ({
   };
 
   const levelButtons = [
-    { value: 'ERROR', icon: AlertCircle, color: 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' },
-    { value: 'WARN', icon: AlertTriangle, color: 'text-yellow-600 bg-yellow-50 border-yellow-200 hover:bg-yellow-100' },
-    { value: 'INFO', icon: Info, color: 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100' },
-    { value: 'DEBUG', icon: CheckCircle2, color: 'text-gray-600 bg-gray-50 border-gray-200 hover:bg-gray-100' }
+    {
+      value: "ERROR",
+      icon: AlertCircle,
+      color: "text-red-600 bg-red-50 border-red-200 hover:bg-red-100",
+    },
+    {
+      value: "WARN",
+      icon: AlertTriangle,
+      color:
+        "text-yellow-600 bg-yellow-50 border-yellow-200 hover:bg-yellow-100",
+    },
+    {
+      value: "INFO",
+      icon: Info,
+      color: "text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100",
+    },
+    {
+      value: "DEBUG",
+      icon: CheckCircle2,
+      color: "text-gray-600 bg-gray-50 border-gray-200 hover:bg-gray-100",
+    },
   ];
 
   const statusButtons = [
-    { value: 'success', label: 'Success', color: 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100' },
-    { value: 'failed', label: 'Failed', color: 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' },
-    { value: 'running', label: 'Running', color: 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100' },
-    { value: 'pending', label: 'Pending', color: 'text-yellow-600 bg-yellow-50 border-yellow-200 hover:bg-yellow-100' }
+    {
+      value: "success",
+      label: "Success",
+      color: "text-green-600 bg-green-50 border-green-200 hover:bg-green-100",
+    },
+    {
+      value: "failed",
+      label: "Failed",
+      color: "text-red-600 bg-red-50 border-red-200 hover:bg-red-100",
+    },
+    {
+      value: "running",
+      label: "Running",
+      color: "text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100",
+    },
+    {
+      value: "pending",
+      label: "Pending",
+      color:
+        "text-yellow-600 bg-yellow-50 border-yellow-200 hover:bg-yellow-100",
+    },
   ];
 
   const timeRangeOptions = [
-    { value: 'all', label: 'All time' },
-    { value: '1h', label: 'Last hour' },
-    { value: '24h', label: 'Last 24 hours' },
-    { value: '7d', label: 'Last 7 days' },
-    { value: '30d', label: 'Last 30 days' }
+    { value: "all", label: "All time" },
+    { value: "1h", label: "Last hour" },
+    { value: "24h", label: "Last 24 hours" },
+    { value: "7d", label: "Last 7 days" },
+    { value: "30d", label: "Last 30 days" },
   ];
 
   return (
@@ -91,31 +133,35 @@ const LogFilters: React.FC<LogFiltersProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={filters.regex ? "Filter logs... (regex enabled)" : "Filter logs..."}
+              placeholder={
+                filters.regex
+                  ? "Filter logs... (regex enabled)"
+                  : "Filter logs..."
+              }
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             {searchQuery && (
               <button
-                onClick={() => onSearchChange('')}
+                onClick={() => onSearchChange("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
-          
+
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className={cn(
               "px-4 py-2 border rounded-lg flex items-center gap-2 transition-colors cursor-pointer",
-              isExpanded 
-                ? "bg-blue-50 border-blue-300 text-blue-700" 
+              isExpanded
+                ? "bg-blue-50 border-blue-300 text-blue-700"
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
             )}
           >
             <Filter className="w-4 h-4" />
             <span className="font-medium">Filters</span>
-            {(filteredLogs !== totalLogs) && (
+            {filteredLogs !== totalLogs && (
               <span className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded-full">
                 {filteredLogs}/{totalLogs}
               </span>
@@ -220,10 +266,10 @@ const LogFilters: React.FC<LogFiltersProps> = ({
             <button
               onClick={() => {
                 const newFilters = {
-                  levels: new Set(['ERROR']),
-                  statuses: new Set(['failed']),
-                  timeRange: '24h',
-                  regex: false
+                  levels: new Set(["ERROR"]),
+                  statuses: new Set(["failed"]),
+                  timeRange: "24h",
+                  regex: false,
                 };
                 setFilters(newFilters);
                 onFilterChange(newFilters);
@@ -235,14 +281,19 @@ const LogFilters: React.FC<LogFiltersProps> = ({
             <button
               onClick={() => {
                 const newFilters = {
-                  levels: new Set(['ERROR', 'WARN', 'INFO', 'DEBUG']),
-                  statuses: new Set(['success', 'failed', 'running', 'pending']),
-                  timeRange: 'all',
-                  regex: false
+                  levels: new Set(["ERROR", "WARN", "INFO", "DEBUG"]),
+                  statuses: new Set([
+                    "success",
+                    "failed",
+                    "running",
+                    "pending",
+                  ]),
+                  timeRange: "all",
+                  regex: false,
                 };
                 setFilters(newFilters);
                 onFilterChange(newFilters);
-                onSearchChange('');
+                onSearchChange("");
               }}
               className="px-3 py-1.5 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
             >

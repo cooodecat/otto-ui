@@ -1,6 +1,6 @@
-import { ComponentType } from 'react';
-import { NodeProps } from '@xyflow/react';
-import { BaseNodeData } from './node.types';
+import { ComponentType } from "react";
+import { NodeProps } from "@xyflow/react";
+import { BaseNodeData } from "./node.types";
 
 /**
  * 노드 설정 인터페이스
@@ -40,18 +40,18 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
    * 노드 카테고리
    */
   category:
-    | 'trigger'
-    | 'action'
-    | 'control'
-    | 'data'
-    | 'custom'
-    | 'cicd-start'
-    | 'cicd-prebuild'
-    | 'cicd-build'
-    | 'cicd-test'
-    | 'cicd-deploy'
-    | 'cicd-notification'
-    | 'cicd-utility';
+    | "trigger"
+    | "action"
+    | "control"
+    | "data"
+    | "custom"
+    | "cicd-start"
+    | "cicd-prebuild"
+    | "cicd-build"
+    | "cicd-test"
+    | "cicd-deploy"
+    | "cicd-notification"
+    | "cicd-utility";
 
   /**
    * 노드 설명
@@ -78,7 +78,7 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
    */
   inputs?: {
     count: number;
-    position?: 'top' | 'left' | 'right' | 'bottom';
+    position?: "top" | "left" | "right" | "bottom";
   };
 
   /**
@@ -86,7 +86,7 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
    */
   outputs?: {
     count: number;
-    position?: 'top' | 'left' | 'right' | 'bottom';
+    position?: "top" | "left" | "right" | "bottom";
     ids?: string[];
   };
 }

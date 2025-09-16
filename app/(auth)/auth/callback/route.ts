@@ -10,15 +10,17 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       // 사용자 인증 성공 후 프로젝트 데이터 가져오기
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (user) {
         try {
           // TODO: 실제 API 호출로 대체 예정
           // NOTE: 데이터베이스에서도 동일한 로직으로 최신 프로젝트/파이프라인 결정 예정
           // 현재는 Mock 데이터 기준으로 가장 최신 프로젝트/파이프라인으로 결정
-          const latestProjectNumericId = '3'; // proj_3에 해당하는 숫자 ID
-          const latestPipelineNumericId = '2'; // proj_3의 pipe_2 (가장 최신)
+          const latestProjectNumericId = "3"; // proj_3에 해당하는 숫자 ID
+          const latestPipelineNumericId = "2"; // proj_3의 pipe_2 (가장 최신)
 
           // 가장 최신 프로젝트의 가장 최신 파이프라인으로 리다이렉트
           const redirectPath = `/projects/${latestProjectNumericId}/pipelines/${latestPipelineNumericId}`;
@@ -29,7 +31,9 @@ export async function GET(request: Request) {
           if (isLocalEnv) {
             return NextResponse.redirect(`${origin}${redirectPath}`);
           } else if (forwardedHost) {
-            return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`);
+            return NextResponse.redirect(
+              `https://${forwardedHost}${redirectPath}`
+            );
           } else {
             return NextResponse.redirect(`${origin}${redirectPath}`);
           }

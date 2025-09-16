@@ -21,11 +21,11 @@ export interface FilterState {
 }
 
 export interface DropdownPosition {
-  timeline: 'top' | 'bottom';
-  status: 'top' | 'bottom';
-  trigger: 'top' | 'bottom';
-  branch: 'top' | 'bottom';
-  author: 'top' | 'bottom';
+  timeline: "top" | "bottom";
+  status: "top" | "bottom";
+  trigger: "top" | "bottom";
+  branch: "top" | "bottom";
+  author: "top" | "bottom";
 }
 
 export interface FilterPanelProps {
@@ -43,35 +43,35 @@ export interface LogData {
   buildId: string;
   buildNumber: number;
   projectName: string;
-  
+
   // 상태 정보
-  buildStatus: 'SUCCEEDED' | 'FAILED' | 'IN_PROGRESS' | 'STOPPED';
-  deployStatus?: 'SUCCEEDED' | 'FAILED' | 'IN_PROGRESS' | 'STOPPED';
-  overallStatus: 'SUCCESS' | 'FAILED' | 'RUNNING';
-  
+  buildStatus: "SUCCEEDED" | "FAILED" | "IN_PROGRESS" | "STOPPED";
+  deployStatus?: "SUCCEEDED" | "FAILED" | "IN_PROGRESS" | "STOPPED";
+  overallStatus: "SUCCESS" | "FAILED" | "RUNNING";
+
   // 시간 정보
   startTime: string; // ISO 8601 format
   endTime?: string;
   duration: string; // "3m 45s" format
-  
+
   // 소스 정보
-  trigger: 'Manual' | 'GitHub Push' | 'Scheduled' | 'Webhook';
+  trigger: "Manual" | "GitHub Push" | "Scheduled" | "Webhook";
   branch: string;
   commitHash: string; // 짧은 형태 (7자리)
   commitMessage: string;
   commitAuthor: string;
-  
+
   // 파이프라인 단계
   pipeline: PipelineStage[];
-  
+
   // 배포 정보 (옵션)
   deployment?: {
-    environment: 'staging' | 'production';
+    environment: "staging" | "production";
     deployedVersion: string;
     rollbackAvailable: boolean;
-    healthCheckStatus: 'HEALTHY' | 'UNHEALTHY';
+    healthCheckStatus: "HEALTHY" | "UNHEALTHY";
   };
-  
+
   // 에러 정보 (실패 시)
   errorSummary?: {
     phase: string;
@@ -79,7 +79,7 @@ export interface LogData {
     exitCode: number;
     failedTests?: string[];
   };
-  
+
   // 로그 정보
   logs: {
     totalLines: number;
@@ -93,7 +93,7 @@ export interface LogData {
 export interface LogListData {
   id: string;
   name: string;
-  status: 'running' | 'success' | 'failed' | 'pending';
+  status: "running" | "success" | "failed" | "pending";
   logs: LogItem[];
   total: number;
   hasNext: boolean;
@@ -101,7 +101,7 @@ export interface LogListData {
 
 export interface PipelineStage {
   stage: string; // "Source Download", "Build & Test", "Deploy"
-  status: 'SUCCESS' | 'FAILED' | 'IN_PROGRESS' | 'PENDING';
+  status: "SUCCESS" | "FAILED" | "IN_PROGRESS" | "PENDING";
   duration: string;
   startTime: string;
   endTime?: string;
@@ -109,14 +109,14 @@ export interface PipelineStage {
 
 export interface LogLine {
   timestamp: string;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
+  level: "INFO" | "WARN" | "ERROR" | "DEBUG";
   message: string;
   source?: string; // 로그 소스 (예: "npm", "docker", "aws-cli")
 }
 
 export interface LogItem {
   id: string;
-  status: 'success' | 'failed' | 'running' | 'pending';
+  status: "success" | "failed" | "running" | "pending";
   pipelineName: string;
   trigger: {
     type: string;
@@ -140,7 +140,7 @@ export interface LogDetailsPanelProps {
   buildId: string;
   isOpen: boolean;
   onClose: () => void;
-  onNavigate?: (direction: 'prev' | 'next') => void; // 키보드 네비게이션용
+  onNavigate?: (direction: "prev" | "next") => void; // 키보드 네비게이션용
 }
 
 export interface PipelineLogsPageProps {
@@ -170,17 +170,17 @@ export interface PipelineLogsTableProps {
 // Additional Types
 // ============================================================================
 
-export type ViewMode = 'summary' | 'expanded';
+export type ViewMode = "summary" | "expanded";
 
 export interface LogSearchResult {
   lineNumber: number;
   timestamp: string;
   message: string;
-  level: LogLine['level'];
+  level: LogLine["level"];
 }
 
 export interface LogFilter {
-  levels: LogLine['level'][];
+  levels: LogLine["level"][];
   searchQuery: string;
   showTimestamps: boolean;
 }
@@ -196,8 +196,14 @@ export interface KeyboardShortcut {
 
 // Build Log Streaming Types (SSE + REST cache)
 // ============================================================================
-export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG' | 'UNKNOWN';
-export type BuildExecStatus = 'SUCCEEDED' | 'FAILED' | 'STOPPED' | 'TIMED_OUT' | 'IN_PROGRESS' | 'UNKNOWN';
+export type LogLevel = "INFO" | "WARN" | "ERROR" | "DEBUG" | "UNKNOWN";
+export type BuildExecStatus =
+  | "SUCCEEDED"
+  | "FAILED"
+  | "STOPPED"
+  | "TIMED_OUT"
+  | "IN_PROGRESS"
+  | "UNKNOWN";
 
 export interface RawLogEvent {
   timestamp: number;
@@ -230,11 +236,11 @@ export interface LogsState {
   logs: LogItem[];
   displayedLogs: LogItem[];
   selectedLogId: string | null;
-  
+
   // 필터 상태
   filters: FilterState;
   searchQuery: string;
-  
+
   // UI 상태
   isLive: boolean;
   isLoading: boolean;
@@ -242,7 +248,7 @@ export interface LogsState {
   hasMore: boolean;
   page: number;
   newLogIds: Set<string>;
-  
+
   // 액션들
   setFilters: (filters: Partial<FilterState>) => void;
   setSearchQuery: (query: string) => void;

@@ -1,75 +1,75 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useProjectStore } from '@/lib/projectStore';
-import StepIndicator from './StepIndicator';
-import StepOne from './StepOne';
-import StepTwo from './StepTwo';
-import StepThree from './StepThree';
+import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useProjectStore } from "@/lib/projectStore";
+import StepIndicator from "./StepIndicator";
+import StepOne from "./StepOne";
+import StepTwo from "./StepTwo";
+import StepThree from "./StepThree";
 import {
   WizardState,
   ProjectCreationWizardProps,
   Repository,
   Branch,
-  ProjectConfig
-} from './types';
+  ProjectConfig,
+} from "./types";
 
 // Mock data - 실제로는 GitHub API를 호출해야 합니다
 const mockBranches: Branch[] = [
   {
-    name: 'main',
+    name: "main",
     commit: {
-      sha: 'abc123',
-      message: 'Initial commit',
-      date: '2024-01-15',
-      author: 'John Doe'
-    }
+      sha: "abc123",
+      message: "Initial commit",
+      date: "2024-01-15",
+      author: "John Doe",
+    },
   },
   {
-    name: 'develop',
+    name: "develop",
     commit: {
-      sha: 'def456',
-      message: 'Add new feature',
-      date: '2024-01-14',
-      author: 'Jane Smith'
-    }
+      sha: "def456",
+      message: "Add new feature",
+      date: "2024-01-14",
+      author: "Jane Smith",
+    },
   },
   {
-    name: 'feature/auth',
+    name: "feature/auth",
     commit: {
-      sha: 'ghi789',
-      message: 'Implement authentication',
-      date: '2024-01-13',
-      author: 'Bob Johnson'
-    }
-  }
+      sha: "ghi789",
+      message: "Implement authentication",
+      date: "2024-01-13",
+      author: "Bob Johnson",
+    },
+  },
 ];
 
 // Mock repository data
 const mockRepository: Repository = {
-  name: '',
-  owner: '',
-  description: 'A modern web application built with Next.js',
-  defaultBranch: 'main',
+  name: "",
+  owner: "",
+  description: "A modern web application built with Next.js",
+  defaultBranch: "main",
   languages: {
-    'TypeScript': 65234,
-    'JavaScript': 23456,
-    'CSS': 12345,
-    'HTML': 5432
+    TypeScript: 65234,
+    JavaScript: 23456,
+    CSS: 12345,
+    HTML: 5432,
   },
-  updatedAt: '2일 전',
+  updatedAt: "2일 전",
   stars: 128,
   forks: 24,
-  visibility: 'Public'
+  visibility: "Public",
 };
 
 export default function ProjectCreationWizard({
   isOpen,
   onClose,
-  repository: repoInfo
+  repository: repoInfo,
 }: ProjectCreationWizardProps) {
   const router = useRouter();
   const { createProject } = useProjectStore();
@@ -77,47 +77,50 @@ export default function ProjectCreationWizard({
   const [state, setState] = useState<WizardState>({
     currentStep: 1,
     repository: null,
-    selectedBranch: 'main',
+    selectedBranch: "main",
     branches: [],
     projectConfig: {
-      name: '',
-      description: ''
+      name: "",
+      description: "",
     },
     validation: {
       isNameValid: false,
       nameError: null,
-      isChecking: false
+      isChecking: false,
     },
     isLoading: false,
     isCreating: false,
     createdProjectId: null,
-    createdProjectNumericId: null
+    createdProjectNumericId: null,
   });
 
   const [error, setError] = useState<string | null>(null);
 
   // 프로젝트 이름 검증 (useEffect보다 먼저 정의)
   const validateProjectName = useCallback(async (name: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       validation: {
         ...prev.validation,
-        isChecking: true
-      }
+        isChecking: true,
+      },
     }));
 
     // 실제로는 API를 호출하여 중복 검사
     setTimeout(() => {
-      const isValid = name.length >= 3 && name.length <= 50 && /^[a-z0-9-]+$/.test(name);
-      const nameError = !isValid ? '프로젝트 이름 형식이 올바르지 않습니다' : null;
+      const isValid =
+        name.length >= 3 && name.length <= 50 && /^[a-z0-9-]+$/.test(name);
+      const nameError = !isValid
+        ? "프로젝트 이름 형식이 올바르지 않습니다"
+        : null;
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         validation: {
           isNameValid: isValid && !nameError,
           nameError,
-          isChecking: false
-        }
+          isChecking: false,
+        },
       }));
     }, 500);
   }, []);
@@ -125,25 +128,27 @@ export default function ProjectCreationWizard({
   // 저장소 정보 초기화
   useEffect(() => {
     if (isOpen && repoInfo) {
-      const initialProjectName = repoInfo.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      const initialProjectName = repoInfo.name
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-");
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         repository: {
           ...mockRepository,
           name: repoInfo.name,
           owner: repoInfo.owner,
-          visibility: repoInfo.visibility
+          visibility: repoInfo.visibility,
         },
         projectConfig: {
           name: initialProjectName,
-          description: mockRepository.description
+          description: mockRepository.description,
         },
         validation: {
           isNameValid: true, // 초기값은 유효하다고 가정
           nameError: null,
-          isChecking: false
-        }
+          isChecking: false,
+        },
       }));
 
       // 초기 이름에 대한 유효성 검사 실행
@@ -153,20 +158,20 @@ export default function ProjectCreationWizard({
 
   // 브랜치 목록 로드
   const loadBranches = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
+    setState((prev) => ({ ...prev, isLoading: true }));
     // 실제로는 GitHub API를 호출
     setTimeout(() => {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         branches: mockBranches,
-        isLoading: false
+        isLoading: false,
       }));
     }, 1000);
   }, []);
 
   // 프로젝트 생성
   const handleCreateProject = async () => {
-    setState(prev => ({ ...prev, isCreating: true }));
+    setState((prev) => ({ ...prev, isCreating: true }));
     setError(null);
 
     try {
@@ -177,24 +182,24 @@ export default function ProjectCreationWizard({
         projectId: `proj_${numericProjectId}`,
         name: state.projectConfig.name,
         description: state.projectConfig.description,
-        githubOwner: state.repository?.owner || '',
-        githubRepoName: state.repository?.name || '',
+        githubOwner: state.repository?.owner || "",
+        githubRepoName: state.repository?.name || "",
         defaultBranch: state.selectedBranch,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
 
       // Zustand store에 프로젝트 추가
       createProject(newProject);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isCreating: false,
         createdProjectId: newProject.projectId,
-        createdProjectNumericId: numericProjectId
+        createdProjectNumericId: numericProjectId,
       }));
     } catch (err) {
-      setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
-      setState(prev => ({ ...prev, isCreating: false }));
+      setError("프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
+      setState((prev) => ({ ...prev, isCreating: false }));
     }
   };
 
@@ -203,7 +208,7 @@ export default function ProjectCreationWizard({
     if (state.createdProjectNumericId) {
       // 생성된 프로젝트로 이동 (첫 번째 파이프라인으로 이동)
       const projectId = state.createdProjectNumericId;
-      const pipelineId = '1'; // 새 프로젝트의 첫 번째 파이프라인
+      const pipelineId = "1"; // 새 프로젝트의 첫 번째 파이프라인
       router.push(`/projects/${projectId}/pipelines/${pipelineId}`);
       onClose();
     }
@@ -211,18 +216,24 @@ export default function ProjectCreationWizard({
 
   // Step 이동
   const handleStepChange = (step: 1 | 2 | 3) => {
-    setState(prev => ({ ...prev, currentStep: step }));
+    setState((prev) => ({ ...prev, currentStep: step }));
   };
 
   const handleNext = () => {
     if (state.currentStep < 3) {
-      setState(prev => ({ ...prev, currentStep: (prev.currentStep + 1) as 1 | 2 | 3 }));
+      setState((prev) => ({
+        ...prev,
+        currentStep: (prev.currentStep + 1) as 1 | 2 | 3,
+      }));
     }
   };
 
   const handlePrevious = () => {
     if (state.currentStep > 1) {
-      setState(prev => ({ ...prev, currentStep: (prev.currentStep - 1) as 1 | 2 | 3 }));
+      setState((prev) => ({
+        ...prev,
+        currentStep: (prev.currentStep - 1) as 1 | 2 | 3,
+      }));
     }
   };
 
@@ -233,7 +244,9 @@ export default function ProjectCreationWizard({
       return;
     }
 
-    const confirmClose = window.confirm('정말 취소하시겠습니까? 입력한 정보가 저장되지 않습니다.');
+    const confirmClose = window.confirm(
+      "정말 취소하시겠습니까? 입력한 정보가 저장되지 않습니다."
+    );
     if (confirmClose) {
       onClose();
     }
@@ -242,19 +255,19 @@ export default function ProjectCreationWizard({
   // ESC 키 처리
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         handleClose();
       }
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'hidden';
+      document.addEventListener("keydown", handleEscKey);
+      document.body.style.overflow = "hidden";
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'auto';
+      document.removeEventListener("keydown", handleEscKey);
+      document.body.style.overflow = "auto";
     };
   }, [isOpen, state.createdProjectId]);
 
@@ -264,12 +277,14 @@ export default function ProjectCreationWizard({
   const canProceed = () => {
     switch (state.currentStep) {
       case 1:
-        return state.selectedBranch !== '';
+        return state.selectedBranch !== "";
       case 2:
         // 이름이 있고, 검사 중이 아니며, (유효하거나 아직 검사하지 않은 경우)
-        return state.projectConfig.name.length > 0 &&
-               !state.validation.isChecking &&
-               (state.validation.isNameValid || state.validation.nameError === null);
+        return (
+          state.projectConfig.name.length > 0 &&
+          !state.validation.isChecking &&
+          (state.validation.isNameValid || state.validation.nameError === null)
+        );
       case 3:
         return true;
       default:
@@ -294,7 +309,8 @@ export default function ProjectCreationWizard({
               프로젝트 생성 마법사
             </h2>
             <p className="text-gray-600 mt-1">
-              {state.repository?.owner}/{state.repository?.name} 저장소로 새 프로젝트를 만듭니다
+              {state.repository?.owner}/{state.repository?.name} 저장소로 새
+              프로젝트를 만듭니다
             </p>
           </div>
           <button
@@ -318,7 +334,9 @@ export default function ProjectCreationWizard({
               repository={state.repository}
               branches={state.branches}
               selectedBranch={state.selectedBranch}
-              onBranchChange={(branch) => setState(prev => ({ ...prev, selectedBranch: branch }))}
+              onBranchChange={(branch) =>
+                setState((prev) => ({ ...prev, selectedBranch: branch }))
+              }
               isLoading={state.isLoading}
               onLoadBranches={loadBranches}
             />
@@ -327,11 +345,13 @@ export default function ProjectCreationWizard({
           {state.currentStep === 2 && (
             <StepTwo
               projectConfig={state.projectConfig}
-              onConfigChange={(config) => setState(prev => ({ ...prev, projectConfig: config }))}
+              onConfigChange={(config) =>
+                setState((prev) => ({ ...prev, projectConfig: config }))
+              }
               validation={state.validation}
               onValidateName={validateProjectName}
-              defaultName={state.repository?.name || ''}
-              defaultDescription={state.repository?.description || ''}
+              defaultName={state.repository?.name || ""}
+              defaultDescription={state.repository?.description || ""}
             />
           )}
 
@@ -357,9 +377,10 @@ export default function ProjectCreationWizard({
               disabled={state.currentStep === 1}
               className={`
                 flex items-center gap-2 px-4 py-2 rounded-lg transition-colors
-                ${state.currentStep === 1
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
+                ${
+                  state.currentStep === 1
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
                 }
               `}
             >
@@ -377,9 +398,10 @@ export default function ProjectCreationWizard({
                 disabled={!canProceed()}
                 className={`
                   flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors
-                  ${canProceed()
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ${
+                    canProceed()
+                      ? "bg-purple-600 hover:bg-purple-700 text-white"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }
                 `}
               >
@@ -395,7 +417,7 @@ export default function ProjectCreationWizard({
     </div>
   );
 
-  return typeof window !== 'undefined'
+  return typeof window !== "undefined"
     ? createPortal(modalContent, document.body)
     : null;
 }

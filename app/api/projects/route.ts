@@ -37,16 +37,14 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 사용자의 프로젝트 목록 조회
-    const { data: projects, error: projectsError } = await supabase
+    const { data: projects, error: projectsError } = (await supabase
       .from("projects")
-      .select(`
+      .select(
+        `
         project_id,
         name,
         description,
@@ -57,12 +55,27 @@ export async function GET() {
         codebuild_status,
         created_at,
         updated_at
-      `)
+      `
+      )
       .eq("user_id", user.id)
-      .order("updated_at", { ascending: false }) as {
-        data: Pick<ProjectRow, 'project_id' | 'name' | 'description' | 'github_repo_name' | 'github_repo_url' | 'github_owner' | 'selected_branch' | 'codebuild_status' | 'created_at' | 'updated_at'>[] | null;
-        error: any;
-      };
+      .order("updated_at", { ascending: false })) as {
+      data:
+        | Pick<
+            ProjectRow,
+            | "project_id"
+            | "name"
+            | "description"
+            | "github_repo_name"
+            | "github_repo_url"
+            | "github_owner"
+            | "selected_branch"
+            | "codebuild_status"
+            | "created_at"
+            | "updated_at"
+          >[]
+        | null;
+      error: any;
+    };
 
     if (projectsError) {
       console.error("Error fetching projects:", projectsError);
@@ -119,10 +132,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 요청 본문 파싱
@@ -151,8 +161,9 @@ export async function POST(request: Request) {
     const codebuildProjectName = `otto-${user.id.slice(0, 8)}-${timestamp}`;
 
     // 프로젝트 생성
-    const { data: project, error: createError } = await (supabase
-      .from("projects") as any)
+    const { data: project, error: createError } = await (
+      supabase.from("projects") as any
+    )
       .insert({
         user_id: user.id,
         name,

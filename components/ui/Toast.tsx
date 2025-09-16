@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import * as ToastPrimitive from '@radix-ui/react-toast';
-import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useState } from "react";
+import * as ToastPrimitive from "@radix-ui/react-toast";
+import {
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Info,
+  AlertTriangle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
+export type ToastType = "success" | "error" | "warning" | "info";
 
 export interface ToastProps {
   id: string;
@@ -19,32 +25,32 @@ export interface ToastProps {
 const toastStyles = {
   success: {
     icon: CheckCircle2,
-    className: 'bg-green-50 border-green-200',
-    iconClassName: 'text-green-600'
+    className: "bg-green-50 border-green-200",
+    iconClassName: "text-green-600",
   },
   error: {
     icon: AlertCircle,
-    className: 'bg-red-50 border-red-200',
-    iconClassName: 'text-red-600'
+    className: "bg-red-50 border-red-200",
+    iconClassName: "text-red-600",
   },
   warning: {
     icon: AlertTriangle,
-    className: 'bg-yellow-50 border-yellow-200',
-    iconClassName: 'text-yellow-600'
+    className: "bg-yellow-50 border-yellow-200",
+    iconClassName: "text-yellow-600",
   },
   info: {
     icon: Info,
-    className: 'bg-blue-50 border-blue-200',
-    iconClassName: 'text-blue-600'
-  }
+    className: "bg-blue-50 border-blue-200",
+    iconClassName: "text-blue-600",
+  },
 };
 
 export const Toast: React.FC<ToastProps> = ({
-  type = 'info',
+  type = "info",
   title,
   description,
   duration = 5000,
-  onClose
+  onClose,
 }) => {
   const [open, setOpen] = useState(true);
   const style = toastStyles[type];
@@ -65,14 +71,14 @@ export const Toast: React.FC<ToastProps> = ({
       open={open}
       onOpenChange={setOpen}
       className={cn(
-        'group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-lg border p-4 pr-8 shadow-lg transition-all',
-        'data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
+        "group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-lg border p-4 pr-8 shadow-lg transition-all",
+        "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
         style.className
       )}
     >
       <div className="flex gap-3">
-        <Icon className={cn('h-5 w-5 shrink-0', style.iconClassName)} />
+        <Icon className={cn("h-5 w-5 shrink-0", style.iconClassName)} />
         <div className="grid gap-1">
           <ToastPrimitive.Title className="text-sm font-semibold">
             {title}
