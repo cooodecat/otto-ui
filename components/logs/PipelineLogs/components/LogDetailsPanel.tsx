@@ -98,7 +98,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
       // 약간의 딜레이 시뮬레이션
       await new Promise((r) => setTimeout(r, 500));
       setLogData(data);
-    } catch (e) {
+    } catch {
       setError('Failed to load build details');
     } finally {
       setLoading(false);
