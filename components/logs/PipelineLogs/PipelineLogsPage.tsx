@@ -37,7 +37,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     loadMore,
     refresh,
     search: searchLogs,
-    filter: filterLogs
+    filter: _filterLogs
   } = usePipelineLogs({
     userId,
     useRealData: useRealApi,
@@ -47,10 +47,10 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
 
   // Legacy API Integration (SSE 및 실시간 기능용)
   const {
-    logData,
-    loading: apiLoading,
+    logData: _logData,
+    loading: _apiLoading,
     error: apiError,
-    refetch,
+    refetch: _refetch,
     isCollecting,
     startCollection,
     stopCollection
@@ -64,7 +64,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   const [displayedLogs, setDisplayedLogs] = useState<LogItem[]>(logs);
   const [isLive, setIsLive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filters] = useState<FilterState>({
+  const [_filters] = useState<FilterState>({
     timeline: 'all-time',
     status: 'any-status',
     trigger: 'all-triggers',

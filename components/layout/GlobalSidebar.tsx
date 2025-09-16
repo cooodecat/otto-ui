@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Search,
   Plus,
@@ -10,9 +10,9 @@ import {
   ChevronDown,
   Copy,
   BookOpen,
-  FileText,
   Home,
   Check,
+  ScrollText,
 } from 'lucide-react';
 import SettingsModal from '../settings/SettingsModal';
 import { useProjectStore } from '@/lib/projectStore';
@@ -108,6 +108,7 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
  */
 const GlobalSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const isCanvasLayout = isCanvasLayoutPath(pathname);
   /** 글로벌 워크스페이스 검색용 쿼리 */
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -209,7 +210,7 @@ const GlobalSidebar = () => {
   const bottomIcons: BottomIcon[] = [
     { icon: Settings, title: 'Settings' },
     { icon: HelpCircle, title: 'Help' },
-    { icon: FileText, title: 'Documentation' },
+    { icon: ScrollText, title: 'Pipeline Logs' },
     { icon: BookOpen, title: 'Resources' },
     { icon: Home, title: 'Home' },
   ];
@@ -533,6 +534,7 @@ const GlobalSidebar = () => {
         </div>
       </div>
 
+
       {/* Blocks Palette Section Card */}
       <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex-1 flex flex-col min-h-0'>
         <div className='mb-4'>
@@ -577,7 +579,13 @@ const GlobalSidebar = () => {
                 key={index}
                 className='p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors'
                 title={item.title}
-                onClick={item.title === 'Settings' ? handleSettingsClick : undefined}
+                onClick={
+                  item.title === 'Settings' 
+                    ? handleSettingsClick 
+                    : item.title === 'Pipeline Logs'
+                    ? () => router.push('/logs')
+                    : undefined
+                }
               >
                 <item.icon className='w-4 h-4' />
               </button>

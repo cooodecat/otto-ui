@@ -182,46 +182,69 @@ export function usePipelineLogs(options: UsePipelineLogsOptions): UsePipelineLog
       
       setHasMore(false); // 목업 데이터는 추가 로드 없음
       setTotalCount(mockLogs.length);
-    } catch (err) {
+    } catch {
       setError('Failed to load mock data');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // 데이터 로드 (실제 또는 목업)
-  const loadData = useCallback(async (append: boolean = false) => {
-    if (useRealData) {
-      await fetchRealData(
-        append ? currentOffset : 0,
-        initialLimit,
-        currentSearchQuery,
-        currentFilters,
-        append
-      );
-    } else {
-      await fetchMockData(append);
-    }
-  }, [useRealData, fetchRealData, fetchMockData, currentOffset, initialLimit, currentSearchQuery, currentFilters]);
-
   // 초기 로드
   useEffect(() => {
-    if (autoFetch && (useRealData ? currentUserId : true)) {
-      loadData();
-    }
-  }, [autoFetch, loadData, currentUserId, useRealData]);
+    if (!autoFetch) return;
+    if (useRealData && !currentUserId) return;
+    
+    const initialLoad = async () => {
+      if (useRealData) {
+        await fetchRealData(
+          0,
+          initialLimit,
+          currentSearchQuery,
+          currentFilters,
+          false
+        );
+      } else {
+        await fetchMockData(false);
+      }
+    };
+    
+    initialLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFetch, currentUserId, useRealData]); // 안전한 의존성만 포함
 
   // 더 많은 로그 로드
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore) return;
-    await loadData(true);
-  }, [isLoading, hasMore, loadData]);
+    
+    if (useRealData) {
+      await fetchRealData(
+        currentOffset,
+        initialLimit,
+        currentSearchQuery,
+        currentFilters,
+        true
+      );
+    } else {
+      await fetchMockData(true);
+    }
+  }, [isLoading, hasMore, useRealData, fetchRealData, fetchMockData, currentOffset, initialLimit, currentSearchQuery, currentFilters]);
 
   // 새로고침
   const refresh = useCallback(async () => {
     setCurrentOffset(0);
-    await loadData(false);
-  }, [loadData]);
+    
+    if (useRealData) {
+      await fetchRealData(
+        0,
+        initialLimit,
+        currentSearchQuery,
+        currentFilters,
+        false
+      );
+    } else {
+      await fetchMockData(false);
+    }
+  }, [useRealData, fetchRealData, fetchMockData, initialLimit, currentSearchQuery, currentFilters]);
 
   // 검색
   const search = useCallback(async (query: string) => {

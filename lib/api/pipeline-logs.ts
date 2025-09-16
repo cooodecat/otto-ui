@@ -12,16 +12,43 @@ type ProjectRow = Database['public']['Tables']['projects']['Row'];
  */
 
 /**
+ * API 요청 재시도 헬퍼 함수
+ */
+async function retryApiCall<T>(
+  apiCall: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await apiCall();
+    } catch (error) {
+      console.warn(`API call attempt ${i + 1} failed:`, error);
+      
+      if (i === maxRetries - 1) {
+        throw error; // 마지막 시도에서도 실패하면 에러 던지기
+      }
+      
+      // 지수적 백오프로 대기
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+/**
  * 사용자의 프로젝트 목록 조회
  */
 export async function getUserProjects(userId: string): Promise<ProjectRow[]> {
   const supabase = createClient();
   
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  const { data, error } = await retryApiCall(async () => {
+    return await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+  });
 
   if (error) {
     console.error('Error fetching user projects:', error);
@@ -104,11 +131,13 @@ export async function getAllUserBuildHistories(
   const supabase = createClient();
   const { limit = 20, offset = 0, status, projectId } = options;
 
-  // 먼저 사용자의 프로젝트 ID들을 조회
-  const { data: projects, error: projectsError } = await supabase
-    .from('projects')
-    .select('project_id')
-    .eq('user_id', userId);
+  // 먼저 사용자의 프로젝트 ID들을 조회 (재시도 로직 적용)
+  const { data: projects, error: projectsError } = await retryApiCall(async () => {
+    return await supabase
+      .from('projects')
+      .select('project_id')
+      .eq('user_id', userId);
+  });
 
   if (projectsError) {
     console.error('Error fetching user projects:', projectsError);
