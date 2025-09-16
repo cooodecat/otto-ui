@@ -1,13 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { 
-  X, Settings, Palette, Bell, Keyboard, Zap, 
-  Download, Upload, RotateCcw, Check, Moon, Sun, Monitor
-} from 'lucide-react';
-import { useUserPreferences } from '@/hooks/logs/useUserPreferences';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import {
+  X,
+  Settings,
+  Palette,
+  Bell,
+  Keyboard,
+  Zap,
+  Download,
+  Upload,
+  RotateCcw,
+  Check,
+  Moon,
+  Sun,
+  Monitor,
+} from "lucide-react";
+import { useUserPreferences } from "@/hooks/logs/useUserPreferences";
+import { cn } from "@/lib/utils";
 
 interface PreferencesModalProps {
   isOpen: boolean;
@@ -15,17 +26,23 @@ interface PreferencesModalProps {
   userId?: string;
 }
 
-const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, userId }) => {
-  const { 
-    preferences, 
-    updatePreferences, 
+const PreferencesModal: React.FC<PreferencesModalProps> = ({
+  isOpen,
+  onClose,
+  userId,
+}) => {
+  const {
+    preferences,
+    updatePreferences,
     updateNestedPreference,
-    resetPreferences, 
-    exportPreferences, 
-    importPreferences 
+    resetPreferences,
+    exportPreferences,
+    importPreferences,
   } = useUserPreferences(userId);
-  
-  const [activeTab, setActiveTab] = useState<'view' | 'notifications' | 'display' | 'performance' | 'keyboard'>('view');
+
+  const [activeTab, setActiveTab] = useState<
+    "view" | "notifications" | "display" | "performance" | "keyboard"
+  >("view");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,11 +53,11 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
   };
 
   const tabs = [
-    { id: 'view', label: 'View', icon: Settings },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'display', label: 'Display', icon: Palette },
-    { id: 'performance', label: 'Performance', icon: Zap },
-    { id: 'keyboard', label: 'Shortcuts', icon: Keyboard },
+    { id: "view", label: "View", icon: Settings },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "display", label: "Display", icon: Palette },
+    { id: "performance", label: "Performance", icon: Zap },
+    { id: "keyboard", label: "Shortcuts", icon: Keyboard },
   ];
 
   return (
@@ -62,7 +79,7 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
 
           {/* Tabs */}
           <div className="flex border-b border-gray-200 px-6">
-            {tabs.map(tab => {
+            {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
@@ -84,12 +101,14 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            {activeTab === 'view' && (
+            {activeTab === "view" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Default View</h3>
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">
+                    Default View
+                  </h3>
                   <div className="flex gap-2">
-                    {(['cards', 'table', 'timeline'] as const).map(view => (
+                    {(["cards", "table", "timeline"] as const).map((view) => (
                       <button
                         key={view}
                         onClick={() => updatePreferences({ defaultView: view })}
@@ -108,31 +127,43 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
 
                 <div className="space-y-3">
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Auto-scroll to new logs</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Auto-scroll to new logs
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.autoScroll}
-                      onChange={(e) => updatePreferences({ autoScroll: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({ autoScroll: e.target.checked })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
 
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Show analytics by default</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Show analytics by default
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.showAnalytics}
-                      onChange={(e) => updatePreferences({ showAnalytics: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({ showAnalytics: e.target.checked })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
 
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Expand timeline groups</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Expand timeline groups
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.expandedGroups}
-                      onChange={(e) => updatePreferences({ expandedGroups: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({ expandedGroups: e.target.checked })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
@@ -140,45 +171,67 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
               </div>
             )}
 
-            {activeTab === 'notifications' && (
+            {activeTab === "notifications" && (
               <div className="space-y-6">
                 <div className="space-y-3">
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Notification sound</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Notification sound
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.notificationSound}
-                      onChange={(e) => updatePreferences({ notificationSound: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({
+                          notificationSound: e.target.checked,
+                        })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
 
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Show success toasts</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Show success toasts
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.showSuccessToasts}
-                      onChange={(e) => updatePreferences({ showSuccessToasts: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({
+                          showSuccessToasts: e.target.checked,
+                        })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
 
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Show failure toasts</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Show failure toasts
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.showFailureToasts}
-                      onChange={(e) => updatePreferences({ showFailureToasts: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({
+                          showFailureToasts: e.target.checked,
+                        })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
 
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Show info toasts</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Show info toasts
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.showInfoToasts}
-                      onChange={(e) => updatePreferences({ showInfoToasts: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({ showInfoToasts: e.target.checked })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
@@ -194,23 +247,29 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
                     max="10000"
                     step="1000"
                     value={preferences.toastDuration}
-                    onChange={(e) => updatePreferences({ toastDuration: parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      updatePreferences({
+                        toastDuration: parseInt(e.target.value),
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
             )}
 
-            {activeTab === 'display' && (
+            {activeTab === "display" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Color Theme</h3>
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">
+                    Color Theme
+                  </h3>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => updatePreferences({ colorTheme: 'light' })}
+                      onClick={() => updatePreferences({ colorTheme: "light" })}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors cursor-pointer",
-                        preferences.colorTheme === 'light'
+                        preferences.colorTheme === "light"
                           ? "bg-blue-50 border-blue-300 text-blue-700"
                           : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                       )}
@@ -219,10 +278,10 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
                       Light
                     </button>
                     <button
-                      onClick={() => updatePreferences({ colorTheme: 'dark' })}
+                      onClick={() => updatePreferences({ colorTheme: "dark" })}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors cursor-pointer",
-                        preferences.colorTheme === 'dark'
+                        preferences.colorTheme === "dark"
                           ? "bg-blue-50 border-blue-300 text-blue-700"
                           : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                       )}
@@ -231,10 +290,10 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
                       Dark
                     </button>
                     <button
-                      onClick={() => updatePreferences({ colorTheme: 'auto' })}
+                      onClick={() => updatePreferences({ colorTheme: "auto" })}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors cursor-pointer",
-                        preferences.colorTheme === 'auto'
+                        preferences.colorTheme === "auto"
                           ? "bg-blue-50 border-blue-300 text-blue-700"
                           : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                       )}
@@ -247,59 +306,89 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
 
                 <div className="space-y-3">
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Compact mode</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Compact mode
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.compactMode}
-                      onChange={(e) => updatePreferences({ compactMode: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({ compactMode: e.target.checked })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
 
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Show relative time</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Show relative time
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.showRelativeTime}
-                      onChange={(e) => updatePreferences({ showRelativeTime: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({
+                          showRelativeTime: e.target.checked,
+                        })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
 
                   <label className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Show build numbers</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      Show build numbers
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.showBuildNumbers}
-                      onChange={(e) => updatePreferences({ showBuildNumbers: e.target.checked })}
+                      onChange={(e) =>
+                        updatePreferences({
+                          showBuildNumbers: e.target.checked,
+                        })
+                      }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </label>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Default Log Filters</h3>
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">
+                    Default Log Filters
+                  </h3>
                   <div className="space-y-2">
-                    {(['Errors', 'Warnings', 'Info', 'Debug'] as const).map((level) => {
-                      const key = `show${level}` as keyof typeof preferences.defaultFilters;
-                      return (
-                        <label key={level} className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Show {level}</span>
-                          <input
-                            type="checkbox"
-                            checked={preferences.defaultFilters[key]}
-                            onChange={(e) => updateNestedPreference('defaultFilters', { [key]: e.target.checked })}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                        </label>
-                      );
-                    })}
+                    {(["Errors", "Warnings", "Info", "Debug"] as const).map(
+                      (level) => {
+                        const key =
+                          `show${level}` as keyof typeof preferences.defaultFilters;
+                        return (
+                          <label
+                            key={level}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="text-sm text-gray-700">
+                              Show {level}
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={preferences.defaultFilters[key]}
+                              onChange={(e) =>
+                                updateNestedPreference("defaultFilters", {
+                                  [key]: e.target.checked,
+                                })
+                              }
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </label>
+                        );
+                      }
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {activeTab === 'performance' && (
+            {activeTab === "performance" && (
               <div className="space-y-6">
                 <div>
                   <label className="text-sm font-medium text-gray-900 block mb-2">
@@ -307,7 +396,9 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
                   </label>
                   <select
                     value={preferences.logRetention}
-                    onChange={(e) => updatePreferences({ logRetention: e.target.value as any })}
+                    onChange={(e) =>
+                      updatePreferences({ logRetention: e.target.value as any })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="1h">1 hour</option>
@@ -327,49 +418,78 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose, us
                     max="1000"
                     step="10"
                     value={preferences.maxLogsInView}
-                    onChange={(e) => updatePreferences({ maxLogsInView: parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      updatePreferences({
+                        maxLogsInView: parseInt(e.target.value),
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <label className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900">Enable virtual scrolling</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    Enable virtual scrolling
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.enableVirtualScrolling}
-                    onChange={(e) => updatePreferences({ enableVirtualScrolling: e.target.checked })}
+                    onChange={(e) =>
+                      updatePreferences({
+                        enableVirtualScrolling: e.target.checked,
+                      })
+                    }
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </label>
               </div>
             )}
 
-            {activeTab === 'keyboard' && (
+            {activeTab === "keyboard" && (
               <div className="space-y-6">
                 <label className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900">Enable keyboard shortcuts</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    Enable keyboard shortcuts
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.keyboardShortcutsEnabled}
-                    onChange={(e) => updatePreferences({ keyboardShortcutsEnabled: e.target.checked })}
+                    onChange={(e) =>
+                      updatePreferences({
+                        keyboardShortcutsEnabled: e.target.checked,
+                      })
+                    }
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </label>
 
                 {preferences.keyboardShortcutsEnabled && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-gray-900">Custom Shortcuts</h3>
-                    {Object.entries(preferences.customShortcuts).map(([action, key]) => (
-                      <div key={action} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700 capitalize">{action.replace(/([A-Z])/g, ' $1').trim()}</span>
-                        <input
-                          type="text"
-                          value={key}
-                          onChange={(e) => updateNestedPreference('customShortcuts', { [action]: e.target.value })}
-                          className="w-20 px-2 py-1 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                    ))}
+                    <h3 className="text-sm font-medium text-gray-900">
+                      Custom Shortcuts
+                    </h3>
+                    {Object.entries(preferences.customShortcuts).map(
+                      ([action, key]) => (
+                        <div
+                          key={action}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-sm text-gray-700 capitalize">
+                            {action.replace(/([A-Z])/g, " $1").trim()}
+                          </span>
+                          <input
+                            type="text"
+                            value={key}
+                            onChange={(e) =>
+                              updateNestedPreference("customShortcuts", {
+                                [action]: e.target.value,
+                              })
+                            }
+                            className="w-20 px-2 py-1 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
               </div>

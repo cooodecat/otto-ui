@@ -7,7 +7,7 @@ import { PipelineStartNodeData } from "@/types/cicd-node.types";
 
 const PipelineStartNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as PipelineStartNodeData;
-  
+
   return (
     <div className="relative bg-white border-2 border-green-300 rounded-lg shadow-lg min-w-[280px]">
       {/* Header */}
@@ -15,14 +15,12 @@ const PipelineStartNode = memo(({ data, id }: NodeProps) => {
         <Play className="w-4 h-4 text-white" />
         <h3 className="font-medium text-sm">{nodeData.label}</h3>
       </div>
-      
+
       {/* Content */}
       <div className="p-4">
-        <div className="text-sm text-gray-600">
-          파이프라인 시작점
-        </div>
+        <div className="text-sm text-gray-600">파이프라인 시작점</div>
       </div>
-      
+
       {/* Single Success Output Handle */}
       <Handle
         type="source"
@@ -36,7 +34,7 @@ const PipelineStartNode = memo(({ data, id }: NodeProps) => {
           width: 12,
           height: 12,
           borderRadius: "50%",
-          bottom: "-6px"
+          bottom: "-6px",
         }}
       />
     </div>

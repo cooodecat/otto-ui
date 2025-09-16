@@ -37,11 +37,16 @@ const ConditionNode = memo(({ data, id }: NodeProps) => {
           <div className="bg-gray-50 rounded-lg p-3">
             {nodeData.conditions && nodeData.conditions.length > 0 ? (
               nodeData.conditions.map((condition, index) => (
-                <div key={condition.id} className="flex items-center gap-2 text-sm">
+                <div
+                  key={condition.id}
+                  className="flex items-center gap-2 text-sm"
+                >
                   <span className="text-gray-500">{index + 1}</span>
                   <code className="text-gray-600">{condition.field}</code>
                   <span className="text-gray-400">{condition.operator}</span>
-                  <span className="text-gray-600">{String(condition.value)}</span>
+                  <span className="text-gray-600">
+                    {String(condition.value)}
+                  </span>
                 </div>
               ))
             ) : (

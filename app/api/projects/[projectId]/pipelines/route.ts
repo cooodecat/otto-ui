@@ -36,10 +36,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 프로젝트 소유권 확인
@@ -60,13 +57,15 @@ export async function GET(request: Request, { params }: RouteParams) {
     // 파이프라인 목록 조회
     const { data: pipelines, error: pipelinesError } = await supabase
       .from("pipelines")
-      .select(`
+      .select(
+        `
         pipeline_id,
         project_id,
         data,
         env,
         created_at
-      `)
+      `
+      )
       .eq("project_id", projectId)
       .order("created_at", { ascending: false });
 
@@ -83,17 +82,20 @@ export async function GET(request: Request, { params }: RouteParams) {
       ((pipelines as Pipeline[]) || []).map(async (pipeline) => {
         // 파이프라인 데이터에서 이름 추출 (data.name이 있다고 가정)
         const pipelineData = pipeline.data;
-        const pipelineName = pipelineData?.name || `Pipeline ${pipeline.pipeline_id.slice(0, 8)}`;
+        const pipelineName =
+          pipelineData?.name || `Pipeline ${pipeline.pipeline_id.slice(0, 8)}`;
 
         // 최근 빌드 실행 정보 조회
         const { data: lastRun } = await supabase
           .from("build_histories")
-          .select(`
+          .select(
+            `
             aws_build_id,
             build_execution_status,
             start_time,
             end_time
-          `)
+          `
+          )
           .eq("project_id", projectId)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -140,10 +142,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 프로젝트 소유권 확인
@@ -218,10 +217,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 프로젝트 소유권 확인

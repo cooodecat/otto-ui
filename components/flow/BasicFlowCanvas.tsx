@@ -43,7 +43,11 @@ const initialNodes: Node[] = [
   },
 ];
 
-function DropZone({ onInitializeReady }: { onInitializeReady: (fn: () => void) => void }) {
+function DropZone({
+  onInitializeReady,
+}: {
+  onInitializeReady: (fn: () => void) => void;
+}) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { screenToFlowPosition } = useReactFlow();
@@ -180,8 +184,13 @@ interface BasicFlowCanvasProps {
   pipelineId: string;
 }
 
-function FlowCanvasWithButtons({ projectId: _projectId, pipelineId: _pipelineId }: BasicFlowCanvasProps) {
-  const [handleInitialize, setHandleInitialize] = useState<(() => void) | null>(null);
+function FlowCanvasWithButtons({
+  projectId: _projectId,
+  pipelineId: _pipelineId,
+}: BasicFlowCanvasProps) {
+  const [handleInitialize, setHandleInitialize] = useState<(() => void) | null>(
+    null
+  );
 
   const onInitializeReady = useCallback((fn: () => void) => {
     setHandleInitialize(() => fn);
@@ -218,7 +227,10 @@ function FlowCanvasWithButtons({ projectId: _projectId, pipelineId: _pipelineId 
  * @param pipelineId - 파이프라인 ID
  * @returns 파이프라인 플로우 캔버스
  */
-export default function BasicFlowCanvas({ projectId, pipelineId }: BasicFlowCanvasProps) {
+export default function BasicFlowCanvas({
+  projectId,
+  pipelineId,
+}: BasicFlowCanvasProps) {
   return (
     <ReactFlowProvider>
       <FlowCanvasWithButtons projectId={projectId} pipelineId={pipelineId} />

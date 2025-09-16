@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Loader2, Info } from 'lucide-react';
-import { ProjectConfig } from './types';
+import React, { useState, useEffect } from "react";
+import { AlertCircle, CheckCircle, Loader2, Info } from "lucide-react";
+import { ProjectConfig } from "./types";
 
 interface StepTwoProps {
   projectConfig: ProjectConfig;
@@ -63,14 +63,16 @@ export default function StepTwo({
     }
   };
 
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDescriptionChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     onConfigChange({
       ...projectConfig,
       description: e.target.value,
     });
   };
 
-  const handleBlur = (field: 'name' | 'description') => {
+  const handleBlur = (field: "name" | "description") => {
     setTouched({
       ...touched,
       [field]: true,
@@ -81,7 +83,10 @@ export default function StepTwo({
     <div className="p-8 space-y-6">
       {/* Project Name */}
       <div>
-        <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor="project-name"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           프로젝트 이름 <span className="text-red-500">*</span>
         </label>
         <div className="relative">
@@ -90,14 +95,15 @@ export default function StepTwo({
             type="text"
             value={projectConfig.name}
             onChange={handleNameChange}
-            onBlur={() => handleBlur('name')}
+            onBlur={() => handleBlur("name")}
             className={`
               w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors
-              ${validation.nameError && touched.name
-                ? 'border-red-300 focus:ring-red-500 pr-10'
-                : validation.isNameValid && touched.name
-                  ? 'border-green-300 focus:ring-green-500 pr-10'
-                  : 'border-gray-300 focus:ring-purple-500'
+              ${
+                validation.nameError && touched.name
+                  ? "border-red-300 focus:ring-red-500 pr-10"
+                  : validation.isNameValid && touched.name
+                  ? "border-green-300 focus:ring-green-500 pr-10"
+                  : "border-gray-300 focus:ring-purple-500"
               }
             `}
             placeholder="my-awesome-project"
@@ -143,22 +149,24 @@ export default function StepTwo({
 
       {/* Project Description */}
       <div>
-        <label htmlFor="project-description" className="block text-sm font-medium text-gray-700 mb-2">
-          프로젝트 설명 <span className="text-gray-400 text-xs">(선택사항)</span>
+        <label
+          htmlFor="project-description"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          프로젝트 설명{" "}
+          <span className="text-gray-400 text-xs">(선택사항)</span>
         </label>
         <textarea
           id="project-description"
           value={projectConfig.description}
           onChange={handleDescriptionChange}
-          onBlur={() => handleBlur('description')}
+          onBlur={() => handleBlur("description")}
           rows={4}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
           placeholder="프로젝트에 대한 간단한 설명을 입력하세요..."
         />
         <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-gray-500">
-            마크다운 형식을 지원합니다
-          </p>
+          <p className="text-xs text-gray-500">마크다운 형식을 지원합니다</p>
           <p className="text-xs text-gray-500">
             {projectConfig.description.length} / 500
           </p>
@@ -186,7 +194,7 @@ export default function StepTwo({
           <h4 className="text-sm font-medium text-gray-700 mb-3">미리보기</h4>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">
-              {projectConfig.name || '프로젝트 이름'}
+              {projectConfig.name || "프로젝트 이름"}
             </h3>
             {projectConfig.description && (
               <p className="text-sm text-gray-600 mt-2">

@@ -10,8 +10,8 @@ export type Json =
   | Json[];
 
 // Enum 타입들
-export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-export type CollectionStatus = 'ACTIVE' | 'STOPPED' | 'ERROR';
+export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
+export type CollectionStatus = "ACTIVE" | "STOPPED" | "ERROR";
 
 export interface Database {
   public: {
@@ -66,7 +66,7 @@ export interface Database {
           updated_at?: string | null;
         };
       };
-      
+
       // 빌드 실행 단계 (INSTALL/BUILD/FINALIZE 등)
       build_execution_phases: {
         Row: {
@@ -102,7 +102,7 @@ export interface Database {
           phase_context_message?: string | null;
         };
       };
-      
+
       // 실행 로그 (CloudWatch에서 수집된 각 로그 이벤트)
       job_execution_logs: {
         Row: {
@@ -144,7 +144,7 @@ export interface Database {
           raw_data?: Json | null;
         };
       };
-      
+
       // 로그 실행 단위 (Job Execution 단위, CodeBuild 빌드 단위와 유사)
       job_executions: {
         Row: {
@@ -180,7 +180,7 @@ export interface Database {
           ended_at?: string | null;
         };
       };
-      
+
       // 로그 수집 상태 (last_token 기반 추적)
       log_collection_state: {
         Row: {
@@ -208,7 +208,7 @@ export interface Database {
           updated_at?: string | null;
         };
       };
-      
+
       // Supabase 프로젝트와 연결된 pipeline 정의 (JSON 기반)
       pipeline: {
         Row: {
@@ -229,7 +229,7 @@ export interface Database {
           env?: Json | null;
         };
       };
-      
+
       // 사용자 프로필 정보 (auth.users를 확장)
       profiles: {
         Row: {
@@ -265,7 +265,7 @@ export interface Database {
           updated_at?: string | null;
         };
       };
-      
+
       // 프로젝트 정보 (빌드 대상 저장소 등)
       projects: {
         Row: {
@@ -337,7 +337,7 @@ export interface Database {
           codebuild_error_message?: string | null;
         };
       };
-      
+
       // GitHub Installation 정보 (user와 연결)
       github_installations: {
         Row: {
@@ -373,7 +373,7 @@ export interface Database {
           updated_at?: string | null;
         };
       };
-      
+
       // GitHub Push 이벤트 수신 기록
       push_events: {
         Row: {

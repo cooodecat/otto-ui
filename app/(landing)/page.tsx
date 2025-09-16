@@ -24,7 +24,9 @@ export default function Home() {
         if (latestProject) {
           // 해당 프로젝트의 파이프라인 데이터 로드
           await fetchPipelines(latestProject.projectId);
-          const latestPipeline = getLatestPipelineByProject(latestProject.projectId);
+          const latestPipeline = getLatestPipelineByProject(
+            latestProject.projectId
+          );
 
           if (latestPipeline) {
             // NOTE: 데이터베이스에서도 동일한 로직으로 최신 프로젝트/파이프라인 결정 예정
@@ -32,7 +34,9 @@ export default function Home() {
             const projectNumericId = reverseMapId(latestProject.projectId);
             const pipelineNumericId = reverseMapId(latestPipeline.pipelineId);
 
-            setLatestRoute(`/projects/${projectNumericId}/pipelines/${pipelineNumericId}`);
+            setLatestRoute(
+              `/projects/${projectNumericId}/pipelines/${pipelineNumericId}`
+            );
           }
         }
       } catch (error) {
@@ -42,7 +46,12 @@ export default function Home() {
     };
 
     initializeLatestRoute();
-  }, [fetchProjects, getLatestProject, fetchPipelines, getLatestPipelineByProject]);
+  }, [
+    fetchProjects,
+    getLatestProject,
+    fetchPipelines,
+    getLatestPipelineByProject,
+  ]);
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">

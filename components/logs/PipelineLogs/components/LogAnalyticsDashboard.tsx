@@ -500,7 +500,9 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
                       label: `${h.hour}시`,
                       value: h.count,
                       max: Math.max(
-                        ...analytics.trends.hourlyDistribution.map((x) => x.count)
+                        ...analytics.trends.hourlyDistribution.map(
+                          (x) => x.count
+                        )
                       ),
                     }))}
                 />
@@ -557,7 +559,9 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
                       <span>{branch.builds} 빌드</span>
-                      <span className="text-gray-400">{branch.lastActivity}</span>
+                      <span className="text-gray-400">
+                        {branch.lastActivity}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -600,16 +604,20 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 <div className="flex items-center justify-between p-3 bg-green-100 rounded-lg">
                   <div>
-                    <div className="text-xs text-green-700 font-medium">최단 시간</div>
+                    <div className="text-xs text-green-700 font-medium">
+                      최단 시간
+                    </div>
                     <div className="text-lg font-bold text-gray-900">
-                      {analytics.performance.fastestBuild?.duration || '-'}
+                      {analytics.performance.fastestBuild?.duration || "-"}
                     </div>
                   </div>
                   <Zap className="w-8 h-8 text-green-600" />
                 </div>
                 <div className="flex items-center justify-between p-3 bg-yellow-100 rounded-lg">
                   <div>
-                    <div className="text-xs text-yellow-700 font-medium">평균 시간</div>
+                    <div className="text-xs text-yellow-700 font-medium">
+                      평균 시간
+                    </div>
                     <div className="text-lg font-bold text-gray-900">
                       {analytics.summary.avgDuration}
                     </div>
@@ -618,9 +626,11 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
                 </div>
                 <div className="flex items-center justify-between p-3 bg-red-100 rounded-lg">
                   <div>
-                    <div className="text-xs text-red-700 font-medium">최장 시간</div>
+                    <div className="text-xs text-red-700 font-medium">
+                      최장 시간
+                    </div>
                     <div className="text-lg font-bold text-gray-900">
-                      {analytics.performance.slowestBuild?.duration || '-'}
+                      {analytics.performance.slowestBuild?.duration || "-"}
                     </div>
                   </div>
                   <Clock className="w-8 h-8 text-red-600" />
@@ -642,7 +652,9 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
                     }),
                     value: d.success + d.failed, // Total builds as proxy for duration impact
                     max: Math.max(
-                      ...analytics.trends.dailyBuilds.map((x) => x.success + x.failed)
+                      ...analytics.trends.dailyBuilds.map(
+                        (x) => x.success + x.failed
+                      )
                     ),
                   }))}
                 />
@@ -660,7 +672,10 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
               </h3>
               <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 {analytics.topIssues.map((issue, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
+                  >
                     <div className="flex items-center gap-3 flex-1">
                       <div className="flex-shrink-0">
                         <AlertTriangle className="w-5 h-5 text-amber-600" />
@@ -681,14 +696,16 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
                         </div>
                         <div className="text-xs text-gray-500">발생</div>
                       </div>
-                      <div className={cn(
-                        "px-2 py-1 rounded-full text-xs font-medium",
-                        issue.percentage > 30
-                          ? "bg-red-100 text-red-700"
-                          : issue.percentage > 20
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-gray-100 text-gray-700"
-                      )}>
+                      <div
+                        className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium",
+                          issue.percentage > 30
+                            ? "bg-red-100 text-red-700"
+                            : issue.percentage > 20
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-gray-100 text-gray-700"
+                        )}
+                      >
                         {issue.percentage}%
                       </div>
                     </div>
@@ -732,7 +749,11 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
                 <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                   <span className="text-sm text-gray-600">실패율</span>
                   <span className="text-lg font-bold text-red-600">
-                    {((analytics.summary.failed / analytics.summary.total) * 100).toFixed(1)}%
+                    {(
+                      (analytics.summary.failed / analytics.summary.total) *
+                      100
+                    ).toFixed(1)}
+                    %
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-white rounded-lg">

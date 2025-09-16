@@ -14,15 +14,14 @@ import {
   ScrollText,
   Filter,
   BookOpen,
-} from 'lucide-react';
-import { cicdCategories } from '@/components/flow/nodes/node-registry';
-import SettingsModal from '../settings/SettingsModal';
-import { useProjectStore } from '@/lib/projectStore';
-import { usePipelineStore } from '@/lib/pipelineStore';
-import { SidebarSkeleton, WorkspaceDropdownSkeleton } from './SidebarSkeleton';
-import { mapProjectId, mapPipelineId } from '@/lib/utils/idMapping';
+} from "lucide-react";
+import { cicdCategories } from "@/components/flow/nodes/node-registry";
+import SettingsModal from "../settings/SettingsModal";
+import { useProjectStore } from "@/lib/projectStore";
+import { usePipelineStore } from "@/lib/pipelineStore";
+import { SidebarSkeleton, WorkspaceDropdownSkeleton } from "./SidebarSkeleton";
+import { mapProjectId, mapPipelineId } from "@/lib/utils/idMapping";
 import CreateProjectModal from "../projects/CreateProjectModal";
-
 
 /**
  * 하단 네비게이션 아이콘의 인터페이스
@@ -72,38 +71,38 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
 
 /**
  * 블록 팔레트를 표시해야 하는 경로인지 확인하는 함수
- * 
+ *
  * 파이프라인 에디터 관련 페이지에서만 블록 팔레트를 표시합니다.
  * 로그 페이지나 대시보드 페이지에서는 블록 팔레트를 숨깁니다.
- * 
+ *
  * @param pathname - 현재 경로 문자열
  * @returns 블록 팔레트를 표시해야 하는지 여부
  */
 const shouldShowBlockPalette = (pathname: string): boolean => {
   // 파이프라인 에디터 페이지
-  if (pathname === '/pipelines' || pathname === '/flow-editor') return true;
-  
+  if (pathname === "/pipelines" || pathname === "/flow-editor") return true;
+
   // 파이프라인 상세 페이지
   const pipelineDetailPattern = /^\/projects\/[^/]+\/pipelines\/[^/]+$/;
   if (pipelineDetailPattern.test(pathname)) return true;
-  
+
   // 로그 페이지나 기타 페이지에서는 표시하지 않음
   return false;
 };
 
 /**
  * 로그 페이지인지 확인하는 함수
- * 
+ *
  * @param pathname - 현재 경로 문자열
  * @returns 로그 페이지인지 여부
  */
 const isLogsPage = (pathname: string): boolean => {
   // 독립적인 /logs 페이지
-  if (pathname === '/logs' || pathname.startsWith('/logs/')) return true;
-  
+  if (pathname === "/logs" || pathname.startsWith("/logs/")) return true;
+
   // 프로젝트별 로그 페이지 (나중에 추가될 수 있음)
-  if (pathname.includes('/logs')) return true;
-  
+  if (pathname.includes("/logs")) return true;
+
   return false;
 };
 
@@ -256,11 +255,11 @@ const GlobalSidebar = () => {
    * 일반적인 워크스페이스 기능에 빠르게 접근할 수 있게 해줍니다
    */
   const bottomIcons: BottomIcon[] = [
-    { icon: Settings, title: 'Settings' },
-    { icon: HelpCircle, title: 'Help' },
-    { icon: ScrollText, title: 'Pipeline Logs' },
-    { icon: BookOpen, title: 'Resources' },
-    { icon: Home, title: 'Home' },
+    { icon: Settings, title: "Settings" },
+    { icon: HelpCircle, title: "Help" },
+    { icon: ScrollText, title: "Pipeline Logs" },
+    { icon: BookOpen, title: "Resources" },
+    { icon: Home, title: "Home" },
   ];
 
   /**
@@ -485,7 +484,7 @@ const GlobalSidebar = () => {
             {/* 워크스페이스 드롭다운 버튼 */}
             <button
               onClick={handleWorkspaceDropdownToggle}
-              className='flex items-center space-x-2 w-full text-left hover:bg-gray-50 hover:cursor-pointer rounded-lg p-2 -m-2 transition-colors'
+              className="flex items-center space-x-2 w-full text-left hover:bg-gray-50 hover:cursor-pointer rounded-lg p-2 -m-2 transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <h1 className="text-lg font-semibold text-gray-900 truncate">
@@ -514,7 +513,9 @@ const GlobalSidebar = () => {
                         key={project.projectId}
                         onClick={() => handleProjectSelect(project.projectId)}
                         className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
-                          project.projectId === selectedProjectId ? 'bg-blue-50' : ''
+                          project.projectId === selectedProjectId
+                            ? "bg-blue-50"
+                            : ""
                         }`}
                       >
                         <div className="flex-1 min-w-0 text-left">
@@ -543,10 +544,10 @@ const GlobalSidebar = () => {
                   )}
 
                   {/* 새 프로젝트 만들기 */}
-                  <div className='border-t border-gray-100 mt-1 pt-1'>
+                  <div className="border-t border-gray-100 mt-1 pt-1">
                     <button
                       onClick={handleCreateProjectClick}
-                      className='w-full flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:cursor-pointer transition-colors'
+                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:cursor-pointer transition-colors"
                     >
                       <Plus className="w-4 h-4" />
                       <span>새 프로젝트 만들기</span>
@@ -558,8 +559,8 @@ const GlobalSidebar = () => {
           </div>
 
           {/* 복사 버튼 */}
-          <button className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg ml-2 transition-colors'>
-            <Copy className='w-4 h-4' />
+          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg ml-2 transition-colors">
+            <Copy className="w-4 h-4" />
           </button>
         </div>
 
@@ -589,8 +590,8 @@ const GlobalSidebar = () => {
               ? `${getSelectedProjectInfo()?.name} Pipelines`
               : "Pipelines"}
           </h3>
-          <button className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'>
-            <Plus className='w-3 h-3' />
+          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors">
+            <Plus className="w-3 h-3" />
           </button>
         </div>
 
@@ -635,37 +636,45 @@ const GlobalSidebar = () => {
 
       {/* Blocks Palette Section Card - 파이프라인 에디터 페이지에서만 표시 */}
       {showBlockPalette && (
-        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex-1 flex flex-col min-h-0'>
-          <div className='mb-4'>
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex-1 flex flex-col min-h-0">
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
-                type='text'
-                placeholder='블록 검색...'
-                className='w-full pl-10 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50'
+                type="text"
+                placeholder="블록 검색..."
+                className="w-full pl-10 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
                 value={searchBlocks}
                 onChange={(e) => setSearchBlocks(e.target.value)}
               />
             </div>
           </div>
 
-          <div className='flex-1 overflow-y-auto space-y-4 pr-1'>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
             {/* 검색어가 있으면 결과 리스트만 표시 */}
             {searchBlocks ? (
-              <div className='space-y-2'>
+              <div className="space-y-2">
                 {getFilteredNodes().map((node) => (
                   <div
                     key={node.type}
-                    className='flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm'
+                    className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm"
                     draggable
                     onDragStart={(e) => handleBlockDragStart(e, node.type)}
                   >
-                    <div className={`w-8 h-8 ${node.colorClass} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}>
-                      <span className='text-white text-sm font-medium'>{node.icon}</span>
+                    <div
+                      className={`w-8 h-8 ${node.colorClass} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}
+                    >
+                      <span className="text-white text-sm font-medium">
+                        {node.icon}
+                      </span>
                     </div>
-                    <div className='min-w-0'>
-                      <div className='text-sm font-medium text-gray-900 truncate'>{node.label}</div>
-                      <div className='text-xs text-gray-500 truncate'>{node.description}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {node.label}
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {node.description}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -674,35 +683,55 @@ const GlobalSidebar = () => {
               // 검색어가 없으면 카테고리별 표시 (CICD와 동일 스타일)
               <>
                 {Object.entries(cicdCategories)
-                  .filter(([key]) => key !== 'start') // start 카테고리 제외 (이미 캔버스에 초기 노드로 있음)
+                  .filter(([key]) => key !== "start") // start 카테고리 제외 (이미 캔버스에 초기 노드로 있음)
                   .map(([key, category]) => (
-                  <div key={key} className='space-y-2'>
-                    <div className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}>
-                      <span className='text-base'>{category.icon}</span>
-                      <h3 className={`text-sm font-medium ${category.textClass}`}>{category.name}</h3>
-                      <span className={`text-xs ${category.textClass} opacity-70`}>({category.nodes.length})</span>
-                    </div>
-
-                    <div className='space-y-1 ml-2'>
-                      {category.nodes.map((node) => (
-                        <div
-                          key={node.type}
-                          className='flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow'
-                          draggable
-                          onDragStart={(e) => handleBlockDragStart(e, node.type)}
+                    <div key={key} className="space-y-2">
+                      <div
+                        className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}
+                      >
+                        <span className="text-base">{category.icon}</span>
+                        <h3
+                          className={`text-sm font-medium ${category.textClass}`}
                         >
-                          <div className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}>
-                            <span className='text-white text-sm'>{node.icon}</span>
+                          {category.name}
+                        </h3>
+                        <span
+                          className={`text-xs ${category.textClass} opacity-70`}
+                        >
+                          ({category.nodes.length})
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 ml-2">
+                        {category.nodes.map((node) => (
+                          <div
+                            key={node.type}
+                            className="flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow"
+                            draggable
+                            onDragStart={(e) =>
+                              handleBlockDragStart(e, node.type)
+                            }
+                          >
+                            <div
+                              className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}
+                            >
+                              <span className="text-white text-sm">
+                                {node.icon}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0 ml-3">
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {node.label}
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">
+                                {node.description}
+                              </div>
+                            </div>
                           </div>
-                          <div className='flex-1 min-w-0 ml-3'>
-                            <div className='text-sm font-medium text-gray-900 truncate'>{node.label}</div>
-                            <div className='text-xs text-gray-500 truncate'>{node.description}</div>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </>
             )}
           </div>
@@ -711,31 +740,53 @@ const GlobalSidebar = () => {
 
       {/* Filter - 로그 페이지 전용 */}
       {isOnLogsPage && (
-        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
-          <div className='flex items-center gap-2 mb-4'>
-            <Filter className='w-4 h-4 text-gray-600' />
-            <h3 className='text-sm font-semibold text-gray-800'>Filter</h3>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-4 h-4 text-gray-600" />
+            <h3 className="text-sm font-semibold text-gray-800">Filter</h3>
           </div>
 
           {/* Filter Buttons */}
-          <div className='space-y-2'>
+          <div className="space-y-2">
             {[
-              { id: 'all', label: '전체 로그', desc: '모든 파이프라인 로그', isActive: true },
-              { id: 'failed', label: '실패한 빌드', desc: 'Status: failed', isActive: false },
-              { id: 'running', label: '실행 중', desc: 'Status: running', isActive: false },
-              { id: '24h', label: '최근 24시간', desc: '지난 24시간 내 로그', isActive: false },
+              {
+                id: "all",
+                label: "전체 로그",
+                desc: "모든 파이프라인 로그",
+                isActive: true,
+              },
+              {
+                id: "failed",
+                label: "실패한 빌드",
+                desc: "Status: failed",
+                isActive: false,
+              },
+              {
+                id: "running",
+                label: "실행 중",
+                desc: "Status: running",
+                isActive: false,
+              },
+              {
+                id: "24h",
+                label: "최근 24시간",
+                desc: "지난 24시간 내 로그",
+                isActive: false,
+              },
             ].map((filter) => (
-              <button 
+              <button
                 key={filter.id}
                 className={`w-full flex items-center p-3 rounded-lg transition-all text-left cursor-pointer ${
-                  filter.isActive 
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100' 
-                    : 'hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-200'
+                  filter.isActive
+                    ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                    : "hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-200"
                 }`}
               >
-                <div className='flex-1'>
-                  <div className='text-sm font-medium'>{filter.label}</div>
-                  <div className='text-xs text-gray-500 mt-0.5'>{filter.desc}</div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium">{filter.label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    {filter.desc}
+                  </div>
                 </div>
               </button>
             ))}
@@ -751,13 +802,13 @@ const GlobalSidebar = () => {
             {bottomIcons.map((item, index) => (
               <button
                 key={index}
-                className='p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors"
                 title={item.title}
                 onClick={
-                  item.title === 'Settings' 
-                    ? handleSettingsClick 
-                    : item.title === 'Pipeline Logs'
-                    ? () => router.push('/logs')
+                  item.title === "Settings"
+                    ? handleSettingsClick
+                    : item.title === "Pipeline Logs"
+                    ? () => router.push("/logs")
                     : undefined
                 }
               >

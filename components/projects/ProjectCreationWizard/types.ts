@@ -39,7 +39,7 @@ export interface WizardState {
   isLoading: boolean;
   isCreating: boolean;
   createdProjectId: string | null;
-  createdProjectNumericId: string | null;
+  createdProjectNumericId: number | null;
 }
 
 export interface ProjectCreationWizardProps {

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   GitBranch,
   FileText,
@@ -9,9 +9,9 @@ import {
   AlertCircle,
   ArrowRight,
   Globe,
-  Lock
-} from 'lucide-react';
-import { Repository, ProjectConfig } from './types';
+  Lock,
+} from "lucide-react";
+import { Repository, ProjectConfig } from "./types";
 
 interface StepThreeProps {
   repository: Repository;
@@ -79,9 +79,12 @@ export default function StepThree({
       {!createdProjectId && (
         <>
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">프로젝트 생성 확인</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              프로젝트 생성 확인
+            </h3>
             <p className="text-sm text-gray-600">
-              아래 정보로 새 프로젝트를 생성합니다. 생성 후에는 프로젝트 이름을 변경할 수 없습니다.
+              아래 정보로 새 프로젝트를 생성합니다. 생성 후에는 프로젝트 이름을
+              변경할 수 없습니다.
             </p>
           </div>
 
@@ -100,16 +103,19 @@ export default function StepThree({
                   <span className="text-sm font-medium text-gray-900">
                     {repository.owner}/{repository.name}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    repository.visibility === 'Public'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      repository.visibility === "Public"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
                     <span className="inline-flex items-center gap-1">
-                      {repository.visibility === 'Public' ?
-                        <Globe className="w-3 h-3" /> :
+                      {repository.visibility === "Public" ? (
+                        <Globe className="w-3 h-3" />
+                      ) : (
                         <Lock className="w-3 h-3" />
-                      }
+                      )}
                       {repository.visibility}
                     </span>
                   </span>
@@ -164,9 +170,10 @@ export default function StepThree({
               className={`
                 px-8 py-3 rounded-lg font-medium text-white transition-all
                 flex items-center gap-2 min-w-[200px] justify-center
-                ${isCreating
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-purple-600 hover:bg-purple-700 hover:shadow-lg transform hover:scale-105'
+                ${
+                  isCreating
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700 hover:shadow-lg transform hover:scale-105"
                 }
               `}
             >

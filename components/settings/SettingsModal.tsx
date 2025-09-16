@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { X, User, Bell, Palette, Shield, HelpCircle } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { User as ApiUser } from '@/types/api';
-import { setApiToken, useApi } from '@/lib/api';
-import Image from 'next/image';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { X, User, Bell, Palette, Shield, HelpCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import type { User as ApiUser } from "@/types/api";
+import { setApiToken, useApi } from "@/lib/api";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 /**
  * SettingsModal 컴포넌트의 Props 인터페이스
@@ -50,7 +50,7 @@ interface SettingSection {
  * @returns 설정 모달을 나타내는 JSX 엘리먼트 또는 null
  */
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
-  const [selectedTab, setSelectedTab] = useState('profile');
+  const [selectedTab, setSelectedTab] = useState("profile");
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [apiUser, setApiUser] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,30 +60,37 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const api = useApi();
   const router = useRouter();
 
-  const fetchUserProfile = useCallback(async (sessionToken: string) => {
-    try {
-      setApiToken(sessionToken);
-      const { data: profileData, error } = await api.getUserProfile();
+  const fetchUserProfile = useCallback(
+    async (sessionToken: string) => {
+      try {
+        setApiToken(sessionToken);
+        const { data: profileData, error } = await api.getUserProfile();
 
-      if (error) {
-        console.error("Profile fetch error:", error);
+        if (error) {
+          console.error("Profile fetch error:", error);
+          setHasError(true);
+        } else {
+          setApiUser(profileData || null);
+          setHasError(false);
+        }
+      } catch (err) {
+        console.error("Profile API call failed:", err);
         setHasError(true);
-      } else {
-        setApiUser(profileData || null);
-        setHasError(false);
       }
-    } catch (err) {
-      console.error("Profile API call failed:", err);
-      setHasError(true);
-    }
-  }, [api]);
+    },
+    [api]
+  );
 
   useEffect(() => {
     if (!isOpen) return;
 
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setUser(user);
 
       if (session?.access_token && !hasError) {
@@ -95,7 +102,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.access_token) {
         setUser(session.user);
         if (!hasError) {
@@ -123,21 +132,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   // ESC 키 이벤트 처리
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onClose();
       }
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscKey);
+      document.addEventListener("keydown", handleEscKey);
       // 모달이 열릴 때 body 스크롤 방지
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscKey);
+      document.removeEventListener("keydown", handleEscKey);
       // 모달이 닫힐 때 body 스크롤 복원
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [isOpen, onClose]);
 
@@ -153,35 +162,35 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
    */
   const settingSections: SettingSection[] = [
     {
-      id: 'profile',
-      title: '프로필',
+      id: "profile",
+      title: "프로필",
       icon: User,
-      description: '사용자 정보 및 계정 설정'
+      description: "사용자 정보 및 계정 설정",
     },
     {
-      id: 'notifications',
-      title: '알림',
+      id: "notifications",
+      title: "알림",
       icon: Bell,
-      description: '알림 설정 및 이메일 구독 관리'
+      description: "알림 설정 및 이메일 구독 관리",
     },
     {
-      id: 'appearance',
-      title: '테마',
+      id: "appearance",
+      title: "테마",
       icon: Palette,
-      description: '다크 모드 및 인터페이스 설정'
+      description: "다크 모드 및 인터페이스 설정",
     },
     {
-      id: 'security',
-      title: '보안',
+      id: "security",
+      title: "보안",
       icon: Shield,
-      description: '비밀번호 및 2단계 인증 설정'
+      description: "비밀번호 및 2단계 인증 설정",
     },
     {
-      id: 'help',
-      title: '도움말',
+      id: "help",
+      title: "도움말",
       icon: HelpCircle,
-      description: '사용법 가이드 및 지원'
-    }
+      description: "사용법 가이드 및 지원",
+    },
   ];
 
   // 모달이 닫혀있으면 렌더링하지 않음
@@ -209,7 +218,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         {/* 헤더 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 id="settings-modal-title" className="text-2xl font-semibold text-gray-900">
+            <h2
+              id="settings-modal-title"
+              className="text-2xl font-semibold text-gray-900"
+            >
               설정
             </h2>
             <p className="text-sm text-gray-500 mt-1">
@@ -235,8 +247,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   key={section.id}
                   className={`w-full flex items-start space-x-3 p-3 text-left rounded-lg transition-colors group ${
                     selectedTab === section.id
-                      ? 'bg-blue-50 border border-blue-200 text-blue-700'
-                      : 'hover:bg-gray-50'
+                      ? "bg-blue-50 border border-blue-200 text-blue-700"
+                      : "hover:bg-gray-50"
                   }`}
                   onClick={() => setSelectedTab(section.id)}
                 >
@@ -257,7 +269,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           {/* 메인 콘텐츠 영역 */}
           <div className="flex-1 p-6 overflow-y-auto">
             <div className="max-w-2xl">
-              {selectedTab === 'profile' ? (
+              {selectedTab === "profile" ? (
                 // 프로필 탭 - 대시보드 UserProfile 내용
                 <div>
                   {loading ? (
@@ -271,7 +283,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
                           <div className="text-center">
                             <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto mb-2"></div>
-                            <p className="text-sm text-gray-600 font-medium">로그아웃 중...</p>
+                            <p className="text-sm text-gray-600 font-medium">
+                              로그아웃 중...
+                            </p>
                           </div>
                         </div>
                       )}
@@ -291,18 +305,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             {user.user_metadata?.full_name || user.email}
                           </h3>
                           {user.user_metadata?.user_name && (
-                            <p className="text-gray-600">@{user.user_metadata.user_name}</p>
+                            <p className="text-gray-600">
+                              @{user.user_metadata.user_name}
+                            </p>
                           )}
                         </div>
                       </div>
 
                       <div className="space-y-2 mb-4 text-sm text-gray-600">
                         <p>
-                          <span className="font-medium">이메일:</span> {user.email}
+                          <span className="font-medium">이메일:</span>{" "}
+                          {user.email}
                         </p>
                         {apiUser?.name && (
                           <p>
-                            <span className="font-medium">이름:</span> {apiUser.name}
+                            <span className="font-medium">이름:</span>{" "}
+                            {apiUser.name}
                           </p>
                         )}
                         {user.user_metadata?.user_name && (
@@ -313,12 +331,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         )}
                         <p>
                           <span className="font-medium">로그인:</span>{" "}
-                          {new Date(user.last_sign_in_at || "").toLocaleString("ko-KR")}
+                          {new Date(user.last_sign_in_at || "").toLocaleString(
+                            "ko-KR"
+                          )}
                         </p>
                         {apiUser?.created_at && (
                           <p>
                             <span className="font-medium">가입:</span>{" "}
-                            {new Date(apiUser.created_at).toLocaleString("ko-KR")}
+                            {new Date(apiUser.created_at).toLocaleString(
+                              "ko-KR"
+                            )}
                           </p>
                         )}
                       </div>
@@ -348,8 +370,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     설정 페이지 준비 중
                   </h3>
                   <p className="text-gray-500 mb-6">
-                    좌측 메뉴에서 설정할 항목을 선택하세요.<br />
-                    각 섹션별 상세 설정 페이지가 곧 추가될 예정입니다.
+                    좌측 메뉴에서 설정할 항목을 선택하세요.
+                    <br />각 섹션별 상세 설정 페이지가 곧 추가될 예정입니다.
                   </p>
                   <button
                     onClick={onClose}
@@ -368,7 +390,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   // React Portal을 사용하여 document.body에 렌더링
   // 이를 통해 사이드바나 다른 컴포넌트의 z-index 제약을 벗어남
-  return typeof window !== 'undefined'
+  return typeof window !== "undefined"
     ? createPortal(modalContent, document.body)
     : null;
 };
