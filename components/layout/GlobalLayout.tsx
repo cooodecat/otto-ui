@@ -34,7 +34,7 @@ const SIDEBAR_EXCLUDED_PATHS = ['/', '/signin'];
  * ```typescript
  * isCanvasLayoutPath('/pipelines') // true - 파이프라인 에디터
  * isCanvasLayoutPath('/projects/123/pipelines/456') // true - 파이프라인 상세
- * isCanvasLayoutPath('/dashboard') // false - 일반 페이지
+ * isCanvasLayoutPath('/projects') // false - 일반 페이지
  * ```
  */
 const isCanvasLayoutPath = (pathname: string): boolean => {

@@ -170,7 +170,12 @@ function DropZone({ onInitializeReady }: { onInitializeReady: (fn: () => void) =
   );
 }
 
-function FlowCanvasWithButtons() {
+interface BasicFlowCanvasProps {
+  projectId: string;
+  pipelineId: string;
+}
+
+function FlowCanvasWithButtons({ projectId, pipelineId }: BasicFlowCanvasProps) {
   const [handleInitialize, setHandleInitialize] = useState<(() => void) | null>(null);
 
   const onInitializeReady = useCallback((fn: () => void) => {
@@ -202,10 +207,10 @@ function FlowCanvasWithButtons() {
   );
 }
 
-export default function BasicFlowCanvas() {
+export default function BasicFlowCanvas({ projectId, pipelineId }: BasicFlowCanvasProps) {
   return (
     <ReactFlowProvider>
-      <FlowCanvasWithButtons />
+      <FlowCanvasWithButtons projectId={projectId} pipelineId={pipelineId} />
     </ReactFlowProvider>
   );
 }

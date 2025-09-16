@@ -80,7 +80,7 @@ interface PipelineItem {
  * ```typescript
  * isCanvasLayoutPath('/pipelines') // true
  * isCanvasLayoutPath('/projects/123/pipelines/456') // true
- * isCanvasLayoutPath('/dashboard') // false
+ * isCanvasLayoutPath('/projects') // false
  * ```
  */
 const isCanvasLayoutPath = (pathname: string): boolean => {
@@ -239,7 +239,7 @@ const GlobalSidebar = () => {
    * 파이프라인 선택 이벤트를 처리합니다
    *
    * 사용자가 파이프라인 목록에서 특정 파이프라인을 클릭했을 때
-   * 해당 파이프라인을 활성 상태로 설정합니다.
+   * 해당 파이프라인 페이지로 이동합니다.
    *
    * @param pipelineId - 선택할 파이프라인의 고유 식별자
    *
@@ -249,7 +249,10 @@ const GlobalSidebar = () => {
    * ```
    */
   const handlePipelineSelect = (pipelineId: string) => {
-    setSelectedPipelineId(pipelineId);
+    const currentProject = getSelectedProject();
+    if (currentProject) {
+      window.location.href = `/projects/${currentProject.projectId}/pipelines/${pipelineId}`;
+    }
   };
 
   /**
