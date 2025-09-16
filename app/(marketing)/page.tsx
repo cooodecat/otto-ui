@@ -96,6 +96,12 @@ export default function Home() {
                 >
                   🔴 Real API Test
                 </Link>
+                <Link
+                  href="/debug-api"
+                  className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105"
+                >
+                  🔧 API Debug Console
+                </Link>
               </div>
               <div className="text-xs text-gray-600 mt-4">
                 완전한 UI, 목업 데이터, 키보드 단축키, 무한 스크롤, 실시간 필터링 + 실제 API 연동 및 SSE 스트리밍
