@@ -194,6 +194,34 @@ export interface KeyboardShortcut {
   description: string;
 }
 
+// Build Log Streaming Types (SSE + REST cache)
+// ============================================================================
+export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG' | 'UNKNOWN';
+export type BuildExecStatus = 'SUCCEEDED' | 'FAILED' | 'STOPPED' | 'TIMED_OUT' | 'IN_PROGRESS' | 'UNKNOWN';
+
+export interface RawLogEvent {
+  timestamp: number;
+  message: string;
+  ingestionTime: number;
+}
+
+export interface NormalizedLog {
+  ts: number;
+  message: string;
+  source?: string;
+  level: LogLevel;
+  phase?: string; // INSTALL | PRE_BUILD | BUILD | POST_BUILD | FINAL
+  code?: string; // error/warn code if available
+  buildStatus?: BuildExecStatus;
+}
+
+export interface SSEPayload {
+  buildId: string;
+  events: RawLogEvent[];
+  normalized?: NormalizedLog[];
+  timestamp: number; // server sent time
+}
+
 // Store Types (for state management)
 // ============================================================================
 

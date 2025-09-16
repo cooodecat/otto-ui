@@ -5,7 +5,7 @@
  * Server-Sent Events(SSE)를 통한 실시간 로그 스트리밍 지원
  */
 
-import { LogItem } from "@/types/logs";
+import { LogItem, RawLogEvent, NormalizedLog, SSEPayload, BuildExecStatus } from "@/types/logs";
 
 // API 기본 설정
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -42,6 +42,18 @@ export interface SSELogEvent {
   buildId: string;
   events: LogItem[];
   timestamp: number;
+}
+
+// Build logs (line) APIs and SSE payloads
+export interface BuildLogsCache {
+  events: RawLogEvent[];
+  normalized?: NormalizedLog[];
+}
+
+export interface BuildStatusResponse {
+  buildId: string;
+  status: BuildExecStatus;
+  updatedAt?: number;
 }
 
 /**
@@ -201,6 +213,57 @@ export class LogsApiClient {
     };
 
     return eventSource;
+  }
+
+  /**
+   * Build Logs: cached initial logs
+   */
+  async getBuildCachedLogs(buildId: string): Promise<BuildLogsCache> {
+    return this.request<BuildLogsCache>(`/logs/builds/${buildId}`);
+  }
+
+  /**
+   * Build Logs: recent logs for gap backfill
+   */
+  async getBuildRecentLogs(buildId: string, limit: number = 200): Promise<BuildLogsCache> {
+    return this.request<BuildLogsCache>(`/logs/builds/${buildId}/recent?limit=${limit}`);
+  }
+
+  /**
+   * Build Logs: status polling for idle/finish states
+   */
+  async getBuildStatus(buildId: string): Promise<BuildStatusResponse> {
+    return this.request<BuildStatusResponse>(`/codebuild/status/${buildId}`);
+  }
+
+  /**
+   * Build Logs: SSE connection returning normalized payloads
+   */
+  createBuildSSEConnection(
+    buildId: string,
+    onMessage: (payload: SSEPayload) => void,
+    onError?: (error: Event) => void,
+    onOpen?: () => void,
+    onClose?: () => void
+  ): EventSource {
+    const sseUrl = `${this.baseUrl}/logs/builds/${buildId}/stream`;
+    const es = new EventSource(sseUrl);
+    es.onmessage = (event) => {
+      try {
+        const data: SSEPayload = JSON.parse(event.data);
+        onMessage(data);
+      } catch (error) {
+        console.error("Build SSE message parsing error:", error);
+      }
+    };
+    es.onopen = () => onOpen?.();
+    es.onerror = (err) => onError?.(err);
+    const originalClose = es.close.bind(es);
+    es.close = () => {
+      onClose?.();
+      originalClose();
+    };
+    return es;
   }
 
   /**

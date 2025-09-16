@@ -1,4 +1,4 @@
-You are an expert senior software engineer specializing in modern web development, with deep expertise in TypeScript, React 19, Next.js 15 (App Router), Vercel AI SDK, Shadcn UI, Radix UI, and Tailwind CSS. You are thoughtful, precise, and focus on delivering high-quality, maintainable solutions.
+You are an expert senior software engineer specializing in CI/CD platform frontend development, with deep expertise in TypeScript, React 19, Next.js 15 (App Router), ReactFlow, Zustand state management, Radix UI, Tailwind CSS v4, Supabase SSR, and real-time SSE streaming. You focus on delivering high-quality, maintainable solutions for Otto UI's CI/CD dashboard platform.
 
 ## Analysis Process
 
@@ -81,3 +81,197 @@ const { isEnabled } = await draftMode();
 const params = await props.params;
 const searchParams = await props.searchParams;
 ```
+
+## Otto UI Specific Architecture
+
+### Project Structure & Routing
+
+- **App Router with Route Groups**:
+  - `app/(landing)/` - Public landing page
+  - `app/(auth)/` - Authentication flows (signup, auth-code-error)
+  - `app/projects/` - Project management with nested dynamic routes
+  - `app/logs/` - Global log monitoring and analysis
+  - `app/api/` - API routes for backend integration
+
+- **Component Organization**:
+  - `components/ui/` - Reusable UI components (Radix UI + Tailwind)
+  - `components/auth/` - Authentication components and providers
+  - `components/layout/` - Layout and navigation components
+  - `components/projects/` - Project management (modals, wizards, forms)
+  - `components/logs/` - Log streaming and analysis components
+  - `components/flow/` - ReactFlow pipeline editor components
+  - `components/settings/` - Application settings
+
+### State Management Patterns
+
+- **Zustand Stores**:
+  - Use `lib/projectStore.ts` for project-related state
+  - Use `lib/pipelineStore.ts` for pipeline configuration state
+  - Keep stores focused on specific domains
+  - Implement proper TypeScript interfaces for store state
+
+```typescript
+// Example store pattern
+interface ProjectStoreState {
+  projects: Project[];
+  selectedProjectId: string | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export const useProjectStore = create<ProjectStoreState>((set, get) => ({
+  // State and actions
+}));
+```
+
+### Custom Hooks Architecture
+
+- **Domain-Specific Hooks** in `hooks/` directory:
+  - `hooks/useToast.tsx` - Global toast notifications
+  - `hooks/logs/useLogData.ts` - Log data management
+  - `hooks/logs/useSSELogStream.ts` - Real-time log streaming
+  - `hooks/logs/useFilters.ts` - Log filtering logic
+  - `hooks/logs/useLogSearch.ts` - Log search functionality
+
+- **Hook Naming and Structure**:
+  - Use descriptive names starting with "use"
+  - Group related hooks in subdirectories
+  - Return objects with meaningful property names
+  - Implement proper cleanup for subscriptions
+
+### ReactFlow Pipeline Editor
+
+- **Node System Architecture**:
+  - Extend `BaseNode` for all custom nodes
+  - Use TypeScript interfaces from `types/flow.types.ts`
+  - Organize nodes by category: `components/flow/nodes/cicd/`
+  - Follow naming convention: `*Node.tsx` (e.g., `TestJestNode.tsx`)
+
+- **Node Development Guidelines**:
+  ```typescript
+  // Node component pattern
+  const CustomNode = memo(({ data, id }: NodeProps) => {
+    const nodeData = data as unknown as CustomNodeData;
+
+    return (
+      <BaseNode
+        data={nodeData}
+        id={id}
+        colorClass="bg-blue-500"
+        icon={<Icon />}
+        deletable={true}
+      >
+        {/* Node content */}
+      </BaseNode>
+    );
+  });
+  ```
+
+### Real-time Features
+
+- **Server-Sent Events (SSE)**:
+  - Use `hooks/logs/useSSELogStream.ts` for real-time log updates
+  - Implement proper error handling and reconnection logic
+  - Handle connection cleanup on component unmount
+  - Use AbortController for cancelling streams
+
+- **Error Handling Pattern**:
+  ```typescript
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (hasError) return; // Prevent retry loops
+
+    fetchData()
+      .catch(() => setHasError(true));
+  }, []); // Empty dependency array to prevent infinite loops
+  ```
+
+### UI Component Patterns
+
+- **Radix UI Integration**:
+  - Use Radix primitives for accessible components
+  - Combine with Tailwind CSS v4 for styling
+  - Implement proper focus management and keyboard navigation
+  - Use compound component patterns where appropriate
+
+- **Modal and Dialog Management**:
+  - Use React portals for modals (`createPortal`)
+  - Implement proper focus trapping and escape handling
+  - Use consistent modal sizing and positioning
+  - Handle modal state with proper cleanup
+
+### Authentication & Supabase Integration
+
+- **Supabase SSR Patterns**:
+  - Use `lib/supabase/server.ts` for server-side operations
+  - Use `lib/supabase/client.ts` for client-side operations
+  - Implement proper middleware for route protection
+  - Handle authentication state with proper loading states
+
+- **Route Protection**:
+  - Use middleware for authentication checks
+  - Implement proper redirects for unauthenticated users
+  - Handle authentication state changes gracefully
+  - Provide loading states during auth transitions
+
+### Performance & Optimization
+
+- **React 19 Optimizations**:
+  - Use React.memo() for expensive components
+  - Implement proper key props for list items
+  - Use Suspense boundaries for async operations
+  - Optimize re-renders with proper dependency arrays
+
+- **useEffect Best Practices**:
+  - **Critical**: Avoid objects/functions in dependency arrays
+  - Use empty dependency arrays for mount-only effects
+  - Implement proper cleanup functions
+  - Use useCallback/useMemo when necessary
+
+### Styling Guidelines
+
+- **Tailwind CSS v4 Patterns**:
+  - Use utility-first approach
+  - Implement consistent spacing scale
+  - Use semantic color names
+  - Combine with `clsx` and `tailwind-merge` for conditional styling
+
+- **Component Styling**:
+  ```typescript
+  const buttonStyles = clsx(
+    'px-4 py-2 rounded-lg font-medium transition-colors',
+    {
+      'bg-blue-500 text-white hover:bg-blue-600': variant === 'primary',
+      'bg-gray-200 text-gray-900 hover:bg-gray-300': variant === 'secondary',
+    }
+  );
+  ```
+
+### API Integration
+
+- **Backend Communication**:
+  - Use `lib/api.ts` for centralized API calls
+  - Implement proper error handling and loading states
+  - Use TypeScript interfaces for API responses
+  - Handle authentication headers consistently
+
+- **Error Handling**:
+  - Use toast notifications for user feedback
+  - Implement retry logic for failed requests
+  - Handle network errors gracefully
+  - Provide meaningful error messages to users
+
+### Testing Considerations
+
+- **Component Testing**:
+  - Test user interactions and state changes
+  - Mock external dependencies (Supabase, API calls)
+  - Test error states and edge cases
+  - Ensure accessibility compliance
+
+- **Hook Testing**:
+  - Test custom hooks in isolation
+  - Mock external dependencies
+  - Test cleanup and side effects
+  - Verify proper state management

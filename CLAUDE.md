@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Next.js 15 application using the App Router, React 19, TypeScript, and Tailwind CSS v4. The project uses pnpm as the package manager.
+Otto UI is a Next.js 15 frontend application for a comprehensive CI/CD platform. It provides a modern dashboard for project management, build monitoring, log analysis, and pipeline visualization. Built with React 19, TypeScript, Tailwind CSS v4, and leverages advanced features like real-time SSE log streaming, interactive flow editors, and responsive design.
 
 ## Essential Commands
 
@@ -25,17 +25,43 @@ pnpm lint:fix     # Auto-fix ESLint issues
 
 ### App Router Structure
 
-- `/app` directory contains the Next.js App Router pages and layouts
-- `app/layout.tsx` - Root layout with Geist font configuration
-- `app/page.tsx` - Homepage component
-- `app/globals.css` - Global styles with Tailwind CSS
+The application uses Next.js 15 App Router with route groups for logical organization:
+
+- **Route Groups**:
+  - `app/(landing)/` - Public landing page
+  - `app/(auth)/` - Authentication flows (signup, auth-code-error)
+  - `app/projects/` - Project management with nested routes
+  - `app/logs/` - Log monitoring and analysis
+  - `app/api/` - API routes for backend integration
+
+- **Key Files**:
+  - `app/layout.tsx` - Root layout with Geist fonts and providers
+  - `app/globals.css` - Global styles with Tailwind CSS
+  - `middleware.ts` - Authentication and route protection
+
+- **Dynamic Routes**:
+  - `app/projects/[projectId]/` - Project details
+  - `app/projects/[projectId]/pipelines/[pipelineId]/` - Pipeline visualization
+  - `app/projects/[projectId]/logs/` - Project-specific logs
+
+### Component Architecture
+
+- **components/ui/** - Reusable UI components (Radix UI + Tailwind)
+- **components/auth/** - Authentication components and providers
+- **components/layout/** - Layout and navigation components
+- **components/projects/** - Project management (modals, wizards, forms)
+- **components/logs/** - Log streaming and analysis components
+- **components/settings/** - Application settings
+- **components/landing/** - Landing page components
 
 ### TypeScript Configuration
 
-- **Base URL**: `src/` - All imports resolve from src directory
 - **Path Aliases**:
-  - `@/styles/*` → `styles/*`
   - `@/components/*` → `components/*`
+  - `@/styles/*` → `styles/*`
+  - `@/lib/*` → `lib/*`
+  - `@/hooks/*` → `hooks/*`
+  - `@/types/*` → `types/*`
 - **Strict Mode**: Enabled with all TypeScript strict checks
 
 ### ESLint Configuration
@@ -120,24 +146,77 @@ const searchParams = await props.searchParams;
 
 ### State Management
 
-- Use `useActionState` instead of deprecated `useFormState`
-- Leverage enhanced `useFormStatus` with new properties (data, method, action)
-- Consider URL state management with 'nuqs' for client state
-- Minimize client-side state when possible
+- **Global State**: Zustand stores for application-wide state
+  - `lib/projectStore.ts` - Project management state
+  - `lib/pipelineStore.ts` - Pipeline configuration state
+- **Custom Hooks**: Specialized hooks for features
+  - `hooks/useToast.tsx` - Toast notifications
+  - `hooks/logs/useLogData.ts` - Log data management
+  - `hooks/logs/useSSELogStream.ts` - Real-time log streaming
+  - `hooks/logs/useFilters.ts` - Log filtering
+  - `hooks/logs/useLogSearch.ts` - Log search functionality
+- **React 19 Features**:
+  - Use `useActionState` instead of deprecated `useFormState`
+  - Leverage enhanced `useFormStatus` with new properties
+- **Minimalist Approach**: Prefer server components and minimize client-side state
 
 ## Environment Variables
 
-- `.env.dev` - Development environment variables
+Configuration files for different environments:
+
+- `.env.development` - Development environment variables
 - `.env.example` - Template for environment variables
 
-## Flow Editor 노드 시스템 (2025년 1월 기준)
+### Required Environment Variables
 
-### ⚠️ 중요: 이 섹션은 현재 노드 시스템 구조를 설명합니다
-**구조가 변경되면 이 섹션을 반드시 업데이트하거나 삭제하세요.**
+```env
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:4000
 
-### 새로운 노드 추가 방법
+# Supabase Configuration (optional, for direct frontend access)
+NEXT_PUBLIC_SUPABASE_URL=https://[project-id].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[anon-key]
+```
 
-현재 Flow Editor는 확장 가능한 컴포넌트 기반 노드 시스템을 사용합니다. 새로운 노드를 추가하려면:
+## Key Libraries & Dependencies
+
+- **Core Framework**: Next.js 15.5.3, React 19.1.0, TypeScript 5.x
+- **State Management**: Zustand 5.0.8 for lightweight global state
+- **UI Components**:
+  - Radix UI (dialogs, toasts) for accessible primitives
+  - Lucide React 0.544.0 for modern icons
+- **Flow Editor**: @xyflow/react 12.8.4 for interactive pipeline visualization
+- **Styling**:
+  - Tailwind CSS v4 with PostCSS
+  - clsx and tailwind-merge for conditional styling
+- **Authentication**: Supabase SSR 0.7.0 for server-side rendering support
+- **Development**: ESLint 9.35.0, TypeScript ESLint 8.43.0
+
+## Pipeline Flow Editor System
+
+The application includes a comprehensive pipeline visualization system built with ReactFlow for creating and managing CI/CD workflows.
+
+### Architecture Overview
+
+- **Flow Types**: Defined in `types/flow.types.ts` with generic type support
+- **Base Components**: `components/flow/nodes/BaseNode.tsx` provides common functionality
+- **Node Categories**: Organized by purpose (core, CI/CD, testing, notifications)
+
+### Current Node Implementation
+
+#### Core Nodes
+- **StartNode**: Workflow entry point
+- **PipelineStartNode**: Pipeline-specific start node
+- **FunctionNode**: Custom function execution
+
+#### CI/CD Nodes (`components/flow/nodes/cicd/`)
+- **Build Nodes**: BuildWebpackNode, ViteBuildNode, CustomBuildNode
+- **Package Management**: InstallPackagesNode, OSPackageNode
+- **Testing**: TestJestNode, TestMochaNode, TestVitestNode
+- **Notifications**: NotificationEmailNode, NotificationSlackNode
+- **Flow Control**: ConditionBranchNode
+
+### Adding New Nodes
 
 #### 1. 노드 데이터 타입 정의 (`types/node.types.ts`)
 ```typescript
@@ -220,30 +299,45 @@ export const nodeConfigs = {
 };
 ```
 
-### 현재 구현된 노드들
+### Node Development Guidelines
 
-- **StartNode**: 워크플로우 시작점 (삭제 불가)
-- **AgentNode**: AI 에이전트 처리
-- **ApiNode**: 외부 API 호출
-- **ConditionNode**: 조건 분기 (다중 출력)
-- **FunctionNode**: 커스텀 함수 실행
-- **KnowledgeNode**: 지식 베이스 쿼리
-- **DeveloperNode**: 개발자 할당 (예시)
+1. **Extend BaseNode**: All nodes should extend the BaseNode component for consistency
+2. **Type Safety**: Use TypeScript interfaces for node data structures
+3. **Categorization**: Place nodes in appropriate subdirectories (cicd/, testing/, etc.)
+4. **Naming Convention**: Use descriptive names ending with "Node" (e.g., TestJestNode)
+5. **Icon Integration**: Use Lucide React icons for visual consistency
 
-### 노드 시스템 주요 특징
+### Key Features
 
-- **BaseNode 컴포넌트**: 모든 노드의 공통 UI/로직 제공
-- **타입 안정성**: 각 노드별 고유 타입 정의
-- **확장성**: 새 노드 추가가 매우 간단 (3단계만 필요)
-- **독립성**: 각 노드가 독립적인 파일로 관리됨
+- **Extensible Architecture**: Easy to add new node types with minimal code
+- **Type Safety**: Full TypeScript support with generic interfaces
+- **Visual Consistency**: BaseNode component ensures uniform styling
+- **Category Organization**: Logical grouping of nodes by functionality
+- **Icon System**: Consistent iconography using Lucide React
 
-### 주의사항
+## Real-time Features
 
-- Start 노드는 `deletable: false`로 설정하여 삭제 방지
-- Condition 노드처럼 다중 출력이 필요한 경우 `outputHandles` 배열 사용
-- 노드 아이콘은 이모지 또는 lucide-react 컴포넌트 사용 가능
-- 색상은 Tailwind CSS 클래스 사용 (bg-{color}-500 형식)
+### Server-Sent Events (SSE)
+- **Live Log Streaming**: Real-time log updates via SSE
+- **Custom Hooks**: `hooks/logs/useSSELogStream.ts` for SSE management
+- **Error Handling**: Robust reconnection and error recovery
 
-## 구현 방식
+### Toast Notifications
+- **Global System**: `hooks/useToast.tsx` for app-wide notifications
+- **Radix Integration**: Accessible toast components via Radix UI
 
-- 구현 방식에 있어서는 .cursorrules를 참조하세요.
+## Integration Points
+
+### Backend API Integration
+- **API Client**: `lib/api.ts` for backend communication
+- **Supabase Integration**: `lib/supabase/` for authentication and database
+- **Middleware**: Route protection and authentication handling
+
+### Project Management
+- **Store Management**: Zustand-based project state management
+- **Modal System**: CreateProjectModal and ProjectCreationWizard
+- **GitHub Integration**: Repository connection and management
+
+## Implementation Guidelines
+
+For detailed implementation patterns and coding standards, refer to `.cursorrules` in the project root.
