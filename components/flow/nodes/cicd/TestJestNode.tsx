@@ -4,8 +4,9 @@ import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
 import { TestJestNodeData } from "@/types/cicd-node.types";
-import { CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import { CICD_GROUP_COLORS } from "@/types/cicd-node.types";
 import { TestTube } from "lucide-react";
+import {CICDBlockGroup} from "@/types/block-enum";
 
 const TestJestNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as TestJestNodeData;

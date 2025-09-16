@@ -14,13 +14,12 @@ import {
   OSPackageNodeData,
   BuildWebpackNodeData,
   TestJestNodeData,
-  DeployVercelNodeData,
   NotificationSlackNodeData,
   ConditionBranchNodeData,
   CICD_GROUP_COLORS,
-  CICDBlockGroup,
+
   CICD_BLOCK_CONFIGS,
-  CICDBlockType,
+
 } from "@/types/cicd-node.types";
 
 // 노드 컴포넌트들 import
@@ -51,6 +50,7 @@ import {
   ConditionBranchNode,
   GenericCICDNode,
 } from "./cicd";
+import {CICDBlockGroup, CICDBlockType } from "@/types/block-enum";
 
 /**
  * 노드 설정 레지스트리

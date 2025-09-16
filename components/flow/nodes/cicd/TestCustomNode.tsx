@@ -3,20 +3,21 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { TestCustomNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import { TestCustomNodeData, CICD_GROUP_COLORS } from "@/types/cicd-node.types";
 import { Wrench } from "lucide-react";
+import {CICDBlockGroup} from "@/types/block-enum";
 
 const TestCustomNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as TestCustomNodeData;
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.TEST];
 
-  const [manager, setManager] = useState(nodeData.packageManager || 'pnpm');
-  const [script, setScript] = useState(nodeData.scriptName || 'test');
-  const [coverage, setCoverage] = useState(Boolean(nodeData.generateReports));
+  const [manager, setManager] = useState(nodeData.package_manager || 'pnpm');
+  const [script, setScript] = useState(nodeData.script_name || 'test');
+  const [coverage, setCoverage] = useState(Boolean(nodeData.generate_reports));
 
   return (
     <BaseNode
-      data={{ ...nodeData, packageManager: manager, scriptName: script, generateReports: coverage }}
+      data={{ ...nodeData, package_manager: manager, script_name: script, generate_reports: coverage }}
       id={id}
       colorClass={groupColors.colorClass}
       icon={<Wrench className="w-4 h-4 text-white" />}

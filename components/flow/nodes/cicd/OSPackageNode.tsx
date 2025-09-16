@@ -3,8 +3,7 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { OSPackageNodeData } from "@/types/cicd-node.types";
-import { CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import { OSPackageNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
 import { Edit3, Package } from "lucide-react";
 
 const OSPackageNode = memo(({ data, id }: NodeProps) => {

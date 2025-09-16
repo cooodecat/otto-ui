@@ -42,9 +42,9 @@ export default function CICDPage() {
       // snake_case만 사용하여 구조 생성
       const result: any = {
         label: nodeData.label,
-        block_type: nodeData.blockType,
-        group_type: nodeData.groupType,
-        block_id: nodeData.blockId || node.id,
+        block_type: nodeData.block_type,
+        group_type: nodeData.group_type,
+        block_id: nodeData.block_id || node.id,
         // success/failed 연결 설정
         on_success: successEdge?.target || undefined,
         on_failed: failedEdge?.target || undefined,

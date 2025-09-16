@@ -3,8 +3,9 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { NotificationEmailNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import { NotificationEmailNodeData, CICD_GROUP_COLORS } from "@/types/cicd-node.types";
 import { Mail } from "lucide-react";
+import {CICDBlockGroup} from "@/types/block-enum";
 
 const NotificationEmailNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as NotificationEmailNodeData;
@@ -13,12 +14,12 @@ const NotificationEmailNode = memo(({ data, id }: NodeProps) => {
   const [recipientsText, setRecipientsText] = useState(
     (nodeData.recipients || ["dev@company.com"]).join(", ")
   );
-  const [subject, setSubject] = useState(nodeData.subjectTemplate || "Build Status: {status}");
-  const [body, setBody] = useState(nodeData.bodyTemplate || "Project {project} on {branch} finished with {status}.");
+  const [subject, setSubject] = useState(nodeData.subject_template || "Build Status: {status}");
+  const [body, setBody] = useState(nodeData.body_template || "Project {project} on {branch} finished with {status}.");
 
   return (
     <BaseNode
-      data={{ ...nodeData, recipients: recipientsText.split(/[,\n]/).map((s)=>s.trim()).filter(Boolean), subjectTemplate: subject, bodyTemplate: body }}
+      data={{ ...nodeData, recipients: recipientsText.split(/[,\n]/).map((s)=>s.trim()).filter(Boolean), subject_template: subject, body_template: body }}
       id={id}
       colorClass={groupColors.colorClass}
       icon={<Mail className="w-4 h-4 text-white" />}

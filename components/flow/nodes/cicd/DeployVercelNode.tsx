@@ -3,12 +3,13 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { DeployVercelNodeData } from "@/types/cicd-node.types";
-import { CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+//import { DeployVercelNodeData } from "@/types/cicd-node.types";
+import { CICD_GROUP_COLORS } from "@/types/cicd-node.types";
 import { Triangle, Settings, Globe } from "lucide-react";
+import {CICDBlockGroup} from "@/types/block-enum";
 
 const DeployVercelNode = memo(({ data, id }: NodeProps) => {
-  const nodeData = data as unknown as DeployVercelNodeData;
+  const nodeData = data as any //as unknown as DeployVercelNodeData;
   const [isExpanded, setIsExpanded] = useState(false);
 
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.DEPLOY];
@@ -69,20 +70,20 @@ const DeployVercelNode = memo(({ data, id }: NodeProps) => {
         {isExpanded && (
           <div className="space-y-3 p-3 bg-gray-50 rounded border">
             {/* 환경 변수 */}
-            {nodeData.environmentVariables && Object.keys(nodeData.environmentVariables).length > 0 && (
+            {nodeData.environment_variables && Object.keys(nodeData.environment_variables).length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Environment Variables
                 </label>
                 <div className="space-y-1 max-h-20 overflow-y-auto">
-                  {Object.entries(nodeData.environmentVariables).map(([key, value], idx) => (
+                  {Object.entries(nodeData.environment_variables).map(([key, value], idx) => (
                     <div
                       key={idx}
                       className="flex items-center justify-between bg-white px-2 py-1 rounded border"
                     >
                       <span className="text-xs font-mono text-gray-700">{key}</span>
                       <span className="text-xs text-gray-500 truncate ml-2 max-w-20">
-                        {value.length > 10 ? `${value.substring(0, 10)}...` : value}
+                        {typeof value === 'string' && value.length > 10 ? `${value.substring(0, 10)}...` : String(value)}
                       </span>
                     </div>
                   ))}

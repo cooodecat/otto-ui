@@ -4,8 +4,9 @@ import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
 import { NotificationSlackNodeData } from "@/types/cicd-node.types";
-import { CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import { CICD_GROUP_COLORS } from "@/types/cicd-node.types";
 import { MessageSquare, Settings, Hash } from "lucide-react";
+import {CICDBlockGroup} from "@/types/block-enum";
 
 const NotificationSlackNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as NotificationSlackNodeData;
@@ -132,7 +133,7 @@ const NotificationSlackNode = memo(({ data, id }: NodeProps) => {
               </div>
               <div>
                 <span className="text-gray-600">Retry:</span>
-                <span className="ml-1">{nodeData.retryCount || 3}</span>
+                <span className="ml-1">{nodeData.retry_count || 3}</span>
               </div>
             </div>
 

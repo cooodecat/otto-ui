@@ -9,7 +9,11 @@ import {
 } from "@xyflow/react";
 import { Trash2, CheckCircle, XCircle } from "lucide-react";
 
-const CICDEdge: React.FC<EdgeProps> = ({
+interface CICDEdgeProps extends EdgeProps {
+  sourceHandle?: string;
+}
+
+const CICDEdge: React.FC<CICDEdgeProps> = ({
   id,
   sourceX,
   sourceY,

@@ -8,7 +8,7 @@ import { Globe } from "lucide-react";
 
 const EnvironmentSetupNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as EnvironmentSetupNodeData;
-  const [envs, setEnvs] = useState<Record<string, string>>(nodeData.environmentVariables || {});
+  const [envs, setEnvs] = useState<Record<string, string>>(nodeData.environment_variables || {});
   const [keyInput, setKeyInput] = useState("");
   const [valInput, setValInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -3,8 +3,9 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { TestVitestNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import { TestVitestNodeData, CICD_GROUP_COLORS } from "@/types/cicd-node.types";
 import { FlaskConical } from "lucide-react";
+import {CICDBlockGroup} from "@/types/block-enum";
 
 const TestVitestNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as TestVitestNodeData;

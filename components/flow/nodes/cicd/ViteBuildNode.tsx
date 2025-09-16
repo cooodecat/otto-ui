@@ -3,14 +3,15 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { BuildViteNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import { BuildViteNodeData, CICD_GROUP_COLORS } from "@/types/cicd-node.types";
 import { Zap } from "lucide-react";
+import {CICDBlockGroup} from "@/types/block-enum";
 
 const ViteBuildNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as BuildViteNodeData;
   const [mode, setMode] = useState(nodeData.mode || 'production');
-  const [basePath, setBasePath] = useState(nodeData.basePath || '');
-  const [outDir, setOutDir] = useState(nodeData.outputDir || '');
+  const [basePath, setBasePath] = useState(nodeData.base_path || '');
+  const [outDir, setOutDir] = useState(nodeData.output_dir || '');
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.BUILD];
 
   return (

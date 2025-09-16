@@ -48,8 +48,8 @@ export default function DashboardClient() {
       // snake_case만 사용하여 구조 생성
       const result: any = {
         label: nodeData.label,
-        block_type: nodeData.blockType,
-        group_type: nodeData.groupType,
+        block_type: nodeData.block_type,
+        group_type: nodeData.group_type,
         block_id: nodeIdMap.get(node.id), // UUID 사용
         // success/failed 연결을 UUID로 변환
         on_success: successEdge ? nodeIdMap.get(successEdge.target) || null : null,
@@ -58,7 +58,7 @@ export default function DashboardClient() {
 
       // 다른 필드들을 snake_case로 변환
       Object.keys(nodeData).forEach(key => {
-        if (!['label', 'blockType', 'groupType', 'blockId'].includes(key)) {
+        if (!['label', 'block_type', 'group_type', 'block_id'].includes(key)) {
           const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
           result[snakeKey] = nodeData[key as keyof BaseCICDNodeData];
         }
