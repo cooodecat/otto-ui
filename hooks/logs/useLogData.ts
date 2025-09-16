@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { LogData, LogItem } from '@/types/logs';
+import { LogListData, LogItem } from '@/types/logs';
 import { fetchLogData, logsApi, LogsApiError } from '@/lib/api/logs-api';
 
 interface UseLogDataResult {
-  logData: LogData | null;
+  logData: LogListData | null;
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -16,7 +16,7 @@ interface UseLogDataOptions {
   // API 호출 함수 (새 프로젝트에서 구현)
   fetchLogData?: (buildId: string) => Promise<LogItem[]>;
   // 모킹 데이터 함수 (개발용)
-  getMockData?: (buildId: string) => LogData | null;
+  getMockData?: (buildId: string) => LogListData | null;
   // 로딩 딜레이 (개발용)
   simulateDelay?: number;
   // 실제 API 사용 여부
@@ -34,7 +34,7 @@ export const useLogData = (
     useRealApi = false
   } = options;
   
-  const [logData, setLogData] = useState<LogData | null>(null);
+  const [logData, setLogData] = useState<LogListData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCollecting, setIsCollecting] = useState(false);
@@ -63,7 +63,7 @@ export const useLogData = (
           : await fetchLogData(buildId);
         
         // LogItem[] 배열을 LogData 형식으로 변환
-        const logData: LogData = {
+        const logData: LogListData = {
           id: buildId,
           name: `Pipeline ${buildId}`,
           status: 'running',

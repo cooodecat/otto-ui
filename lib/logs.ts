@@ -256,9 +256,9 @@ export const parseURLFilters = (searchParams: URLSearchParams) => {
 // Mock Data Utils
 // ============================================================================
 
-import { LogData } from '@/types/logs';
+import { LogListData } from '@/types/logs';
 
-const mockLogData: Record<string, LogData> = {
+const mockLogData: Record<string, LogListData> = {
   'test-build-123': {
     id: 'test-build-123',
     name: 'Test Build Pipeline',
@@ -332,6 +332,6 @@ const mockLogData: Record<string, LogData> = {
   },
 };
 
-export const getMockData = (buildId: string): LogData | null => {
+export const getMockData = (buildId: string): LogListData | null => {
   return mockLogData[buildId] || null;
 };

@@ -221,7 +221,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   useEffect(() => {
     if (logData?.logs) {
       setLogs(logData.logs);
-      setHasMore(logData.hasNext || false);
+      setHasMore(logData?.hasNext || false);
     }
   }, [logData]);
 

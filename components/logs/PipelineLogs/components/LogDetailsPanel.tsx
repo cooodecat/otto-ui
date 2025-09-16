@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Maximize2, Minimize2, ExternalLink, Copy, Download } from 'lucide-react';
-import { LogDetailsPanelProps, ViewMode } from '@/types/logs';
-import { useLogData } from '@/hooks/logs/useLogData';
+import { LogDetailsPanelProps, ViewMode, LogData } from '@/types/logs';
 import { useKeyboardShortcuts } from '@/hooks/logs/useKeyboardShortcuts';
 
 /**
@@ -22,21 +21,26 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // 로그 데이터 로드 - Phase 5에서 실제 API로 교체 예정
-  const { logData, loading, error, refetch } = useLogData(buildId, {
-    // 목업 데이터 함수 (실제 API 연동 전까지 사용)
-    getMockData: (buildId) => {
-      // 간단한 목업 데이터 반환
-      return {
+  // 로컬 목업 데이터 상태 (상세 뷰 전용)
+  const [logData, setLogData] = useState<LogData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadMockData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // 간단한 목업 데이터 생성 (실제 API 연동 전까지 사용)
+      const data: LogData = {
         buildId,
         buildNumber: Math.floor(Math.random() * 1000) + 1,
         projectName: 'otto-ui',
-        buildStatus: 'SUCCEEDED' as const,
-        overallStatus: 'SUCCESS' as const,
+        buildStatus: 'SUCCEEDED',
+        overallStatus: 'SUCCESS',
         startTime: new Date().toISOString(),
         endTime: new Date().toISOString(),
         duration: '3m 45s',
-        trigger: 'GitHub Push' as const,
+        trigger: 'GitHub Push',
         branch: 'main',
         commitHash: 'a1b2c3d',
         commitMessage: 'feat: implement pipeline logs',
@@ -44,21 +48,21 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
         pipeline: [
           {
             stage: 'Source Download',
-            status: 'SUCCESS' as const,
+            status: 'SUCCESS',
             duration: '30s',
             startTime: new Date().toISOString(),
             endTime: new Date().toISOString(),
           },
           {
             stage: 'Build & Test',
-            status: 'SUCCESS' as const,
+            status: 'SUCCESS',
             duration: '2m 45s',
             startTime: new Date().toISOString(),
             endTime: new Date().toISOString(),
           },
           {
             stage: 'Deploy',
-            status: 'SUCCESS' as const,
+            status: 'SUCCESS',
             duration: '30s',
             startTime: new Date().toISOString(),
             endTime: new Date().toISOString(),
@@ -69,19 +73,19 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
           recentLines: [
             {
               timestamp: new Date().toISOString(),
-              level: 'INFO' as const,
+              level: 'INFO',
               message: 'Starting build process...',
               source: 'build'
             },
             {
               timestamp: new Date().toISOString(),
-              level: 'INFO' as const,
+              level: 'INFO',
               message: 'Installing dependencies...',
               source: 'npm'
             },
             {
               timestamp: new Date().toISOString(),
-              level: 'INFO' as const,
+              level: 'INFO',
               message: 'Build completed successfully',
               source: 'build'
             }
@@ -90,9 +94,25 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
           cloudWatchUrl: '#'
         }
       };
-    },
-    simulateDelay: 500
-  });
+
+      // 약간의 딜레이 시뮬레이션
+      await new Promise((r) => setTimeout(r, 500));
+      setLogData(data);
+    } catch (e) {
+      setError('Failed to load build details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMockData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildId]);
+
+  const refetch = () => {
+    loadMockData();
+  };
 
   const toggleViewMode = () => {
     setViewMode(prev => prev === 'summary' ? 'expanded' : 'summary');

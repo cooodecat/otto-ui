@@ -37,6 +37,7 @@ export interface FilterPanelProps {
 // Pipeline Logs Types
 // ============================================================================
 
+// Detailed build log data (for LogDetailsPanel)
 export interface LogData {
   // 기본 정보
   buildId: string;
@@ -86,6 +87,16 @@ export interface LogData {
     hasErrors: boolean;
     cloudWatchUrl: string;
   };
+}
+
+// Summary/list data for pipeline logs table and list fetching
+export interface LogListData {
+  id: string;
+  name: string;
+  status: 'running' | 'success' | 'failed' | 'pending';
+  logs: LogItem[];
+  total: number;
+  hasNext: boolean;
 }
 
 export interface PipelineStage {
