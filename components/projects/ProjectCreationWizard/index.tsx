@@ -190,7 +190,7 @@ export default function ProjectCreationWizard({
         ...prev,
         isCreating: false,
         createdProjectId: newProject.projectId,
-        createdProjectNumericId: numericProjectId.toString()
+        createdProjectNumericId: numericProjectId
       }));
     } catch (err) {
       setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
