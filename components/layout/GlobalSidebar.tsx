@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Search,
   Plus,
@@ -19,18 +19,8 @@ import SettingsModal from '../settings/SettingsModal';
 import { useProjectStore } from '@/lib/projectStore';
 import { usePipelineStore } from '@/lib/pipelineStore';
 import { SidebarSkeleton, WorkspaceDropdownSkeleton } from './SidebarSkeleton';
+import { mapProjectId, mapPipelineId } from '@/lib/utils/idMapping';
 
-/**
- * 블록 팔레트 아이템의 인터페이스
- */
-interface Block {
-  /** 블록의 표시 이름 */
-  name: string;
-  /** 블록의 이모지 아이콘 */
-  icon: string;
-  /** Tailwind CSS 배경색 클래스 */
-  color: string;
-}
 
 /**
  * 폴더 섹션 아이템의 인터페이스
@@ -81,7 +71,7 @@ interface PipelineItem {
  * ```typescript
  * isCanvasLayoutPath('/pipelines') // true
  * isCanvasLayoutPath('/projects/123/pipelines/456') // true
- * isCanvasLayoutPath('/dashboard') // false
+ * isCanvasLayoutPath('/projects/1/pipelines/1') // true
  * ```
  */
 const isCanvasLayoutPath = (pathname: string): boolean => {
@@ -109,6 +99,7 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
  */
 const GlobalSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const isCanvasLayout = isCanvasLayoutPath(pathname);
   /** 글로벌 워크스페이스 검색용 쿼리 */
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -117,7 +108,7 @@ const GlobalSidebar = () => {
   const [searchBlocks, setSearchBlocks] = useState<string>('');
 
   /** 현재 선택된 파이프라인 ID */
-  const [_selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
   /** 워크스페이스 드롭다운 열림/닫힘 상태 */
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState<boolean>(false);
@@ -139,7 +130,8 @@ const GlobalSidebar = () => {
     error: pipelinesError,
     fetchPipelines: _fetchPipelines,
     setCurrentProject,
-    getPipelinesByProject
+    getPipelinesByProject,
+    getLatestPipelineByProject
   } = usePipelineStore();
 
   /** 
@@ -169,10 +161,10 @@ const GlobalSidebar = () => {
     };
   }, []);
 
-  // 데이터 로딩 및 초기화
+  // 데이터 로딩 및 초기화 (컴포넌트 마운트 시 한 번만 실행)
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+  }, []); // 의존성 배열을 빈 배열로 변경하여 무한 루프 방지
 
   // 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옴
   useEffect(() => {
@@ -180,6 +172,31 @@ const GlobalSidebar = () => {
       setCurrentProject(selectedProjectId);
     }
   }, [selectedProjectId, setCurrentProject]);
+
+  // 현재 URL 파라미터에서 프로젝트 ID와 파이프라인 ID 추출 및 동기화
+  useEffect(() => {
+    const pipelineDetailPattern = /^\/projects\/([^/]+)\/pipelines\/([^/]+)$/;
+    const match = pathname.match(pipelineDetailPattern);
+
+    if (match) {
+      const rawUrlProjectId = match[1];
+      const rawUrlPipelineId = match[2];
+
+      // URL 파라미터를 Mock 데이터 ID로 변환
+      const urlProjectId = mapProjectId(rawUrlProjectId);
+      const urlPipelineId = mapPipelineId(rawUrlPipelineId);
+
+      // URL에서 추출한 프로젝트 ID로 상태 동기화 (중복 호출 방지)
+      if (urlProjectId !== selectedProjectId) {
+        setSelectedProject(urlProjectId);
+        // setCurrentProject는 아래 useEffect에서 처리하므로 여기서는 호출하지 않음
+      }
+
+      setSelectedPipelineId(urlPipelineId);
+    } else {
+      setSelectedPipelineId(null);
+    }
+  }, [pathname, selectedProjectId, setSelectedProject]); // setCurrentProject 제거
 
   /**
    * CI/CD 노드 카테고리에서 검색을 위해 플랫 목록 생성
@@ -189,12 +206,12 @@ const GlobalSidebar = () => {
   };
 
   // 현재 선택된 프로젝트의 파이프라인들을 변환
-  const currentPipelines: PipelineItem[] = selectedProjectId 
+  const currentPipelines: PipelineItem[] = selectedProjectId
     ? getPipelinesByProject(selectedProjectId).map(pipeline => ({
         name: pipeline.name || `Pipeline ${pipeline.pipelineId.slice(-6)}`,
         icon: '🔧', // 파이프라인 기본 아이콘
         pipelineId: pipeline.pipelineId,
-        isActive: pipeline.pipelineId === _selectedPipelineId
+        isActive: pipeline.pipelineId === selectedPipelineId
       }))
     : [];
 
@@ -236,7 +253,7 @@ const GlobalSidebar = () => {
    * 파이프라인 선택 이벤트를 처리합니다
    *
    * 사용자가 파이프라인 목록에서 특정 파이프라인을 클릭했을 때
-   * 해당 파이프라인을 활성 상태로 설정합니다.
+   * 해당 파이프라인 페이지로 네비게이션합니다.
    *
    * @param pipelineId - 선택할 파이프라인의 고유 식별자
    *
@@ -246,7 +263,9 @@ const GlobalSidebar = () => {
    * ```
    */
   const handlePipelineSelect = (pipelineId: string) => {
-    setSelectedPipelineId(pipelineId);
+    if (selectedProjectId) {
+      router.push(`/projects/${selectedProjectId}/pipelines/${pipelineId}`);
+    }
   };
 
   /**
@@ -254,7 +273,7 @@ const GlobalSidebar = () => {
    *
    * 워크스페이스 드롭다운에서 프로젝트를 선택했을 때 호출되며,
    * 선택된 프로젝트를 전역 상태에 저장하고 해당 프로젝트의
-   * 파이프라인들을 자동으로 로드합니다.
+   * 최신 파이프라인으로 자동 이동합니다.
    *
    * @param projectId - 선택할 프로젝트의 고유 식별자
    *
@@ -266,9 +285,25 @@ const GlobalSidebar = () => {
    * @see {@link useProjectStore} - 프로젝트 상태 관리
    * @see {@link usePipelineStore} - 파이프라인 상태 관리
    */
-  const handleProjectSelect = (projectId: string) => {
+  const handleProjectSelect = async (projectId: string) => {
     setSelectedProject(projectId);
     setIsWorkspaceDropdownOpen(false);
+
+    // 해당 프로젝트의 파이프라인을 먼저 로드
+    setCurrentProject(projectId);
+
+    // 잠시 기다린 후 최신 파이프라인 찾기
+    setTimeout(() => {
+      const latestPipeline = getLatestPipelineByProject(projectId);
+
+      if (latestPipeline) {
+        // 최신 파이프라인으로 이동
+        router.push(`/projects/${projectId}/pipelines/${latestPipeline.pipelineId}`);
+      } else {
+        // 파이프라인이 없는 경우 프로젝트의 첫 번째 파이프라인 페이지로 이동 (기본값 사용)
+        router.push(`/projects/${projectId}/pipelines/pipe_1`);
+      }
+    }, 100); // 파이프라인 로딩을 위한 짧은 지연
   };
 
   /**

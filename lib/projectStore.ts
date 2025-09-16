@@ -42,6 +42,8 @@ interface ProjectStoreActions {
   setSelectedProject: (projectId: string) => void;
   /** 선택된 프로젝트 정보 가져오기 */
   getSelectedProject: () => Project | null;
+  /** 가장 최신 프로젝트 가져오기 (숫자가 클수록 최신) */
+  getLatestProject: () => Project | null;
   /** 프로젝트 추가 */
   addProject: (project: Project) => void;
   /** 프로젝트 업데이트 */
@@ -84,6 +86,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       // 현재는 mock 데이터 사용
       await new Promise(resolve => setTimeout(resolve, 1000)); // 가짜 로딩
 
+      // NOTE: 데이터베이스에서도 동일한 규칙 적용 예정
+      // 숫자가 클수록 최신 프로젝트 (proj_3이 가장 최신)
       const mockProjects: Project[] = [
         {
           projectId: 'proj_1',
@@ -98,16 +102,16 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           name: 'Otto Backend',
           githubOwner: 'dbswl030',
           githubRepoName: 'otto-backend',
-          createdAt: '2024-01-10',
-          updatedAt: '2024-01-18'
+          createdAt: '2024-01-20',
+          updatedAt: '2024-01-25'
         },
         {
           projectId: 'proj_3',
           name: 'Data Pipeline',
           githubOwner: 'dbswl030',
           githubRepoName: 'data-pipeline',
-          createdAt: '2024-01-05',
-          updatedAt: '2024-01-15'
+          createdAt: '2024-01-25',
+          updatedAt: '2024-01-30'
         }
       ];
 
@@ -132,6 +136,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   getSelectedProject: () => {
     const { projects, selectedProjectId } = get();
     return projects.find(project => project.projectId === selectedProjectId) || null;
+  },
+
+  getLatestProject: () => {
+    const { projects } = get();
+    if (projects.length === 0) return null;
+
+    // NOTE: 데이터베이스에서도 동일한 로직 적용 예정
+    // 숫자가 클수록 최신 프로젝트 (proj_3 > proj_2 > proj_1)
+    return projects.sort((a, b) => {
+      const numA = parseInt(a.projectId.replace('proj_', ''));
+      const numB = parseInt(b.projectId.replace('proj_', ''));
+      return numB - numA; // 내림차순 정렬
+    })[0];
   },
 
   addProject: (project: Project) => {
