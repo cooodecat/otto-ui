@@ -9,7 +9,7 @@ interface ConnectionStatusProps {
   isConnecting?: boolean;
   error?: string;
   reconnectCount?: number;
-  lastMessageTime?: number;
+  lastMessageTime?: number | null;
   onReconnect?: () => void;
 }
 

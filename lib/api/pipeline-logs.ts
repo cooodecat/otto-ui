@@ -106,9 +106,9 @@ export async function getProjectBuildHistories(
 
   // 빌드 데이터에 프로젝트 정보 추가
   const buildsWithProject = (data || []).map(build => ({
-    ...build,
+    ...(build as any),
     projects: project
-  }));
+  } as BuildHistoryRow));
 
   return {
     builds: buildsWithProject,
@@ -132,12 +132,14 @@ export async function getAllUserBuildHistories(
   const { limit = 20, offset = 0, status, projectId } = options;
 
   // 먼저 사용자의 프로젝트 ID들을 조회 (재시도 로직 적용)
-  const { data: projects, error: projectsError } = await retryApiCall(async () => {
+  type ProjectSelect = Pick<ProjectRow, 'project_id' | 'name' | 'github_repo_name' | 'selected_branch' | 'github_owner'>;
+  const result = await retryApiCall(async () => {
     return await supabase
       .from('projects')
       .select('project_id, name, github_repo_name, selected_branch, github_owner')
       .eq('user_id', userId);
   });
+  const { data: projects, error: projectsError } = result as { data: ProjectSelect[] | null; error: any };
 
   if (projectsError) {
     console.error('Error fetching user projects:', projectsError);
@@ -176,17 +178,17 @@ export async function getAllUserBuildHistories(
   const hasMore = count ? offset + limit < count : false;
 
   // 빌드 데이터에 해당 프로젝트 정보 추가
-  const buildsWithProject = (data || []).map(build => {
-    const project = projects.find(p => p.project_id === build.project_id);
+  const buildsWithProject = (data || []).map((build: any) => {
+    const project = projects?.find((p: any) => p.project_id === build.project_id);
     return {
-      ...build,
+      ...(build as any),
       projects: project ? {
         name: project.name,
         github_repo_name: project.github_repo_name,
         selected_branch: project.selected_branch,
         github_owner: project.github_owner
       } : undefined
-    };
+    } as BuildHistoryRow & { projects?: any };
   });
 
   return {
@@ -321,11 +323,13 @@ export async function searchBuildHistories(
   const { limit = 20, offset = 0, status } = options;
 
   // 먼저 사용자의 프로젝트 ID들을 조회
-  const { data: projects, error: projectsError } = await supabase
+  type ProjectSearch = Pick<ProjectRow, 'project_id' | 'name' | 'github_repo_name' | 'selected_branch' | 'github_owner'>;
+  const searchResult = await supabase
     .from('projects')
     .select('project_id, name, github_repo_name, selected_branch, github_owner')
     .eq('user_id', userId)
     .or(`name.ilike.%${searchQuery}%,github_repo_name.ilike.%${searchQuery}%`);
+  const { data: projects, error: projectsError } = searchResult as { data: ProjectSearch[] | null; error: any };
 
   if (projectsError) {
     console.error('Error searching projects:', projectsError);
@@ -360,17 +364,17 @@ export async function searchBuildHistories(
   const hasMore = count ? offset + limit < count : false;
 
   // 빌드 데이터에 해당 프로젝트 정보 추가
-  const buildsWithProject = (data || []).map(build => {
-    const project = projects.find(p => p.project_id === build.project_id);
+  const buildsWithProject = (data || []).map((build: any) => {
+    const project = projects?.find((p: any) => p.project_id === build.project_id);
     return {
-      ...build,
+      ...(build as any),
       projects: project ? {
         name: project.name,
         github_repo_name: project.github_repo_name,
         selected_branch: project.selected_branch,
         github_owner: project.github_owner
       } : undefined
-    };
+    } as BuildHistoryRow & { projects?: any };
   });
 
   return {

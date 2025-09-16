@@ -21,7 +21,7 @@ interface UseBuildLogsResult {
   stop: () => Promise<void>;
   reconnect: () => void;
   refetchCache: () => Promise<void>;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const toNormalized = (events: RawLogEvent[], normalized?: NormalizedLog[]): NormalizedLog[] => {

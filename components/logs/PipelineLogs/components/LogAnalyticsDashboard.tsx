@@ -220,7 +220,7 @@ const LogAnalyticsDashboard: React.FC<LogAnalyticsDashboardProps> = ({
         };
         const parts = log.duration.split(" ");
         let seconds = 0;
-        parts.forEach((part) => {
+        parts.forEach((part: string) => {
           if (part.includes("m")) seconds += parseInt(part) * 60;
           if (part.includes("s")) seconds += parseInt(part);
         });
