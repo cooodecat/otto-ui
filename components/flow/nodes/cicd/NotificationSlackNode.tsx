@@ -15,14 +15,14 @@ const NotificationSlackNode = memo(({ data, id }: NodeProps) => {
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION];
 
   const getTriggerText = () => {
-    if (nodeData.on_success_only) return "Success only";
-    if (nodeData.on_failure_only) return "Failure only";
+    if (nodeData.onSuccessOnly) return "Success only";
+    if (nodeData.onFailureOnly) return "Failure only";
     return "Success & Failure";
   };
 
   const getTriggerColor = () => {
-    if (nodeData.on_success_only) return "text-green-600 bg-green-50";
-    if (nodeData.on_failure_only) return "text-red-600 bg-red-50";
+    if (nodeData.onSuccessOnly) return "text-green-600 bg-green-50";
+    if (nodeData.onFailureOnly) return "text-red-600 bg-red-50";
     return "text-blue-600 bg-blue-50";
   };
 
@@ -79,7 +79,7 @@ const NotificationSlackNode = memo(({ data, id }: NodeProps) => {
                 Message Template
               </label>
               <div className="text-xs bg-white p-2 rounded border font-mono max-h-20 overflow-y-auto">
-                {nodeData.message_template || "Pipeline {status}: {project} - {branch}"}
+                {nodeData.messageTemplate || "Pipeline {status}: {project} - {branch}"}
               </div>
               <div className="text-xs text-gray-500 mt-1">
                 Variables: {"{status}, {project}, {branch}, {commit}, {duration}"}
@@ -95,7 +95,7 @@ const NotificationSlackNode = memo(({ data, id }: NodeProps) => {
                 <div className="text-xs space-y-1">
                   <div>
                     <span className="text-gray-600">URL Env Var:</span>
-                    <span className="ml-1 font-mono text-gray-800">{nodeData.webhook_url_env}</span>
+                    <span className="ml-1 font-mono text-gray-800">{nodeData.webhookUrlEnv}</span>
                   </div>
                   {nodeData.channel && (
                     <div>
@@ -112,15 +112,15 @@ const NotificationSlackNode = memo(({ data, id }: NodeProps) => {
               <div className="p-2 bg-white rounded border">
                 <div className="text-xs text-gray-600 mb-1">Success Notifications</div>
                 <div className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${!nodeData.on_failure_only ? 'bg-green-400' : 'bg-gray-300'}`}></div>
-                  <span className="text-xs">{!nodeData.on_failure_only ? 'Enabled' : 'Disabled'}</span>
+                  <div className={`w-2 h-2 rounded-full ${!nodeData.onFailureOnly ? 'bg-green-400' : 'bg-gray-300'}`}></div>
+                  <span className="text-xs">{!nodeData.onFailureOnly ? 'Enabled' : 'Disabled'}</span>
                 </div>
               </div>
               <div className="p-2 bg-white rounded border">
                 <div className="text-xs text-gray-600 mb-1">Failure Notifications</div>
                 <div className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${!nodeData.on_success_only ? 'bg-red-400' : 'bg-gray-300'}`}></div>
-                  <span className="text-xs">{!nodeData.on_success_only ? 'Enabled' : 'Disabled'}</span>
+                  <div className={`w-2 h-2 rounded-full ${!nodeData.onSuccessOnly ? 'bg-red-400' : 'bg-gray-300'}`}></div>
+                  <span className="text-xs">{!nodeData.onSuccessOnly ? 'Enabled' : 'Disabled'}</span>
                 </div>
               </div>
             </div>
@@ -133,15 +133,15 @@ const NotificationSlackNode = memo(({ data, id }: NodeProps) => {
               </div>
               <div>
                 <span className="text-gray-600">Retry:</span>
-                <span className="ml-1">{nodeData.retry_count || 3}</span>
+                <span className="ml-1">{nodeData.retryCount || 3}</span>
               </div>
             </div>
 
             {/* 연결 정보 */}
             <div className="pt-2 border-t border-gray-200">
               <div className="text-xs text-gray-600">
-                <div>On Success: {nodeData.on_success || 'Continue'}</div>
-                <div>On Failed: {nodeData.on_failed || 'Continue anyway'}</div>
+                <div>On Success: {nodeData.onSuccess || 'Continue'}</div>
+                <div>On Failed: {nodeData.onFailed || 'Continue anyway'}</div>
               </div>
             </div>
           </div>

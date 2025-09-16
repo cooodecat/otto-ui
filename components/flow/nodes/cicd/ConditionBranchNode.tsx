@@ -63,7 +63,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
         <div className={`p-3 rounded ${groupColors.bgClass} ${groupColors.borderClass} border`}>
           <div className="flex items-center justify-between mb-2">
             <div className={`text-sm font-medium ${groupColors.textClass} flex items-center gap-2`}>
-              <span>{getConditionTypeIcon(nodeData.condition_type)}</span>
+              <span>{getConditionTypeIcon(nodeData.conditionType)}</span>
               Condition Branch
             </div>
             <button
@@ -77,42 +77,42 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
           
           {/* 조건 타입 */}
           <div className="text-xs text-gray-600 mb-2">
-            Type: {getConditionTypeLabel(nodeData.condition_type)}
+            Type: {getConditionTypeLabel(nodeData.conditionType)}
           </div>
 
           {/* 조건 요약 */}
           <div className="space-y-1">
-            {nodeData.condition_config.environment_var && (
+            {nodeData.conditionConfig.environmentVar && (
               <div className="text-xs">
                 <span className="text-gray-600">Env:</span>
                 <span className="ml-1 font-mono text-gray-800">
-                  {nodeData.condition_config.environment_var}
+                  {nodeData.conditionConfig.environmentVar}
                 </span>
-                {nodeData.condition_config.expected_value && (
+                {nodeData.conditionConfig.expectedValue && (
                   <>
                     <span className="mx-1 text-gray-500">=</span>
                     <span className="font-mono text-gray-800">
-                      {nodeData.condition_config.expected_value}
+                      {nodeData.conditionConfig.expectedValue}
                     </span>
                   </>
                 )}
               </div>
             )}
             
-            {nodeData.condition_config.file_path && (
+            {nodeData.conditionConfig.filePath && (
               <div className="text-xs">
                 <span className="text-gray-600">File:</span>
                 <span className="ml-1 font-mono text-gray-800">
-                  {nodeData.condition_config.file_path}
+                  {nodeData.conditionConfig.filePath}
                 </span>
               </div>
             )}
             
-            {nodeData.condition_config.command && (
+            {nodeData.conditionConfig.command && (
               <div className="text-xs">
                 <span className="text-gray-600">Command:</span>
                 <span className="ml-1 font-mono text-gray-800">
-                  {nodeData.condition_config.command}
+                  {nodeData.conditionConfig.command}
                 </span>
               </div>
             )}
@@ -142,10 +142,10 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
               <div className="p-2 bg-white rounded border space-y-1">
                 <div className="text-xs">
                   <span className="text-gray-600">Type:</span>
-                  <span className="ml-1 font-medium">{getConditionTypeLabel(nodeData.condition_type)}</span>
+                  <span className="ml-1 font-medium">{getConditionTypeLabel(nodeData.conditionType)}</span>
                 </div>
                 
-                {Object.entries(nodeData.condition_config).map(([key, value]) => (
+                {Object.entries(nodeData.conditionConfig).map(([key, value]) => (
                   value && (
                     <div key={key} className="text-xs">
                       <span className="text-gray-600">{key}:</span>
@@ -164,7 +164,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
                   On TRUE
                 </div>
                 <div className="text-xs font-mono text-gray-800">
-                  {nodeData.on_condition_true || 'Next step'}
+                  {nodeData.onConditionTrue || 'Next step'}
                 </div>
               </div>
               <div className="p-2 bg-white rounded border">
@@ -173,7 +173,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
                   On FALSE
                 </div>
                 <div className="text-xs font-mono text-gray-800">
-                  {nodeData.on_condition_false || 'Skip or end'}
+                  {nodeData.onConditionFalse || 'Skip or end'}
                 </div>
               </div>
             </div>
@@ -186,7 +186,7 @@ const ConditionBranchNode = memo(({ data, id }: NodeProps) => {
               </div>
               <div>
                 <span className="text-gray-600">Retry:</span>
-                <span className="ml-1">{nodeData.retry_count || 0}</span>
+                <span className="ml-1">{nodeData.retryCount || 0}</span>
               </div>
             </div>
           </div>

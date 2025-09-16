@@ -7,6 +7,7 @@ import { BaseCICDNodeData } from "@/types/cicd-node.types";
 export default function CICDPage() {
   const flowCanvasRef = useRef<CICDFlowCanvasRef | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [projectId] = useState(() => crypto.randomUUID()); // 임시 프로젝트 ID
 
   useEffect(() => {
     setIsClient(true);
@@ -29,7 +30,7 @@ export default function CICDPage() {
       id: n.id, 
       type: n.type, 
       label: n.data.label, 
-      block_id: n.data.block_id 
+      blockId: n.data.blockId 
     })));
     console.log("🔍 Raw edges data:", edges.map(e => ({ 
       source: e.source, 
@@ -52,29 +53,28 @@ export default function CICDPage() {
         edge.source === node.id && edge.sourceHandle === 'failed-output'
       );
 
-      // 연결된 타겟 노드들의 block_id 찾기
+      // 연결된 타겟 노드들의 blockId 찾기
       const getTargetBlockId = (targetNodeId: string | undefined) => {
         if (!targetNodeId) return null;
         const targetNode = nodes.find(n => n.id === targetNodeId);
-        return targetNode?.data?.block_id || targetNodeId;
+        return targetNode?.data?.blockId || targetNodeId;
       };
 
-      // snake_case만 사용하여 구조 생성
+      // camelCase 사용하여 구조 생성
       const result: any = {
         label: nodeData.label,
-        block_type: nodeData.block_type,
-        group_type: nodeData.group_type,
-        block_id: nodeData.block_id || node.id,
-        // success/failed 연결 설정 - 타겟 노드의 block_id 사용
-        on_success: getTargetBlockId(successEdge?.target),
-        on_failed: getTargetBlockId(failedEdge?.target),
+        blockType: nodeData.blockType,
+        groupType: nodeData.groupType,
+        blockId: nodeData.blockId || node.id,
+        // success/failed 연결 설정 - 타겟 노드의 blockId 사용
+        onSuccess: getTargetBlockId(successEdge?.target),
+        onFailed: getTargetBlockId(failedEdge?.target),
       };
 
-      // 다른 필드들을 snake_case로 변환
+      // 다른 필드들을 camelCase로 유지
       Object.keys(nodeData).forEach(key => {
         if (!['label', 'blockType', 'groupType', 'blockId'].includes(key)) {
-          const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-          result[snakeKey] = nodeData[key as keyof BaseCICDNodeData];
+          result[key] = nodeData[key as keyof BaseCICDNodeData];
         }
       });
 
@@ -126,7 +126,10 @@ export default function CICDPage() {
       {/* 플로우 캔버스 */}
       <div className="h-[calc(100vh-80px)]">
         {isClient ? (
-          <CICDFlowCanvas onRef={(ref) => { flowCanvasRef.current = ref; }} />
+          <CICDFlowCanvas 
+            projectId={projectId}
+            onRef={(ref) => { flowCanvasRef.current = ref; }} 
+          />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
             Loading flow canvas...

@@ -119,125 +119,125 @@ export const CICD_GROUP_COLORS = {
 
 // 기본 CI/CD 노드 데이터
 export interface BaseCICDNodeData extends BaseNodeData {
-  block_type: CICDBlockType;
-  group_type: CICDBlockGroup;
-  block_id: string;
+  blockType: CICDBlockType;
+  groupType: CICDBlockGroup;
+  blockId: string;
   description?: string;
-  on_success?: string;
-  on_failed?: string;
+  onSuccess?: string;
+  onFailed?: string;
   timeout?: number;
-  retry_count?: number;
+  retryCount?: number;
 }
 
 // ==== PIPELINE START 블록 데이터 ====
 export interface PipelineStartNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.PIPELINE_START;
-  group_type: CICDBlockGroup.START;
-  trigger_type?: 'manual' | 'schedule' | 'webhook' | 'push' | 'pull_request';
-  trigger_config?: {
+  blockType: CICDBlockType.PIPELINE_START;
+  groupType: CICDBlockGroup.START;
+  triggerType?: 'manual' | 'schedule' | 'webhook' | 'push' | 'pullRequest';
+  triggerConfig?: {
     schedule?: string; // cron expression
-    branch_patterns?: string[];
-    file_patterns?: string[];
+    branchPatterns?: string[];
+    filePatterns?: string[];
   };
 }
 
 // ==== PREBUILD 블록 데이터 ====
 export interface OSPackageNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.OS_PACKAGE;
-  group_type: CICDBlockGroup.PREBUILD;
-  package_manager: 'apt' | 'yum' | 'dnf' | 'apk' | 'zypper' | 'pacman' | 'brew';
-  install_packages: string[];
-  update_package_list?: boolean;
+  blockType: CICDBlockType.OS_PACKAGE;
+  groupType: CICDBlockGroup.PREBUILD;
+  packageManager: 'apt' | 'yum' | 'dnf' | 'apk' | 'zypper' | 'pacman' | 'brew';
+  installPackages: string[];
+  updatePackageList?: boolean;
 }
 
 export interface NodeVersionNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.NODE_VERSION;
-  group_type: CICDBlockGroup.PREBUILD;
+  blockType: CICDBlockType.NODE_VERSION;
+  groupType: CICDBlockGroup.PREBUILD;
   version: string;
-  package_manager?: 'npm' | 'yarn' | 'pnpm';
+  packageManager?: 'npm' | 'yarn' | 'pnpm';
 }
 
 export interface EnvironmentSetupNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.ENVIRONMENT_SETUP;
-  group_type: CICDBlockGroup.PREBUILD;
-  environment_variables: Record<string, string>;
-  load_from_file?: string;
+  blockType: CICDBlockType.ENVIRONMENT_SETUP;
+  groupType: CICDBlockGroup.PREBUILD;
+  environmentVariables: Record<string, string>;
+  loadFromFile?: string;
 }
 
 // ==== BUILD 블록 데이터 ====
 export interface InstallNodePackageNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.INSTALL_MODULE_NODE;
-  group_type: CICDBlockGroup.BUILD;
-  package_manager: 'npm' | 'yarn' | 'pnpm';
-  install_packages?: string[];
-  install_dev_dependencies?: boolean;
-  production_only?: boolean;
-  clean_install?: boolean;
+  blockType: CICDBlockType.INSTALL_MODULE_NODE;
+  groupType: CICDBlockGroup.BUILD;
+  packageManager: 'npm' | 'yarn' | 'pnpm';
+  installPackages?: string[];
+  installDevDependencies?: boolean;
+  productionOnly?: boolean;
+  cleanInstall?: boolean;
 }
 
 export interface BuildWebpackNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.BUILD_WEBPACK;
-  group_type: CICDBlockGroup.BUILD;
-  config_file?: string;
+  blockType: CICDBlockType.BUILD_WEBPACK;
+  groupType: CICDBlockGroup.BUILD;
+  configFile?: string;
   mode: 'development' | 'production';
-  output_path?: string;
-  additional_options?: string[];
+  outputPath?: string;
+  additionalOptions?: string[];
 }
 
 export interface BuildViteNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.BUILD_VITE;
-  group_type: CICDBlockGroup.BUILD;
-  config_file?: string;
+  blockType: CICDBlockType.BUILD_VITE;
+  groupType: CICDBlockGroup.BUILD;
+  configFile?: string;
   mode: 'development' | 'production';
-  base_path?: string;
-  output_dir?: string;
+  basePath?: string;
+  outputDir?: string;
 }
 
 export interface BuildCustomNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.BUILD_CUSTOM;
-  group_type: CICDBlockGroup.BUILD;
-  package_manager: 'npm' | 'yarn' | 'pnpm';
-  script_name?: string;
-  custom_commands?: string[];
-  working_directory?: string;
+  blockType: CICDBlockType.BUILD_CUSTOM;
+  groupType: CICDBlockGroup.BUILD;
+  packageManager: 'npm' | 'yarn' | 'pnpm';
+  scriptName?: string;
+  customCommands?: string[];
+  workingDirectory?: string;
 }
 
 // ==== TEST 블록 데이터 ====
 export interface TestJestNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.TEST_JEST;
-  group_type: CICDBlockGroup.TEST;
-  config_file?: string;
-  test_pattern?: string;
+  blockType: CICDBlockType.TEST_JEST;
+  groupType: CICDBlockGroup.TEST;
+  configFile?: string;
+  testPattern?: string;
   coverage?: boolean;
-  watch_mode?: boolean;
-  max_workers?: number;
-  additional_options?: string[];
+  watchMode?: boolean;
+  maxWorkers?: number;
+  additionalOptions?: string[];
 }
 
 export interface TestMochaNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.TEST_MOCHA;
-  group_type: CICDBlockGroup.TEST;
-  test_files?: string[];
-  config_file?: string;
+  blockType: CICDBlockType.TEST_MOCHA;
+  groupType: CICDBlockGroup.TEST;
+  testFiles?: string[];
+  configFile?: string;
   reporter?: 'spec' | 'json' | 'html' | 'tap' | 'dot';
   timeout?: number;
   grep?: string;
 }
 
 export interface TestVitestNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.TEST_VITEST;
-  group_type: CICDBlockGroup.TEST;
-  config_file?: string;
+  blockType: CICDBlockType.TEST_VITEST;
+  groupType: CICDBlockGroup.TEST;
+  configFile?: string;
   coverage?: boolean;
   ui?: boolean;
-  watch_mode?: boolean;
+  watchMode?: boolean;
   environment?: 'node' | 'jsdom' | 'happy-dom';
 }
 
 export interface TestPlaywrightNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.TEST_PLAYWRIGHT;
-  group_type: CICDBlockGroup.TEST;
-  config_file?: string;
+  blockType: CICDBlockType.TEST_PLAYWRIGHT;
+  groupType: CICDBlockGroup.TEST;
+  configFile?: string;
   project?: string;
   headed?: boolean;
   debug?: boolean;
@@ -245,13 +245,13 @@ export interface TestPlaywrightNodeData extends BaseCICDNodeData {
 }
 
 export interface TestCustomNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.TEST_CUSTOM;
-  group_type: CICDBlockGroup.TEST;
-  package_manager: 'npm' | 'yarn' | 'pnpm';
-  script_name?: string;
-  custom_commands?: string[];
-  generate_reports?: boolean;
-  coverage_threshold?: number;
+  blockType: CICDBlockType.TEST_CUSTOM;
+  groupType: CICDBlockGroup.TEST;
+  packageManager: 'npm' | 'yarn' | 'pnpm';
+  scriptName?: string;
+  customCommands?: string[];
+  generateReports?: boolean;
+  coverageThreshold?: number;
 }
 
 // ==== DEPLOY 블록 데이터 ====
@@ -293,62 +293,62 @@ export interface TestCustomNodeData extends BaseCICDNodeData {
 
 // ==== 유틸리티 블록 데이터 ====
 export interface NotificationSlackNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.NOTIFICATION_SLACK;
-  group_type: CICDBlockGroup.NOTIFICATION;
-  webhook_url_env: string;
+  blockType: CICDBlockType.NOTIFICATION_SLACK;
+  groupType: CICDBlockGroup.NOTIFICATION;
+  webhookUrlEnv: string;
   channel?: string;
-  message_template: string;
-  on_success_only?: boolean;
-  on_failure_only?: boolean;
+  messageTemplate: string;
+  onSuccessOnly?: boolean;
+  onFailureOnly?: boolean;
 }
 
 export interface NotificationEmailNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.NOTIFICATION_EMAIL;
-  group_type: CICDBlockGroup.NOTIFICATION;
-  smtp_config: {
+  blockType: CICDBlockType.NOTIFICATION_EMAIL;
+  groupType: CICDBlockGroup.NOTIFICATION;
+  smtpConfig: {
     host: string;
     port: number;
-    username_env: string;
-    password_env: string;
+    usernameEnv: string;
+    passwordEnv: string;
   };
   recipients: string[];
-  subject_template: string;
-  body_template: string;
+  subjectTemplate: string;
+  bodyTemplate: string;
 }
 
 export interface ConditionBranchNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.CONDITION_BRANCH;
-  group_type: CICDBlockGroup.UTILITY;
-  condition_type: 'environment' | 'file_exists' | 'command_output' | 'custom';
-  condition_config: {
-    environment_var?: string;
-    expected_value?: string;
-    file_path?: string;
+  blockType: CICDBlockType.CONDITION_BRANCH;
+  groupType: CICDBlockGroup.UTILITY;
+  conditionType: 'environment' | 'fileExists' | 'commandOutput' | 'custom';
+  conditionConfig: {
+    environmentVar?: string;
+    expectedValue?: string;
+    filePath?: string;
     command?: string;
-    custom_script?: string;
+    customScript?: string;
   };
-  on_condition_true: string;
-  on_condition_false: string;
+  onConditionTrue: string;
+  onConditionFalse: string;
 }
 
 export interface ParallelExecutionNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.PARALLEL_EXECUTION;
-  group_type: CICDBlockGroup.UTILITY;
-  parallel_branches: string[];
-  wait_for_all?: boolean;
-  fail_fast?: boolean;
-  on_all_success: string;
-  on_any_failure?: string;
+  blockType: CICDBlockType.PARALLEL_EXECUTION;
+  groupType: CICDBlockGroup.UTILITY;
+  parallelBranches: string[];
+  waitForAll?: boolean;
+  failFast?: boolean;
+  onAllSuccess: string;
+  onAnyFailure?: string;
 }
 
 export interface CustomCommandNodeData extends BaseCICDNodeData {
-  block_type: CICDBlockType.CUSTOM_COMMAND;
-  group_type: CICDBlockGroup.UTILITY;
+  blockType: CICDBlockType.CUSTOM_COMMAND;
+  groupType: CICDBlockGroup.UTILITY;
   commands: string[];
-  working_directory?: string;
+  workingDirectory?: string;
   shell?: 'bash' | 'sh' | 'zsh' | 'fish';
-  environment_variables?: Record<string, string>;
-  ignore_errors?: boolean;
+  environmentVariables?: Record<string, string>;
+  ignoreErrors?: boolean;
 }
 
 // 모든 CI/CD 노드 데이터 유니온 타입

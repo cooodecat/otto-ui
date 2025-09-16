@@ -63,31 +63,69 @@ const getId = () => {
  */
 const initialNodes: Node[] = [];
 
-function CICDDropZone({ onRef }: { onRef?: (ref: CICDFlowCanvasRef) => void }) {
+function CICDDropZone({ 
+  projectId, 
+  onRef 
+}: { 
+  projectId: string;
+  onRef?: (ref: CICDFlowCanvasRef) => void;
+}) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { screenToFlowPosition } = useReactFlow();
   const initializedRef = useRef(false);
 
-  // Pipeline Start 노드 자동 생성 (한 번만 실행)
+  // localStorage에서 파이프라인 데이터 불러오기
   useEffect(() => {
-    if (!initializedRef.current) {
-      console.log("🏁 Creating Pipeline Start node...");
-      const pipelineStartNode = createNodeInstance(
-        'pipeline_start', 
-        { x: 100, y: 100 }, 
-        'pipeline-start-1'
-      );
+    if (!initializedRef.current && projectId) {
+      const storageKey = `pipeline-${projectId}`;
+      const savedData = localStorage.getItem(storageKey);
       
-      // 삭제 불가능하도록 설정
-      pipelineStartNode.selectable = false;
-      pipelineStartNode.deletable = false;
+      if (savedData) {
+        try {
+          const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedData);
+          console.log(`📁 Loading pipeline from localStorage (${storageKey}):`, { nodes: savedNodes.length, edges: savedEdges.length });
+          setNodes(savedNodes);
+          setEdges(savedEdges);
+        } catch (error) {
+          console.error("❌ Failed to parse saved pipeline data:", error);
+          // 파싱 실패시 기본 노드 생성
+          createDefaultPipelineStart();
+        }
+      } else {
+        // 저장된 데이터가 없으면 기본 노드 생성
+        createDefaultPipelineStart();
+      }
       
-      console.log("🏁 Pipeline Start node created:", pipelineStartNode);
-      setNodes([pipelineStartNode]);
       initializedRef.current = true;
     }
-  }, []);
+  }, [projectId]);
+
+  const createDefaultPipelineStart = () => {
+    console.log("🏁 Creating default Pipeline Start node...");
+    const pipelineStartNode = createNodeInstance(
+      'pipeline_start', 
+      { x: 100, y: 100 }, 
+      'pipeline-start-1'
+    );
+    
+    // 삭제 불가능하도록 설정
+    pipelineStartNode.selectable = false;
+    pipelineStartNode.deletable = false;
+    
+    console.log("🏁 Pipeline Start node created:", pipelineStartNode);
+    setNodes([pipelineStartNode]);
+  };
+
+  // localStorage에 자동 저장
+  useEffect(() => {
+    if (initializedRef.current && projectId && (nodes.length > 0 || edges.length > 0)) {
+      const storageKey = `pipeline-${projectId}`;
+      const pipelineData = { nodes, edges };
+      localStorage.setItem(storageKey, JSON.stringify(pipelineData));
+      console.log(`💾 Auto-saved to localStorage (${storageKey}):`, { nodes: nodes.length, edges: edges.length });
+    }
+  }, [nodes, edges, projectId]);
 
   // Ref 등록
   React.useEffect(() => {
@@ -264,11 +302,17 @@ export interface CICDFlowCanvasRef {
   getFlowData: () => { nodes: any[], edges: any[] };
 }
 
-export default function CICDFlowCanvas({ onRef }: { onRef?: (ref: CICDFlowCanvasRef) => void }) {
+export default function CICDFlowCanvas({ 
+  projectId, 
+  onRef 
+}: { 
+  projectId: string;
+  onRef?: (ref: CICDFlowCanvasRef) => void;
+}) {
   return (
     <div className="h-screen w-full bg-gray-50">
       <ReactFlowProvider>
-        <CICDDropZone onRef={onRef} />
+        <CICDDropZone projectId={projectId} onRef={onRef} />
       </ReactFlowProvider>
     </div>
   );

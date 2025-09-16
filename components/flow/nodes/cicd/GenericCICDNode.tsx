@@ -12,7 +12,7 @@ import { BaseCICDNodeData, CICD_GROUP_COLORS, BLOCK_TYPE_TO_GROUP, CICDBlockType
  */
 const GenericCICDNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as BaseCICDNodeData;
-  const group = BLOCK_TYPE_TO_GROUP[(nodeData.block_type as CICDBlockType)];
+  const group = BLOCK_TYPE_TO_GROUP[(nodeData.blockType as CICDBlockType)];
   const groupColors = CICD_GROUP_COLORS[group];
 
   // 표시에서 제외할 필드

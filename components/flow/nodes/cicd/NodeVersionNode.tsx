@@ -11,13 +11,13 @@ const NodeVersionNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as NodeVersionNodeData;
 
   const [version, setVersion] = useState(nodeData.version || "18");
-  const [pkgManager, setPkgManager] = useState<NodeVersionNodeData["package_manager"]>(nodeData.package_manager || "pnpm");
+  const [pkgManager, setPkgManager] = useState<NodeVersionNodeData["packageManager"]>(nodeData.packageManager || "pnpm");
 
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD];
 
   return (
     <BaseNode
-      data={{ ...nodeData, version, package_manager: pkgManager }}
+      data={{ ...nodeData, version, packageManager: pkgManager }}
       id={id}
       colorClass={groupColors.colorClass}
       icon={<Package className="w-4 h-4 text-white" />}

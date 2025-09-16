@@ -70,13 +70,13 @@ const DeployVercelNode = memo(({ data, id }: NodeProps) => {
         {isExpanded && (
           <div className="space-y-3 p-3 bg-gray-50 rounded border">
             {/* 환경 변수 */}
-            {nodeData.environment_variables && Object.keys(nodeData.environment_variables).length > 0 && (
+            {nodeData.environmentVariables && Object.keys(nodeData.environmentVariables).length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Environment Variables
                 </label>
                 <div className="space-y-1 max-h-20 overflow-y-auto">
-                  {Object.entries(nodeData.environment_variables).map(([key, value], idx) => (
+                  {Object.entries(nodeData.environmentVariables).map(([key, value], idx) => (
                     <div
                       key={idx}
                       className="flex items-center justify-between bg-white px-2 py-1 rounded border"
