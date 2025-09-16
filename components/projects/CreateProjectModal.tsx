@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, ExternalLink, Settings, GitBranch, X } from 'lucide-react';
+import { Search, ExternalLink, Settings, GitBranch, X, Plus } from 'lucide-react';
 import { useProjectStore } from '@/lib/projectStore';
+import ProjectCreationWizard from './ProjectCreationWizard';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -16,6 +17,14 @@ interface CreateProjectModalProps {
  */
 export default function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRepository, setSelectedRepository] = useState<{
+    name: string;
+    owner: string;
+    visibility: 'Public' | 'Private';
+    updated: string;
+  } | null>(null);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+
   const {
     projects,
     isLoading,
@@ -41,6 +50,11 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   /** 프로젝트 선택 처리 */
   const handleSelectProject = (projectId: string) => {
     setSelectedProject(projectId);
+
+    // 선택 효과를 보여주고 잠시 후 모달 닫기
+    setTimeout(() => {
+      onClose();
+    }, 300); // 0.3초 후 닫기
   };
 
   /** GitHub 리포지토리를 새 탭에서 열기 */
@@ -48,9 +62,23 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
     window.open(`https://github.com/${githubOwner}/${githubRepoName}`, '_blank');
   };
 
-  /** GitHub OAuth 연동 처리 */
-  const handleGitHubConnect = () => {
-    window.location.href = '/auth/github';
+  /** GitHub 저장소 선택 시 마법사 열기 */
+  const handleRepositorySelect = (repo: {
+    name: string;
+    owner: string;
+    visibility: 'Public' | 'Private';
+    updated: string
+  }) => {
+    setSelectedRepository(repo);
+    setIsWizardOpen(true);
+  };
+
+  /** 마법사 닫기 */
+  const handleWizardClose = () => {
+    setIsWizardOpen(false);
+    setSelectedRepository(null);
+    // 마법사에서 프로젝트가 생성되었으면 모달도 닫기
+    fetchProjects(); // 프로젝트 목록 새로고침
   };
 
   /** 백드롭 클릭 시 모달 닫기 */
@@ -99,13 +127,13 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       />
 
       {/* 모달 컨테이너 */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden m-4">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden m-4">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 id="create-project-modal-title" className="text-2xl font-bold text-gray-900">새 프로젝트 만들기</h2>
             <p className="text-gray-600 mt-1">
-              GitHub 저장소를 연동하여 새 프로젝트를 생성하거나 기존 프로젝트를 관리하세요.
+              프로젝트를 생성할 저장소를 선택하세요 
             </p>
           </div>
           <button
@@ -118,7 +146,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         </div>
 
         {/* Modal Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="p-8 overflow-y-auto max-h-[calc(95vh-100px)]">
           {isLoading && projects.length === 0 ? (
             <div className="animate-pulse">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -142,7 +170,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
             </div>
           ) : (
             /* Two Column Layout */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column - GitHub 저장소 */}
               <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
                 <div className="mb-6">
@@ -155,21 +183,35 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 {/* GitHub 저장소 목록 */}
                 <div className="space-y-3 mb-6">
                   {[
-                    { name: 'mycompany/web-app', visibility: 'Public', updated: '609일 전 업데이트' },
-                    { name: 'mycompany/mobile-app', visibility: 'Private', updated: '610일 전 업데이트' },
-                    { name: 'mycompany/api-server', visibility: 'Private', updated: '611일 전 업데이트' },
-                    { name: 'mycompany/documentation', visibility: 'Public', updated: '612일 전 업데이트' },
-                    { name: 'mycompany/infrastructure', visibility: 'Private', updated: '613일 전 업데이트' },
+                    { name: 'web-app', owner: 'mycompany', visibility: 'Public' as const, updated: '609일 전 업데이트' },
+                    { name: 'mobile-app', owner: 'mycompany', visibility: 'Private' as const, updated: '610일 전 업데이트' },
+                    { name: 'api-server', owner: 'mycompany', visibility: 'Private' as const, updated: '611일 전 업데이트' },
+                    { name: 'documentation', owner: 'mycompany', visibility: 'Public' as const, updated: '612일 전 업데이트' },
+                    { name: 'infrastructure', owner: 'mycompany', visibility: 'Private' as const, updated: '613일 전 업데이트' },
                   ].map((repo, index) => (
                     <div
                       key={index}
-                      className="bg-white hover:bg-gray-50 rounded-lg p-4 border border-gray-200 transition-colors cursor-pointer"
+                      className="group relative bg-white hover:bg-gray-50 rounded-lg p-4 border border-gray-200 transition-all hover:shadow-md"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <GitBranch className="w-4 h-4 text-gray-500" />
-                          <span className="font-medium text-gray-900">{repo.name}</span>
+                          <span className="font-medium text-gray-900">{repo.owner}/{repo.name}</span>
                         </div>
+
+                        {/* Hover 시 나타나는 생성 버튼 - 70% 위치에 배치 */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRepositorySelect(repo);
+                          }}
+                          className="absolute left-[65%] top-5 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 transform scale-90 group-hover:scale-100 flex items-center gap-2 px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl z-10"
+                          title="프로젝트 생성"
+                        >
+                          <Plus className="w-5 h-5" />
+                          <span className="text-base">생성</span>
+                        </button>
+
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           repo.visibility === 'Public'
                             ? 'bg-green-100 text-green-700'
@@ -178,22 +220,28 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                           {repo.visibility}
                         </span>
                       </div>
+
                       <p className="text-sm text-gray-500">{repo.updated}</p>
                     </div>
                   ))}
                 </div>
 
-                <button
-                  onClick={handleGitHubConnect}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 font-medium"
-                >
-                  <GitBranch className="w-5 h-5" />
-                  GitHub 연동하기
-                </button>
+                {/* 저장소가 없을 때 */}
+                {false && ( // TODO: 실제로는 repositories.length === 0 조건 사용
+                  <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                    <GitBranch className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      연결된 저장소가 없습니다
+                    </h4>
+                    <p className="text-gray-600 text-sm">
+                      GitHub 계정을 연결하여 저장소를 불러오세요
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Right Column - 생성된 프로젝트 */}
-              <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 min-w-0">
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">생성된 프로젝트</h3>
                   <p className="text-gray-600 text-sm mb-4">
@@ -214,10 +262,10 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 </div>
 
                 {/* Projects List */}
-                <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-4">
                   {filteredProjects.length === 0 ? (
                     <div className="text-center py-8">
-                      <div className="bg-white rounded-lg p-6 border border-gray-200">
+                      <div className="bg-white rounded-lg p-6 border border-gray-200 mx-2">
                         <GitBranch className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                         <h4 className="text-lg font-semibold text-gray-900 mb-2">
                           {searchQuery ? '검색 결과가 없습니다' : '아직 생성된 프로젝트가 없습니다'}
@@ -233,17 +281,17 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                     filteredProjects.map((project) => (
                       <div
                         key={project.projectId}
-                        className={`rounded-lg border-2 p-4 hover:shadow-md transition-all duration-200 cursor-pointer ${
+                        className={`rounded-lg border-2 p-4 hover:shadow-md transition-all duration-300 cursor-pointer mx-2 ${
                           selectedProjectId === project.projectId
-                            ? 'border-purple-300 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            ? 'border-purple-300 bg-purple-50 shadow-lg scale-[1.005]'
+                            : 'border-gray-200 hover:border-gray-300 bg-white hover:scale-[1.005]'
                         }`}
                         onClick={() => handleSelectProject(project.projectId)}
                       >
                         {/* Project Header */}
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-2">
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-lg font-semibold text-gray-900 truncate mb-1">
+                            <h4 className="text-base font-semibold text-gray-900 truncate mb-1">
                               {project.name}
                             </h4>
                             <div className="flex items-center text-sm text-gray-600">
@@ -296,28 +344,24 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            취소
-          </button>
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
-          >
-            완료
-          </button>
-        </div>
       </div>
     </div>
   );
 
   // React Portal을 사용하여 document.body에 렌더링
   // 이를 통해 사이드바나 다른 컴포넌트의 z-index 제약을 벗어남
-  return typeof window !== 'undefined'
-    ? createPortal(modalContent, document.body)
-    : null;
+  return (
+    <>
+      {typeof window !== 'undefined' && createPortal(modalContent, document.body)}
+
+      {/* 프로젝트 생성 마법사 */}
+      {selectedRepository && (
+        <ProjectCreationWizard
+          isOpen={isWizardOpen}
+          onClose={handleWizardClose}
+          repository={selectedRepository}
+        />
+      )}
+    </>
+  );
 }

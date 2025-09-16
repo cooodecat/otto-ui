@@ -8,10 +8,14 @@ export interface Project {
   projectId: string;
   /** 프로젝트 이름 */
   name: string;
+  /** 프로젝트 설명 */
+  description?: string;
   /** GitHub 소유자 */
   githubOwner: string;
   /** GitHub 리포지토리 이름 */
   githubRepoName: string;
+  /** 기본 브랜치 */
+  defaultBranch?: string;
   /** 생성일 */
   createdAt?: string;
   /** 수정일 */
@@ -44,6 +48,8 @@ interface ProjectStoreActions {
   getSelectedProject: () => Project | null;
   /** 프로젝트 추가 */
   addProject: (project: Project) => void;
+  /** 프로젝트 생성 */
+  createProject: (project: Omit<Project, 'updatedAt'>) => void;
   /** 프로젝트 업데이트 */
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   /** 프로젝트 삭제 */
@@ -111,12 +117,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         }
       ];
 
-      set({
+      set((state) => ({
         projects: mockProjects,
         isLoading: false,
-        // 첫 번째 프로젝트를 기본 선택
-        selectedProjectId: mockProjects.length > 0 ? mockProjects[0].projectId : null
-      });
+        // 기존 선택된 프로젝트가 있으면 유지, 없으면 첫 번째 선택
+        selectedProjectId: state.selectedProjectId ||
+          (mockProjects.length > 0 ? mockProjects[0].projectId : null)
+      }));
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch projects',
@@ -138,6 +145,21 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set(state => ({
       projects: [...state.projects, project]
     }));
+  },
+
+  createProject: (project: Omit<Project, 'updatedAt'>) => {
+    const newProject: Project = {
+      ...project,
+      updatedAt: new Date().toISOString()
+    };
+
+    set(state => ({
+      projects: [...state.projects, newProject],
+      selectedProjectId: newProject.projectId // 생성된 프로젝트를 자동 선택
+    }));
+
+    // TODO: 실제 API 호출 추가
+    // await api.createProject(newProject);
   },
 
   updateProject: (projectId: string, updates: Partial<Project>) => {
