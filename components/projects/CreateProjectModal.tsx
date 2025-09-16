@@ -110,7 +110,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           <div>
             <h2 id="create-project-modal-title" className="text-2xl font-bold text-gray-900">새 프로젝트 만들기</h2>
             <p className="text-gray-600 mt-1">
-              GitHub 저장소를 연동하여 새 프로젝트를 생성하거나 기존 프로젝트를 관리하세요.
+              프로젝트를 생성할 저장소를 선택하세요 
             </p>
           </div>
           <button
@@ -188,13 +188,6 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                   ))}
                 </div>
 
-                <button
-                  onClick={handleGitHubConnect}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 font-medium"
-                >
-                  <GitBranch className="w-5 h-5" />
-                  GitHub 연동하기
-                </button>
               </div>
 
               {/* Right Column - 생성된 프로젝트 */}
