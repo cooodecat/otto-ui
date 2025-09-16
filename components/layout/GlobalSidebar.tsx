@@ -98,7 +98,13 @@ const shouldShowBlockPalette = (pathname: string): boolean => {
  * @returns 로그 페이지인지 여부
  */
 const isLogsPage = (pathname: string): boolean => {
-  return pathname === '/logs' || pathname.startsWith('/logs/');
+  // 독립적인 /logs 페이지
+  if (pathname === '/logs' || pathname.startsWith('/logs/')) return true;
+  
+  // 프로젝트별 로그 페이지 (나중에 추가될 수 있음)
+  if (pathname.includes('/logs')) return true;
+  
+  return false;
 };
 
 /**
