@@ -46,6 +46,14 @@ import { edgeTypes, cicdEdgeOptions } from "./edges";
 
 
 /**
+ * 노드 ID 생성기
+ * crypto.randomUUID()를 사용하여 고유한 ID 생성
+ */
+const getId = () => {
+  return `cicd_node_${crypto.randomUUID()}`;
+};
+
+/**
  * 초기 노드 구성 - 빈 캔버스에서 시작
  */
 const initialNodes: Node[] = [];
@@ -92,11 +100,12 @@ function CICDDropZone({
 
   const createDefaultPipelineStart = () => {
     console.log("🏁 Creating default Pipeline Start node...");
-    const pipelineStartNode = createNodeInstance(
-      'pipeline_start', 
-      { x: 100, y: 100 }
-    );
-    
+
+    const pipelineStartNode = createNodeInstance("pipeline_start", {
+      x: 100,
+      y: 100,
+    }, getId());
+ 
     // 삭제 불가능하도록 설정
     pipelineStartNode.selectable = false;
     pipelineStartNode.deletable = false;
@@ -231,7 +240,7 @@ function CICDDropZone({
       });
 
       try {
-        const newNode = createNodeInstance(type, position);
+        const newNode = createNodeInstance(type, position, getId());
         setNodes((nds) => nds.concat(newNode));
       } catch (error) {
         console.error("Failed to create node:", error);
