@@ -6,91 +6,46 @@ import { useDebounce } from '@/hooks/logs/useDebounce';
 import { useLogData } from '@/hooks/logs/useLogData';
 import { useSSELogStream } from '@/hooks/logs/useSSELogStream';
 import { getMockData } from '@/lib/logs';
+import { usePipelineLogs } from '@/hooks/logs/usePipelineLogs';
 import PipelineLogsHeader from './components/PipelineLogsHeader';
 import PipelineLogsTable from './components/PipelineLogsTable';
-
-// 기본 샘플 데이터 (Phase 5에서 실제 API로 교체 예정)
-const defaultSampleLogs: LogItem[] = [
-  {
-    id: '5',
-    status: 'success',
-    pipelineName: 'E2E Tests',
-    trigger: { type: 'Push to develop', author: 'dev-team', time: '1s ago' },
-    branch: 'develop',
-    commit: { message: 'test: Update checkout flow tests', sha: 'e5f6789', author: 'Dev Team' },
-    duration: '15m 0s',
-    isNew: true,
-  },
-  {
-    id: '4',
-    status: 'pending',
-    pipelineName: 'Mobile App Build',
-    trigger: { type: 'Scheduled build', author: 'system', time: '50m ago' },
-    branch: 'release/v2.1',
-    commit: { message: 'release: Prepare v2.1.0 release', sha: 'd4e5f67', author: 'Release Bot' },
-    duration: '-',
-    isNew: false,
-  },
-  {
-    id: '3',
-    status: 'failed',
-    pipelineName: 'Database Migration',
-    trigger: { type: 'Manual trigger', author: 'admin', time: '5h ago' },
-    branch: 'migration-v2',
-    commit: {
-      message: 'migration: Add user preferences table',
-      sha: 'c3d4e5f',
-      author: 'Admin User',
-    },
-    duration: '3m 0s',
-    isNew: false,
-  },
-  {
-    id: '2',
-    status: 'success',
-    pipelineName: 'Backend API',
-    trigger: { type: 'PR #123 merged', author: 'jane-smith', time: '3h ago' },
-    branch: 'develop',
-    commit: {
-      message: 'fix: Resolve authentication middleware issue',
-      sha: 'b2c3d44',
-      author: 'Jane Smith',
-    },
-    duration: '7m 0s',
-    isNew: false,
-  },
-  {
-    id: '1',
-    status: 'running',
-    pipelineName: 'Frontend Build',
-    trigger: { type: 'Push to main', author: 'john-doe', time: '2h ago' },
-    branch: 'main',
-    commit: {
-      message: 'feat: Add new component library integration',
-      sha: 'a1b2c34',
-      author: 'John Doe',
-    },
-    duration: '8m 32s',
-    isNew: false,
-  },
-];
 
 /**
  * Pipeline Logs Page Component
  * 
  * 파이프라인 로그의 메인 페이지 컴포넌트
  * 헤더, 필터링, 테이블, 무한 스크롤 등 모든 기능 통합
- * Phase 5: 실제 API 및 SSE 연결 지원
+ * 실제 Supabase 데이터와 목업 데이터를 모두 지원
  */
 const PipelineLogsPage: React.FC<PipelineLogsPageProps & { 
   useRealApi?: boolean;
   buildId?: string;
+  userId?: string;
 }> = ({
   projectId: _projectId,
   useRealApi = false,
-  buildId = 'test-build-123'
+  buildId = 'test-build-123',
+  userId
 }) => {
-  // API Integration
+  // Pipeline Logs 데이터 관리
+  const {
+    logs,
+    isLoading,
+    error: pipelineError,
+    hasMore,
+    totalCount,
+    loadMore,
+    refresh,
+    search: searchLogs,
+    filter: filterLogs
+  } = usePipelineLogs({
+    userId,
+    useRealData: useRealApi,
+    initialLimit: 20,
+    autoFetch: true
+  });
+
+  // Legacy API Integration (SSE 및 실시간 기능용)
   const {
     logData,
     loading: apiLoading,
@@ -100,14 +55,13 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     startCollection,
     stopCollection
   } = useLogData(buildId, {
-    useRealApi,
-    getMockData: useRealApi ? undefined : getMockData,
+    useRealApi: false, // Pipeline logs에서는 별도 관리
+    getMockData: getMockData,
     simulateDelay: 1000
   });
 
   // 상태 관리
-  const [logs, setLogs] = useState<LogItem[]>(logData?.logs || defaultSampleLogs);
-  const [displayedLogs, setDisplayedLogs] = useState<LogItem[]>(logData?.logs || defaultSampleLogs);
+  const [displayedLogs, setDisplayedLogs] = useState<LogItem[]>(logs);
   const [isLive, setIsLive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters] = useState<FilterState>({
@@ -117,11 +71,8 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     branch: 'all-branches',
     author: 'all-authors'
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
-  const [newLogIds, setNewLogIds] = useState<Set<string>>(new Set(['5'])); // 최신 로그를 새로운 것으로 표시
-  const [unreadCount, setUnreadCount] = useState(1);
+  const [newLogIds, setNewLogIds] = useState<Set<string>>(new Set()); // 새로운 로그 ID 관리
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // SSE Real-time Log Streaming
   const {
@@ -165,145 +116,32 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   // 디바운싱된 검색어
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // 로그 필터링 함수
-  const filterLogs = useCallback((logList: LogItem[], query: string, filterState: FilterState) => {
-    let filtered = logList;
 
-    // 검색어 필터링
-    if (query.trim()) {
-      const lowerQuery = query.toLowerCase();
-      filtered = filtered.filter(log =>
-        log.pipelineName.toLowerCase().includes(lowerQuery) ||
-        log.branch.toLowerCase().includes(lowerQuery) ||
-        log.commit.message.toLowerCase().includes(lowerQuery) ||
-        log.commit.author.toLowerCase().includes(lowerQuery) ||
-        log.trigger.author.toLowerCase().includes(lowerQuery)
-      );
-    }
-
-    // 상태 필터링
-    if (filterState.status !== 'any-status') {
-      filtered = filtered.filter(log => log.status === filterState.status);
-    }
-
-    // 브랜치 필터링
-    if (filterState.branch !== 'all-branches') {
-      filtered = filtered.filter(log => log.branch === filterState.branch);
-    }
-
-    // 트리거 필터링
-    if (filterState.trigger !== 'all-triggers') {
-      const triggerMap: Record<string, string[]> = {
-        'push': ['Push to main', 'Push to develop'],
-        'pr-merged': ['PR #123 merged'],
-        'manual': ['Manual trigger'],
-        'scheduled': ['Scheduled build']
-      };
-      
-      const allowedTriggers = triggerMap[filterState.trigger] || [];
-      if (allowedTriggers.length > 0) {
-        filtered = filtered.filter(log => allowedTriggers.includes(log.trigger.type));
-      }
-    }
-
-    // 작성자 필터링
-    if (filterState.author !== 'all-authors') {
-      filtered = filtered.filter(log => 
-        log.trigger.author === filterState.author || 
-        log.commit.author.toLowerCase().replace(' ', '-') === filterState.author
-      );
-    }
-
-    return filtered;
-  }, []);
-
-  // API 로드 시 로그 업데이트
+  // logs 변경 시 displayedLogs 업데이트
   useEffect(() => {
-    if (logData?.logs) {
-      setLogs(logData.logs);
-      setHasMore(logData?.hasNext || false);
-    }
-  }, [logData]);
+    setDisplayedLogs(logs);
+  }, [logs]);
 
-  // 필터 및 검색어 변경 시 로그 필터링
+  // 검색어 변경 시 실제 검색 실행 (디바운싱 적용)
   useEffect(() => {
-    const filtered = filterLogs(logs, debouncedSearchQuery, filters);
-    setDisplayedLogs(filtered);
-  }, [logs, debouncedSearchQuery, filters, filterLogs]);
+    if (debouncedSearchQuery !== searchQuery) return;
+    if (debouncedSearchQuery.trim()) {
+      searchLogs(debouncedSearchQuery);
+    } else if (searchQuery === '') {
+      // 검색어가 비워지면 전체 목록으로 돌아감
+      refresh();
+    }
+  }, [debouncedSearchQuery, searchQuery, searchLogs, refresh]);
 
-  // 새로운 로그 로드 (무한 스크롤)
+  // 무한 스크롤을 위한 더 많은 로그 로드
   const loadMoreLogs = useCallback(async () => {
-    if (isLoading || !hasMore) return;
-
-    setIsLoading(true);
-    
-    // 실제 구현에서는 API 호출
-    // const newLogs = await api.getLogs({ page: page + 1, projectId });
-    
-    // 시뮬레이션: 추가 로그 생성
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const additionalLogs: LogItem[] = Array.from({ length: 5 }, (_, index) => ({
-      id: `page-${page}-${index}`,
-      status: ['success', 'failed', 'running', 'pending'][Math.floor(Math.random() * 4)] as LogItem['status'],
-      pipelineName: `Pipeline ${page}-${index}`,
-      trigger: { 
-        type: 'Push to main', 
-        author: `user-${index}`, 
-        time: `${Math.floor(Math.random() * 24)}h ago` 
-      },
-      branch: ['main', 'develop', 'feature/test'][Math.floor(Math.random() * 3)],
-      commit: {
-        message: `Commit message for build ${page}-${index}`,
-        sha: Math.random().toString(36).substring(2, 9),
-        author: `User ${index}`
-      },
-      duration: `${Math.floor(Math.random() * 10) + 1}m ${Math.floor(Math.random() * 60)}s`,
-      isNew: false
-    }));
-
-    setLogs(prev => [...prev, ...additionalLogs]);
-    setPage(prev => prev + 1);
-    
-    // 5페이지 후 더 이상 로드하지 않음
-    if (page >= 5) {
-      setHasMore(false);
-    }
-    
-    setIsLoading(false);
-  }, [isLoading, hasMore, page]);
+    await loadMore();
+  }, [loadMore]);
 
   // 새로고침
   const handleRefresh = useCallback(async () => {
-    if (useRealApi) {
-      // 실제 API 사용 시
-      refetch();
-    } else {
-      // 목업 데이터 시뮬레이션
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newLog: LogItem = {
-        id: `refresh-${Date.now()}`,
-        status: 'success',
-        pipelineName: 'Fresh Build',
-        trigger: { type: 'Manual trigger', author: 'current-user', time: 'just now' },
-        branch: 'main',
-        commit: {
-          message: 'feat: Fresh deployment',
-          sha: Math.random().toString(36).substring(2, 9),
-          author: 'Current User'
-        },
-        duration: '4m 15s',
-        isNew: true
-      };
-
-      setLogs(prev => [newLog, ...prev]);
-      setNewLogIds(prev => new Set([...prev, newLog.id]));
-      setUnreadCount(prev => prev + 1);
-      setIsLoading(false);
-    }
-  }, [useRealApi, refetch]);
+    await refresh();
+  }, [refresh]);
 
   // Live 모드 토글
   const handleLiveToggle = useCallback(async (enabled: boolean) => {
@@ -357,11 +195,11 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   return (
     <div className='space-y-6'>
       {/* API 에러 표시 */}
-      {apiError && (
+      {(pipelineError || apiError) && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-start">
             <div className="text-red-600 text-sm">
-              <strong>API Error:</strong> {apiError}
+              <strong>API Error:</strong> {pipelineError || apiError}
             </div>
           </div>
         </div>
@@ -391,16 +229,16 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
         onSearchChange={setSearchQuery}
         unreadCount={unreadCount}
         onRefresh={handleRefresh}
-        isRefreshing={isLoading || apiLoading}
+        isRefreshing={isLoading}
       />
 
       {/* API 로딩 상태 */}
-      {apiLoading && !logs.length && (
+      {isLoading && !logs.length && (
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-gray-600">
-              {useRealApi ? 'Loading logs from API...' : 'Loading mock data...'}
+              {useRealApi ? 'Loading logs from Supabase...' : 'Loading mock data...'}
             </span>
           </div>
         </div>
@@ -425,6 +263,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
           <div>Collecting: {isCollecting ? '✅' : '❌'}</div>
           <div>SSE: {sseConnected ? '🟢' : '🔴'}</div>
           <div>Logs: {logs.length}</div>
+          <div>Total: {totalCount}</div>
           {connectionState.lastMessageTime && (
             <div>Last SSE: {new Date(connectionState.lastMessageTime).toLocaleTimeString()}</div>
           )}
