@@ -135,7 +135,7 @@ export async function getAllUserBuildHistories(
   const { data: projects, error: projectsError } = await retryApiCall(async () => {
     return await supabase
       .from('projects')
-      .select('project_id')
+      .select('project_id, name, github_repo_name, selected_branch, github_owner')
       .eq('user_id', userId);
   });
 
@@ -323,7 +323,7 @@ export async function searchBuildHistories(
   // 먼저 사용자의 프로젝트 ID들을 조회
   const { data: projects, error: projectsError } = await supabase
     .from('projects')
-    .select('project_id, name, github_repo_name')
+    .select('project_id, name, github_repo_name, selected_branch, github_owner')
     .eq('user_id', userId)
     .or(`name.ilike.%${searchQuery}%,github_repo_name.ilike.%${searchQuery}%`);
 

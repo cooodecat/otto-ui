@@ -2,8 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Maximize2, Minimize2, ExternalLink, Copy, Download } from 'lucide-react';
-import { LogDetailsPanelProps, ViewMode, LogData } from '@/types/logs';
+import { X, Maximize2, Minimize2, ExternalLink, Copy, Download, Play, Square, ArrowDownToLine, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { LogDetailsPanelProps, ViewMode } from '@/types/logs';
+import { useBuildLogs } from '@/hooks/logs/useBuildLogs';
 import { useKeyboardShortcuts } from '@/hooks/logs/useKeyboardShortcuts';
 
 /**
@@ -21,108 +22,30 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // 로컬 목업 데이터 상태 (상세 뷰 전용)
-  const [logData, setLogData] = useState<LogData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadMockData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // 간단한 목업 데이터 생성 (실제 API 연동 전까지 사용)
-      const data: LogData = {
-        buildId,
-        buildNumber: Math.floor(Math.random() * 1000) + 1,
-        projectName: 'otto-ui',
-        buildStatus: 'SUCCEEDED',
-        overallStatus: 'SUCCESS',
-        startTime: new Date().toISOString(),
-        endTime: new Date().toISOString(),
-        duration: '3m 45s',
-        trigger: 'GitHub Push',
-        branch: 'main',
-        commitHash: 'a1b2c3d',
-        commitMessage: 'feat: implement pipeline logs',
-        commitAuthor: 'developer',
-        pipeline: [
-          {
-            stage: 'Source Download',
-            status: 'SUCCESS',
-            duration: '30s',
-            startTime: new Date().toISOString(),
-            endTime: new Date().toISOString(),
-          },
-          {
-            stage: 'Build & Test',
-            status: 'SUCCESS',
-            duration: '2m 45s',
-            startTime: new Date().toISOString(),
-            endTime: new Date().toISOString(),
-          },
-          {
-            stage: 'Deploy',
-            status: 'SUCCESS',
-            duration: '30s',
-            startTime: new Date().toISOString(),
-            endTime: new Date().toISOString(),
-          }
-        ],
-        logs: {
-          totalLines: 150,
-          recentLines: [
-            {
-              timestamp: new Date().toISOString(),
-              level: 'INFO',
-              message: 'Starting build process...',
-              source: 'build'
-            },
-            {
-              timestamp: new Date().toISOString(),
-              level: 'INFO',
-              message: 'Installing dependencies...',
-              source: 'npm'
-            },
-            {
-              timestamp: new Date().toISOString(),
-              level: 'INFO',
-              message: 'Build completed successfully',
-              source: 'build'
-            }
-          ],
-          hasErrors: false,
-          cloudWatchUrl: '#'
-        }
-      };
-
-      // 약간의 딜레이 시뮬레이션
-      await new Promise((r) => setTimeout(r, 500));
-      setLogData(data);
-    } catch {
-      setError('Failed to load build details');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadMockData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId]);
-
-  const refetch = () => {
-    loadMockData();
-  };
+  // 실시간 빌드 로그 + 캐시 통합 훅
+  const {
+    logs,
+    isLive,
+    isConnecting,
+    isConnected,
+    error,
+    buildStatus,
+    autoScroll,
+    setAutoScroll,
+    start,
+    stop,
+    reconnect,
+    refetchCache,
+    containerRef,
+  } = useBuildLogs(buildId, { autoScroll: true, idleCheckSeconds: 20 });
 
   const toggleViewMode = () => {
     setViewMode(prev => prev === 'summary' ? 'expanded' : 'summary');
   };
 
   const handleOpenInNewWindow = () => {
-    if (logData) {
-      const url = `/logs/${buildId}?mode=expanded`;
-      window.open(url, '_blank', 'width=1200,height=800');
-    }
+    const url = `/logs/${buildId}?mode=expanded`;
+    window.open(url, '_blank', 'width=1200,height=800');
   };
 
   const focusSearch = () => {
@@ -154,19 +77,21 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
   };
 
   const downloadLogs = () => {
-    if (logData?.logs) {
-      const content = logData.logs.recentLines
-        .map(line => `[${line.timestamp}] ${line.level}: ${line.message}`)
-        .join('\n');
-      
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `build-${buildId}-logs.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+    const content = logs
+      .map(line => {
+        const ts = new Date(line.ts).toISOString();
+        const lvl = line.level || 'INFO';
+        const src = line.source ? `[${line.source}] ` : '';
+        return `[${ts}] ${lvl}: ${src}${line.message}`;
+      })
+      .join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `build-${buildId}-logs.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -181,7 +106,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
             <div className="flex items-center gap-4">
               <div>
                 <Dialog.Title className="text-xl font-semibold text-gray-900">
-                  Build #{logData?.buildNumber || '...'}
+                  Build #{buildId}
                 </Dialog.Title>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-sm text-gray-500">ID: {buildId}</span>
@@ -207,6 +132,26 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
                 ) : (
                   <Minimize2 className="w-4 h-4 text-gray-600" />
                 )}
+              </button>
+
+              <button
+                onClick={() => (isLive ? stop() : start())}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title={isLive ? 'Stop live' : 'Start live'}
+              >
+                {isLive ? (
+                  <Square className="w-4 h-4 text-red-600" />
+                ) : (
+                  <Play className="w-4 h-4 text-green-600" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setAutoScroll(!autoScroll)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title={autoScroll ? 'Autoscroll on' : 'Autoscroll off'}
+              >
+                <ArrowDownToLine className={`w-4 h-4 ${autoScroll ? 'text-blue-600' : 'text-gray-600'}`} />
               </button>
               
               <button
@@ -235,96 +180,81 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
 
           {/* 내용 */}
           <div className="flex-1 overflow-hidden">
-            {loading ? (
+            {isConnecting && !isConnected && logs.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex items-center gap-3">
                   <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <span className="text-gray-600">Loading build details...</span>
+                  <span className="text-gray-600">Connecting live log stream...</span>
                 </div>
               </div>
             ) : error ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="text-red-600 mb-2">Failed to load build details</div>
+                  <div className="text-red-600 mb-2">{error}</div>
                   <button
-                    onClick={refetch}
+                    onClick={reconnect}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Retry
                   </button>
                 </div>
               </div>
-            ) : logData ? (
-              <div className="p-6 h-full overflow-y-auto">
-                {/* 빌드 정보 요약 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">Status</div>
-                    <div className="font-semibold text-green-600">{logData.overallStatus}</div>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">Duration</div>
-                    <div className="font-semibold">{logData.duration}</div>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">Branch</div>
-                    <div className="font-semibold font-mono">{logData.branch}</div>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-500 mb-1">Commit</div>
-                    <div className="font-semibold font-mono">{logData.commitHash}</div>
-                  </div>
-                </div>
-
-                {/* 파이프라인 단계 */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Pipeline Stages</h3>
-                  <div className="space-y-2">
-                    {logData.pipeline.map((stage, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <div className={`w-3 h-3 rounded-full ${
-                          stage.status === 'SUCCESS' ? 'bg-green-500' :
-                          stage.status === 'FAILED' ? 'bg-red-500' :
-                          stage.status === 'IN_PROGRESS' ? 'bg-blue-500 animate-pulse' :
-                          'bg-gray-400'
-                        }`} />
-                        <div className="flex-1">
-                          <div className="font-medium">{stage.stage}</div>
-                          <div className="text-sm text-gray-500">{stage.duration}</div>
-                        </div>
-                        <div className="text-sm font-medium text-gray-600">{stage.status}</div>
-                      </div>
-                    ))}
+            ) : (
+              <div className="p-0 h-full flex flex-col">
+                {/* 상태 배지 영역 */}
+                <div className="px-6 pt-6 flex items-center gap-3">
+                  {buildStatus === 'SUCCEEDED' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-50 text-green-700 text-xs font-medium">
+                      <CheckCircle2 className="w-3 h-3" /> Build Succeeded
+                    </span>
+                  )}
+                  {buildStatus === 'FAILED' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-50 text-red-700 text-xs font-medium">
+                      <AlertTriangle className="w-3 h-3" /> Build Failed
+                    </span>
+                  )}
+                  {error && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-yellow-50 text-yellow-700 text-xs font-medium">
+                      <AlertTriangle className="w-3 h-3" /> {error}
+                    </span>
+                  )}
+                  <div className="ml-auto text-xs text-gray-500 pr-6">
+                    {isConnected ? 'Live connected' : isConnecting ? 'Connecting…' : 'Idle'}
                   </div>
                 </div>
 
-                {/* 로그 미리보기 */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Recent Logs</h3>
-                  <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-100 max-h-64 overflow-y-auto">
-                    {logData.logs.recentLines.map((line, index) => (
-                      <div key={index} className="mb-1">
-                        <span className="text-gray-400">[{new Date(line.timestamp).toLocaleTimeString()}]</span>
-                        <span className={`ml-2 ${
-                          line.level === 'ERROR' ? 'text-red-400' :
-                          line.level === 'WARN' ? 'text-yellow-400' :
-                          line.level === 'INFO' ? 'text-blue-400' :
-                          'text-gray-300'
-                        }`}>
-                          {line.level}:
-                        </span>
+                {/* 로그 뷰 */}
+                <div ref={containerRef} className="flex-1 bg-black text-gray-100 font-mono text-xs overflow-y-auto rounded-b-xl p-4 mt-3">
+                  {logs.map((line, idx) => {
+                    const levelColor = line.level === 'ERROR' ? 'text-red-400' :
+                      line.level === 'WARN' ? 'text-yellow-300' :
+                      line.level === 'DEBUG' ? 'text-gray-400' :
+                      'text-blue-300';
+                    const phaseColor = line.phase === 'BUILD' ? 'bg-indigo-700/40' :
+                      line.phase === 'PRE_BUILD' ? 'bg-sky-700/40' :
+                      line.phase === 'POST_BUILD' ? 'bg-teal-700/40' :
+                      line.phase === 'INSTALL' ? 'bg-emerald-700/40' :
+                      line.phase === 'FINAL' ? 'bg-purple-700/40' : 'bg-gray-700/40';
+                    return (
+                      <div key={`${line.ts}-${idx}`} className="mb-1 whitespace-pre-wrap break-words">
+                        <span className="text-gray-400">[{new Date(line.ts).toLocaleTimeString()}]</span>
+                        <span className={`ml-2 ${levelColor}`}>{line.level}</span>
+                        {line.phase && (
+                          <span className={`ml-2 inline-flex items-center px-1 py-0.5 rounded ${phaseColor}`}>{line.phase}</span>
+                        )}
+                        {line.source && (
+                          <span className="ml-2 inline-flex items-center px-1 py-0.5 rounded bg-gray-700/40">[{line.source}]</span>
+                        )}
+                        {line.code && (
+                          <span className="ml-2 inline-flex items-center px-1 py-0.5 rounded bg-red-700/40">{line.code}</span>
+                        )}
                         <span className="ml-2">{line.message}</span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-center">
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                      View full logs ({logData.logs.totalLines} lines)
-                    </button>
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
         </Dialog.Content>
       </Dialog.Portal>

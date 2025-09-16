@@ -8,6 +8,7 @@ import { useSSELogStream } from '@/hooks/logs/useSSELogStream';
 import { getMockData } from '@/lib/logs';
 import { usePipelineLogs } from '@/hooks/logs/usePipelineLogs';
 import PipelineLogsHeader from './components/PipelineLogsHeader';
+import { useAuth } from '@/components/auth/AuthProvider';
 import PipelineLogsTable from './components/PipelineLogsTable';
 
 /**
@@ -27,6 +28,13 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   buildId = 'test-build-123',
   userId
 }) => {
+  const { user } = useAuth();
+  const scopedUserId = user?.id || 'anon';
+  const scopedProjectId = _projectId || 'default';
+
+  const makeStorageKey = (suffix: string) =>
+    `pipelineLogs:${scopedUserId}:${scopedProjectId}:${buildId}:${suffix}`;
+
   // Pipeline Logs 데이터 관리
   const {
     logs,
@@ -73,6 +81,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   });
   const [newLogIds, setNewLogIds] = useState<Set<string>>(new Set()); // 새로운 로그 ID 관리
   const [unreadCount, setUnreadCount] = useState(0);
+  const [initializedFromCursor, setInitializedFromCursor] = useState(false);
 
   // SSE Real-time Log Streaming
   const {
@@ -85,24 +94,22 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     buildId,
     // 새로운 로그 수신 시 처리
     (newLogs: LogItem[]) => {
-      setLogs(prev => {
+      // displayedLogs 기준으로 병합 (중복 제거)
+      setDisplayedLogs(prev => {
         const existingIds = new Set(prev.map(log => log.id));
         const uniqueNewLogs = newLogs.filter(log => !existingIds.has(log.id));
-        
+
         if (uniqueNewLogs.length > 0) {
-          // 새 로그 ID 추가
+          // 새 로그 ID 추가 및 뱃지 증가
           setNewLogIds(prevIds => {
             const newSet = new Set(prevIds);
             uniqueNewLogs.forEach(log => newSet.add(log.id));
             return newSet;
           });
-          
-          // 읽지 않은 개수 증가
           setUnreadCount(prev => prev + uniqueNewLogs.length);
-          
+
           return [...uniqueNewLogs, ...prev];
         }
-        
         return prev;
       });
     },
@@ -120,6 +127,32 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   // logs 변경 시 displayedLogs 업데이트
   useEffect(() => {
     setDisplayedLogs(logs);
+  }, [logs]);
+
+  // 초기 한번: lastSeenId 기반으로 unread/newLogIds 복원
+  useEffect(() => {
+    if (initializedFromCursor) return;
+    if (!logs || logs.length === 0) return;
+    try {
+      const lastSeenId = typeof window !== 'undefined' 
+        ? localStorage.getItem(makeStorageKey('lastSeenId'))
+        : null;
+      if (lastSeenId) {
+        let count = 0;
+        const newIds = new Set<string>();
+        for (const log of logs) {
+          if (log.id === lastSeenId) break;
+          newIds.add(log.id);
+          count += 1;
+        }
+        if (count > 0) {
+          setUnreadCount(count);
+          setNewLogIds(newIds);
+        }
+      }
+    } catch {}
+    setInitializedFromCursor(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logs]);
 
   // 검색어 변경 시 실제 검색 실행 (디바운싱 적용)
@@ -141,15 +174,29 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   // 새로고침
   const handleRefresh = useCallback(async () => {
     await refresh();
+    // 새로고침 후 현재 최상단을 lastSeen으로 저장 (사용자 의도에 맞게 조정 가능)
+    try {
+      if (typeof window !== 'undefined' && displayedLogs[0]) {
+        localStorage.setItem(makeStorageKey('lastSeenId'), displayedLogs[0].id);
+      }
+    } catch {}
   }, [refresh]);
 
   // Live 모드 토글
   const handleLiveToggle = useCallback(async (enabled: boolean) => {
     setIsLive(enabled);
+    // 세션 저장 (빌드ID 단위)
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(makeStorageKey('live'), String(enabled));
+      }
+    } catch {}
     
     if (enabled && useRealApi) {
       try {
-        // 로그 수집 시작
+        // 백필: 최근 로그 재동기화
+        await refresh();
+        // 로그 수집 시작(옵션)
         await startCollection();
         // SSE 연결 시작
         connectSSE();
@@ -165,6 +212,12 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
         // 로그 수집 중지
         await stopCollection();
         console.log('⏹️ Live mode disabled - collection and streaming stopped');
+        // Live 끌 때 현재 최상단을 lastSeen으로 저장
+        try {
+          if (typeof window !== 'undefined' && displayedLogs[0]) {
+            localStorage.setItem(makeStorageKey('lastSeenId'), displayedLogs[0].id);
+          }
+        } catch {}
       } catch (error) {
         console.error('Failed to stop live mode:', error);
       }
@@ -172,7 +225,64 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
       // 목업 모드에서의 시뮬레이션
       console.log(enabled ? '🔴 Live mode enabled (mock)' : '⏹️ Live mode disabled (mock)');
     }
-  }, [useRealApi, startCollection, stopCollection, connectSSE, disconnectSSE]);
+  }, [useRealApi, startCollection, stopCollection, connectSSE, disconnectSSE, refresh, displayedLogs, makeStorageKey]);
+
+  // 초기 마운트 시 저장된 Live 상태로 자동 연결 / 복원
+  useEffect(() => {
+    if (!useRealApi) return;
+    try {
+      const saved = typeof window !== 'undefined' 
+        ? localStorage.getItem(makeStorageKey('live')) 
+        : null;
+      if (saved === 'true') {
+        // 자동 Live 활성화
+        handleLiveToggle(true);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useRealApi, scopedUserId, scopedProjectId, buildId]);
+
+  // 탭 가시성에 따른 연결 관리
+  useEffect(() => {
+    if (!useRealApi) return;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const onVisibility = async () => {
+      if (document.hidden) {
+        hideTimer = setTimeout(() => {
+          if (isLive) {
+            disconnectSSE();
+          }
+        }, 30000); // 30초 후 자원 절약 차단
+      } else {
+        if (hideTimer) {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+        if (isLive) {
+          // 복귀 시 최신 데이터 백필 후 재연결
+          await refresh();
+          connectSSE();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    // 탭/창 종료 직전 현재 위치 저장
+    const beforeUnload = () => {
+      try {
+        if (typeof window !== 'undefined' && displayedLogs[0]) {
+          localStorage.setItem(makeStorageKey('lastSeenId'), displayedLogs[0].id);
+        }
+      } catch {}
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('beforeunload', beforeUnload);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
+  }, [useRealApi, isLive, connectSSE, disconnectSSE, refresh, displayedLogs, makeStorageKey]);
 
   // 로그 읽음 처리
   const handleMarkAsRead = useCallback((logId: string) => {
