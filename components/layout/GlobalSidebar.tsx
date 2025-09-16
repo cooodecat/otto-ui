@@ -15,6 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import SettingsModal from "../settings/SettingsModal";
+import CreateProjectModal from "../projects/CreateProjectModal";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
 import { SidebarSkeleton, WorkspaceDropdownSkeleton } from "./SidebarSkeleton";
@@ -147,6 +148,10 @@ const GlobalSidebar = () => {
    * true일 때 SettingsModal 컴포넌트가 React Portal을 통해 전체 화면에 표시됩니다
    */
   const [isSettingsModalOpen, setIsSettingsModalOpen] =
+    useState<boolean>(false);
+
+  /** CreateProject 모달 열림/닫힘 상태 */
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
     useState<boolean>(false);
 
   /** 워크스페이스 드롭다운 참조 */
@@ -395,6 +400,17 @@ const GlobalSidebar = () => {
     setIsSettingsModalOpen(false);
   };
 
+  /** CreateProject 모달 열기 및 드롭다운 닫기 */
+  const handleCreateProjectClick = () => {
+    setIsCreateProjectModalOpen(true);
+    setIsWorkspaceDropdownOpen(false); // 드롭다운도 닫기
+  };
+
+  /** CreateProject 모달 닫기 */
+  const handleCreateProjectModalClose = () => {
+    setIsCreateProjectModalOpen(false);
+  };
+
   return (
     <div className={containerClassName}>
       {/* Workspace Header Card */}
@@ -466,9 +482,7 @@ const GlobalSidebar = () => {
                   {/* 새 프로젝트 만들기 */}
                   <div className="border-t border-gray-100 mt-1 pt-1">
                     <button
-                      onClick={() =>
-                        (window.location.href = "/projects/onboarding")
-                      }
+                      onClick={handleCreateProjectClick}
                       className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -598,13 +612,19 @@ const GlobalSidebar = () => {
         </div>
       </div>
 
-      {/* 
+      {/*
         Settings Modal - React Portal을 통해 document.body에 직접 렌더링
         전체 화면 중앙에 블러 배경과 함께 표시되며 사이드바 레이아웃 제약을 벗어남
       */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={handleSettingsModalClose}
+      />
+
+      {/* CreateProject Modal - /projects 페이지의 기능을 모달로 제공 */}
+      <CreateProjectModal
+        isOpen={isCreateProjectModalOpen}
+        onClose={handleCreateProjectModalClose}
       />
     </div>
   );
