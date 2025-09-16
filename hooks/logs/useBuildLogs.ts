@@ -102,7 +102,7 @@ export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {})
     try {
       const cache = await logsApi.getBuildCachedLogs(buildId);
       mergePayload(cache);
-    } catch {
+    } catch (e) {
       const msg = e instanceof LogsApiError ? e.message : 'Failed to load cached logs';
       setError(msg);
     }
@@ -171,7 +171,7 @@ export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {})
       // initial cache fetch if empty
       if (logs.length === 0) await refetchCache();
       connect();
-    } catch {
+    } catch (e) {
       const msg = e instanceof LogsApiError ? e.message : 'Failed to start collection';
       setError(msg);
       setIsLive(false);
