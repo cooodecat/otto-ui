@@ -48,6 +48,7 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
     | 'control'
     | 'data'
     | 'custom'
+    | 'cicd-start'
     | 'cicd-prebuild'
     | 'cicd-build'
     | 'cicd-test'

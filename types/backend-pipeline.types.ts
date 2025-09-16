@@ -19,6 +19,18 @@ export interface PipelineBlock {
   retry_count?: number;
 }
 
+// PIPELINE START 블록
+export interface PipelineStartBlock extends PipelineBlock {
+  block_type: CICDBlockType.PIPELINE_START;
+  group_type: CICDBlockGroup.START;
+  trigger_type?: 'manual' | 'schedule' | 'webhook' | 'push' | 'pull_request';
+  trigger_config?: {
+    schedule?: string; // cron expression
+    branch_patterns?: string[];
+    file_patterns?: string[];
+  };
+}
+
 // PREBUILD 블록들
 export interface OSPackagePipelineBlock extends PipelineBlock {
   block_type: CICDBlockType.OS_PACKAGE;
@@ -197,6 +209,7 @@ export interface CustomCommandPipelineBlock extends PipelineBlock {
 
 // 모든 파이프라인 블록 유니온 타입 (DEPLOY 제외)
 export type AnyPipelineBlock = 
+  | PipelineStartBlock
   | OSPackagePipelineBlock
   | NodeVersionPipelineBlock
   | EnvironmentSetupPipelineBlock

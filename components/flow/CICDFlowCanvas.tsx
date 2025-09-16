@@ -21,7 +21,7 @@
  */
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -59,27 +59,35 @@ const getId = () => {
 };
 
 /**
- * 초기 노드 구성
- * Start 노드는 모든 CI/CD 파이프라인의 시작점으로 삭제할 수 없음
+ * 초기 노드 구성 - 빈 캔버스에서 시작
  */
-const initialNodes: Node[] = [
-  {
-    id: "start-1",
-    type: "start",
-    position: { x: 0, y: 0 },
-    data: {
-      label: "Start Pipeline",
-      type: "start",
-    },
-    selectable: false,
-    deletable: false,
-  },
-];
+const initialNodes: Node[] = [];
 
 function CICDDropZone({ onRef }: { onRef?: (ref: CICDFlowCanvasRef) => void }) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { screenToFlowPosition } = useReactFlow();
+  const initializedRef = useRef(false);
+
+  // Pipeline Start 노드 자동 생성 (한 번만 실행)
+  useEffect(() => {
+    if (!initializedRef.current) {
+      console.log("🏁 Creating Pipeline Start node...");
+      const pipelineStartNode = createNodeInstance(
+        'pipeline_start', 
+        { x: 100, y: 100 }, 
+        'pipeline-start-1'
+      );
+      
+      // 삭제 불가능하도록 설정
+      pipelineStartNode.selectable = false;
+      pipelineStartNode.deletable = false;
+      
+      console.log("🏁 Pipeline Start node created:", pipelineStartNode);
+      setNodes([pipelineStartNode]);
+      initializedRef.current = true;
+    }
+  }, []);
 
   // Ref 등록
   React.useEffect(() => {
@@ -105,9 +113,28 @@ function CICDDropZone({ onRef }: { onRef?: (ref: CICDFlowCanvasRef) => void }) {
   );
 
   const onConnect: OnConnect = useCallback(
-    (params) =>
-      setEdges((eds) =>
-        addEdge(
+    (params) => {
+      setEdges((eds) => {
+        // 연결 전 한 번 더 검증 (현재 edges 상태 사용)
+        const { source, sourceHandle } = params;
+        
+        // 1:1 연결 제한 검증
+        if (sourceHandle === 'success-output' || 
+            sourceHandle === 'failed-output' || 
+            !sourceHandle || 
+            sourceHandle === 'default') {
+          const existingConnection = eds.find(
+            (edge) => edge.source === source && edge.sourceHandle === sourceHandle
+          );
+          
+          if (existingConnection) {
+            console.warn("⚠️ Connection blocked: Already has a connection from this handle");
+            return eds; // 기존 상태 유지 (연결 차단)
+          }
+        }
+
+        // 연결 허용
+        return addEdge(
           {
             ...params,
             ...cicdEdgeOptions, // CI/CD 전용 간선 사용
@@ -117,8 +144,9 @@ function CICDDropZone({ onRef }: { onRef?: (ref: CICDFlowCanvasRef) => void }) {
             },
           },
           eds
-        )
-      ),
+        );
+      });
+    },
     []
   );
 
@@ -127,8 +155,11 @@ function CICDDropZone({ onRef }: { onRef?: (ref: CICDFlowCanvasRef) => void }) {
     (connection: any) => {
       const { source, sourceHandle } = connection;
       
-      // CICD 출력 핸들인 경우에만 제한 적용
-      if (sourceHandle === 'success-output' || sourceHandle === 'failed-output') {
+      // 모든 출력 핸들에 1:1 연결 제한 적용
+      if (sourceHandle === 'success-output' || 
+          sourceHandle === 'failed-output' || 
+          !sourceHandle || // 기본 output handle
+          sourceHandle === 'default') {
         // 이미 해당 소스 핸들로 연결된 간선이 있는지 확인
         const existingConnection = edges.find(
           (edge) => edge.source === source && edge.sourceHandle === sourceHandle
@@ -138,7 +169,7 @@ function CICDDropZone({ onRef }: { onRef?: (ref: CICDFlowCanvasRef) => void }) {
         return !existingConnection;
       }
       
-      // 일반 핸들은 제한 없음
+      // 기타 핸들은 제한 없음 (다중 출력이 필요한 특수한 경우)
       return true;
     },
     [edges]

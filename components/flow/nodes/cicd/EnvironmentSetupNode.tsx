@@ -4,13 +4,15 @@ import { memo, useRef, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
 import { EnvironmentSetupNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
-import { Globe } from "lucide-react";
+import { Globe, Eye, EyeOff } from "lucide-react";
 
 const EnvironmentSetupNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as EnvironmentSetupNodeData;
   const [envs, setEnvs] = useState<Record<string, string>>(nodeData.environment_variables || {});
   const [keyInput, setKeyInput] = useState("");
   const [valInput, setValInput] = useState("");
+  const [showValInput, setShowValInput] = useState(false);
+  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addPair = () => {
@@ -25,7 +27,23 @@ const EnvironmentSetupNode = memo(({ data, id }: NodeProps) => {
     const next = { ...envs };
     delete next[k];
     setEnvs(next);
+    // 삭제할 때 visibility도 제거
+    const newVisible = new Set(visibleKeys);
+    newVisible.delete(k);
+    setVisibleKeys(newVisible);
   };
+
+  const toggleVisibility = (key: string) => {
+    const newVisible = new Set(visibleKeys);
+    if (newVisible.has(key)) {
+      newVisible.delete(key);
+    } else {
+      newVisible.add(key);
+    }
+    setVisibleKeys(newVisible);
+  };
+
+  const maskValue = (value: string) => '•'.repeat(Math.min(value.length, 8));
 
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD];
 
@@ -62,24 +80,35 @@ const EnvironmentSetupNode = memo(({ data, id }: NodeProps) => {
       colorClass={groupColors.colorClass}
       icon={<Globe className="w-4 h-4 text-white" />}
       minWidth={360}
-      deletable={true}
       useCICDOutputs={true}
+      cicdOutputConfig={{ canOnSuccess: true, canOnFailed: false }}
+      deletable={true}
     >
       <div className={`space-y-3`}>
         <div className={`p-3 rounded ${groupColors.bgClass} ${groupColors.borderClass} border`}>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-6 gap-2">
             <input
               value={keyInput}
               onChange={(e) => setKeyInput(e.target.value)}
               placeholder="KEY"
               className="col-span-2 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <input
-              value={valInput}
-              onChange={(e) => setValInput(e.target.value)}
-              placeholder="value"
-              className="col-span-2 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="col-span-2 relative">
+              <input
+                type={showValInput ? "text" : "password"}
+                value={valInput}
+                onChange={(e) => setValInput(e.target.value)}
+                placeholder="value"
+                className="w-full px-2 py-1 pr-8 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowValInput(!showValInput)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showValInput ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+              </button>
+            </div>
             <button
               onClick={addPair}
               className="px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
@@ -108,8 +137,19 @@ const EnvironmentSetupNode = memo(({ data, id }: NodeProps) => {
           )}
           {Object.entries(envs).map(([k, v]) => (
             <div key={k} className="flex items-center justify-between border rounded px-2 py-1">
-              <div className="font-mono text-sm text-gray-800 truncate mr-2">{k}=<span className="text-gray-600">{v}</span></div>
-              <button onClick={() => removeKey(k)} className="text-red-500 text-xs hover:text-red-700">✕</button>
+              <div className="font-mono text-sm text-gray-800 truncate mr-2 flex-1">
+                {k}=<span className="text-gray-600">{visibleKeys.has(k) ? v : maskValue(v)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => toggleVisibility(k)}
+                  className="text-gray-500 hover:text-gray-700 p-1"
+                  title={visibleKeys.has(k) ? "Hide value" : "Show value"}
+                >
+                  {visibleKeys.has(k) ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                </button>
+                <button onClick={() => removeKey(k)} className="text-red-500 text-xs hover:text-red-700">✕</button>
+              </div>
             </div>
           ))}
         </div>

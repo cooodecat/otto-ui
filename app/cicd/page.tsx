@@ -24,6 +24,19 @@ export default function CICDPage() {
 
     const { nodes, edges } = flowCanvasRef.current.getFlowData();
     
+    // 디버깅: 노드와 엣지 정보 출력
+    console.log("🔍 Raw nodes data:", nodes.map(n => ({ 
+      id: n.id, 
+      type: n.type, 
+      label: n.data.label, 
+      block_id: n.data.block_id 
+    })));
+    console.log("🔍 Raw edges data:", edges.map(e => ({ 
+      source: e.source, 
+      target: e.target, 
+      sourceHandle: e.sourceHandle 
+    })));
+    
     // CICD 노드만 필터링 (start 노드 제외)
     const cicdNodes = nodes.filter(node => node.type !== 'start');
     
@@ -39,15 +52,22 @@ export default function CICDPage() {
         edge.source === node.id && edge.sourceHandle === 'failed-output'
       );
 
+      // 연결된 타겟 노드들의 block_id 찾기
+      const getTargetBlockId = (targetNodeId: string | undefined) => {
+        if (!targetNodeId) return null;
+        const targetNode = nodes.find(n => n.id === targetNodeId);
+        return targetNode?.data?.block_id || targetNodeId;
+      };
+
       // snake_case만 사용하여 구조 생성
       const result: any = {
         label: nodeData.label,
         block_type: nodeData.block_type,
         group_type: nodeData.group_type,
         block_id: nodeData.block_id || node.id,
-        // success/failed 연결 설정
-        on_success: successEdge?.target || undefined,
-        on_failed: failedEdge?.target || undefined,
+        // success/failed 연결 설정 - 타겟 노드의 block_id 사용
+        on_success: getTargetBlockId(successEdge?.target),
+        on_failed: getTargetBlockId(failedEdge?.target),
       };
 
       // 다른 필드들을 snake_case로 변환

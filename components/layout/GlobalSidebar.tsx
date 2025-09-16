@@ -572,7 +572,9 @@ const GlobalSidebar = () => {
           ) : (
             // 검색어가 없으면 카테고리별 표시 (CICD와 동일 스타일)
             <>
-              {Object.entries(cicdCategories).map(([key, category]) => (
+              {Object.entries(cicdCategories)
+                .filter(([key]) => key !== 'start') // start 카테고리 제외 (이미 캔버스에 초기 노드로 있음)
+                .map(([key, category]) => (
                 <div key={key} className='space-y-2'>
                   <div className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}>
                     <span className='text-base'>{category.icon}</span>

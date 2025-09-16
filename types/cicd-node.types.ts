@@ -9,6 +9,9 @@ import { BaseNodeData } from "./node.types";
 
 // CI/CD 블록 타입 (ss/components 기반)
 export enum CICDBlockType {
+  // ==== PIPELINE 시작 ====
+  PIPELINE_START = 'pipeline_start',
+
   // ==== PREBUILD 단계 ====
   OS_PACKAGE = 'os_package',
   NODE_VERSION = 'node_version',
@@ -43,6 +46,7 @@ export enum CICDBlockType {
 
 // CI/CD 블록 그룹 타입
 export enum CICDBlockGroup {
+  START = 'start',
   PREBUILD = 'prebuild',
   BUILD = 'build',
   TEST = 'test',
@@ -55,6 +59,14 @@ export enum CICDBlockGroup {
 
 // 그룹별 색상 매핑
 export const CICD_GROUP_COLORS = {
+  [CICDBlockGroup.START]: {
+    colorClass: 'bg-green-500',
+    colorHex: '#10b981',
+    bgClass: 'bg-green-50',
+    borderClass: 'border-green-200',
+    textClass: 'text-green-700',
+    icon: '▶️'
+  },
   [CICDBlockGroup.PREBUILD]: {
     colorClass: 'bg-blue-500',
     colorHex: '#3b82f6',
@@ -115,6 +127,18 @@ export interface BaseCICDNodeData extends BaseNodeData {
   on_failed?: string;
   timeout?: number;
   retry_count?: number;
+}
+
+// ==== PIPELINE START 블록 데이터 ====
+export interface PipelineStartNodeData extends BaseCICDNodeData {
+  block_type: CICDBlockType.PIPELINE_START;
+  group_type: CICDBlockGroup.START;
+  trigger_type?: 'manual' | 'schedule' | 'webhook' | 'push' | 'pull_request';
+  trigger_config?: {
+    schedule?: string; // cron expression
+    branch_patterns?: string[];
+    file_patterns?: string[];
+  };
 }
 
 // ==== PREBUILD 블록 데이터 ====
@@ -329,6 +353,7 @@ export interface CustomCommandNodeData extends BaseCICDNodeData {
 
 // 모든 CI/CD 노드 데이터 유니온 타입
 export type AnyCICDNodeData = 
+  | PipelineStartNodeData
   | OSPackageNodeData
   | NodeVersionNodeData
   | EnvironmentSetupNodeData
@@ -353,6 +378,8 @@ export type AnyCICDNodeData =
 
 // 블록 타입별 그룹 매핑
 export const BLOCK_TYPE_TO_GROUP: Record<CICDBlockType, CICDBlockGroup> = {
+  [CICDBlockType.PIPELINE_START]: CICDBlockGroup.START,
+  
   [CICDBlockType.OS_PACKAGE]: CICDBlockGroup.PREBUILD,
   [CICDBlockType.NODE_VERSION]: CICDBlockGroup.PREBUILD,
   [CICDBlockType.ENVIRONMENT_SETUP]: CICDBlockGroup.PREBUILD,
@@ -383,6 +410,8 @@ export const BLOCK_TYPE_TO_GROUP: Record<CICDBlockType, CICDBlockGroup> = {
 
 // 블록 타입별 기본 라벨과 아이콘
 export const CICD_BLOCK_CONFIGS = {
+  [CICDBlockType.PIPELINE_START]: { label: 'Pipeline Start', icon: '▶️' },
+  
   [CICDBlockType.OS_PACKAGE]: { label: 'OS Packages', icon: '📦' },
   [CICDBlockType.NODE_VERSION]: { label: 'Node Version', icon: '🟢' },
   [CICDBlockType.ENVIRONMENT_SETUP]: { label: 'Environment', icon: '🌍' },

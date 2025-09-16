@@ -93,13 +93,21 @@ export interface BaseNodeProps<T extends BaseNodeData = BaseNodeData> {
    * CI/CD 노드의 success/failed 출력 사용 여부
    */
   useCICDOutputs?: boolean;
+
+  /**
+   * CI/CD outputs 세부 제어 옵션
+   */
+  cicdOutputConfig?: {
+    canOnSuccess?: boolean;  // success-output handle 생성 여부 (기본값: true)
+    canOnFailed?: boolean;   // failed-output handle 생성 여부 (기본값: true)
+  };
 }
 
 /**
  * 모든 노드의 기본 컴포넌트
  * 확장 가능한 구조로 설계됨
  */
-const BaseNode = <T extends BaseNodeData = BaseNodeData>({
+function BaseNode<T extends BaseNodeData = BaseNodeData>({
   data,
   id,
   colorClass,
@@ -111,58 +119,51 @@ const BaseNode = <T extends BaseNodeData = BaseNodeData>({
   showOutput = true,
   outputHandles,
   useCICDOutputs = false,
-}: BaseNodeProps<T>) => {
+  cicdOutputConfig = { canOnSuccess: true, canOnFailed: true },
+}: BaseNodeProps<T>) {
   const { deleteElements } = useReactFlow();
 
   const handleDelete = () => {
     deleteElements({ nodes: [{ id }] });
   };
 
-  // CI/CD 노드의 성공/실패 출력 핸들
-  // Environment 블록은 실패할 가능성이 낮아 success만 제공
-  const isEnvironmentNode = data.label?.includes('Environment');
-  
-  const cicdOutputHandles = useCICDOutputs ? (
-    isEnvironmentNode ? [
-      {
+  // CI/CD 노드의 성공/실패 출력 핸들 (config에 따라 제어)
+  const cicdOutputHandles = useCICDOutputs ? (() => {
+    const handles = [];
+    const { canOnSuccess = true, canOnFailed = true } = cicdOutputConfig;
+    
+    if (canOnSuccess) {
+      handles.push({
         id: "success-output",
         position: Position.Bottom,
         style: { 
-          left: "50%", // 중앙에 위치
+          left: canOnFailed ? "30%" : "50%", // failed가 없으면 중앙에 위치
           backgroundColor: "#10b981", // 초록색
           width: "12px", 
           height: "12px",
           borderRadius: "50%",
           bottom: "-6px"
         }
-      }
-    ] : [
-      {
-        id: "success-output",
-        position: Position.Bottom,
-        style: { 
-          left: "30%", 
-          backgroundColor: "#10b981", // 초록색
-          width: "12px", 
-          height: "12px",
-          borderRadius: "50%",
-          bottom: "-6px"
-        }
-      },
-      {
+      });
+    }
+    
+    if (canOnFailed) {
+      handles.push({
         id: "failed-output", 
         position: Position.Bottom,
         style: { 
-          left: "70%", 
+          left: canOnSuccess ? "70%" : "50%", // success가 없으면 중앙에 위치
           backgroundColor: "#ef4444", // 빨간색
           width: "12px",
           height: "12px", 
           borderRadius: "50%",
           bottom: "-6px"
         }
-      }
-    ]
-  ) : undefined;
+      });
+    }
+    
+    return handles;
+  })() : [];
 
   return (
     <div
@@ -244,7 +245,7 @@ const BaseNode = <T extends BaseNodeData = BaseNodeData>({
       ))}
     </div>
   );
-};
+}
 
 BaseNode.displayName = "BaseNode";
 

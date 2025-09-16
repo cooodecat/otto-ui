@@ -16,6 +16,7 @@ import {
   TestJestNodeData,
   NotificationSlackNodeData,
   ConditionBranchNodeData,
+  PipelineStartNodeData,
   CICD_GROUP_COLORS,
 
   CICD_BLOCK_CONFIGS,
@@ -24,6 +25,7 @@ import {
 
 // 노드 컴포넌트들 import
 import StartNode from "./StartNode";
+import PipelineStartNode from "./PipelineStartNode";
 import AgentNode from "./AgentNode";
 import ApiNode from "./ApiNode";
 import ConditionNode from "./ConditionNode";
@@ -50,7 +52,7 @@ import {
   ConditionBranchNode,
   GenericCICDNode,
 } from "./cicd";
-import {CICDBlockGroup, CICDBlockType } from "@/types/block-enum";
+import {CICDBlockGroup, CICDBlockType } from "@/types/cicd-node.types";
 
 /**
  * 노드 설정 레지스트리
@@ -75,6 +77,31 @@ export const nodeRegistry: NodeRegistry = {
     inputs: { count: 0 },
     outputs: { count: 1, position: "bottom" },
   },
+
+  // CI/CD Pipeline Start
+  pipeline_start: {
+    type: "pipeline_start",
+    label: CICD_BLOCK_CONFIGS[CICDBlockType.PIPELINE_START].label,
+    icon: CICD_BLOCK_CONFIGS[CICDBlockType.PIPELINE_START].icon,
+    colorClass: CICD_GROUP_COLORS[CICDBlockGroup.START].colorClass,
+    colorHex: CICD_GROUP_COLORS[CICDBlockGroup.START].colorHex,
+    component: PipelineStartNode as ComponentType<NodeProps>, // Pipeline Start 전용 컴포넌트
+    category: "cicd-start",
+    description: "CI/CD Pipeline starting point",
+    minWidth: 280,
+    deletable: false,
+    defaultData: {
+      label: CICD_BLOCK_CONFIGS[CICDBlockType.PIPELINE_START].label,
+      blockType: CICDBlockType.PIPELINE_START,
+      groupType: CICDBlockGroup.START,
+      blockId: crypto.randomUUID(),
+      triggerType: "manual",
+      triggerConfig: {},
+    } as Partial<PipelineStartNodeData>,
+    inputs: { count: 0 },
+    outputs: { count: 1, position: "bottom" },
+  },
+
   agent: {
     type: "agent",
     label: "Agent",
@@ -194,7 +221,7 @@ export const nodeRegistry: NodeRegistry = {
       label: "OS Packages",
       blockType: CICDBlockType.OS_PACKAGE,
       groupType: CICDBlockGroup.PREBUILD,
-      blockId: `os_package_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       packageManager: "apt",
       installPackages: ["curl", "git"],
       updatePackageList: true,
@@ -218,7 +245,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.NODE_VERSION].label,
       blockType: CICDBlockType.NODE_VERSION,
       groupType: CICDBlockGroup.PREBUILD,
-      blockId: `node_version_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       version: "18",
       packageManager: "pnpm",
     } as Partial<any>,
@@ -238,7 +265,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.ENVIRONMENT_SETUP].label,
       blockType: CICDBlockType.ENVIRONMENT_SETUP,
       groupType: CICDBlockGroup.PREBUILD,
-      blockId: `environment_setup_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       environmentVariables: { NODE_ENV: "production" },
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
@@ -260,7 +287,7 @@ export const nodeRegistry: NodeRegistry = {
       label: "Webpack Build",
       blockType: CICDBlockType.BUILD_WEBPACK,
       groupType: CICDBlockGroup.BUILD,
-      blockId: `build_webpack_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       mode: "production",
       configFile: "webpack.config.js",
     } as Partial<BuildWebpackNodeData>,
@@ -281,7 +308,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.INSTALL_MODULE_NODE].label,
       blockType: CICDBlockType.INSTALL_MODULE_NODE,
       groupType: CICDBlockGroup.BUILD,
-      blockId: `install_module_node_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       packageManager: "pnpm",
       cleanInstall: true,
     } as Partial<any>,
@@ -301,7 +328,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.BUILD_VITE].label,
       blockType: CICDBlockType.BUILD_VITE,
       groupType: CICDBlockGroup.BUILD,
-      blockId: `build_vite_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       mode: "production",
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
@@ -320,7 +347,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.BUILD_CUSTOM].label,
       blockType: CICDBlockType.BUILD_CUSTOM,
       groupType: CICDBlockGroup.BUILD,
-      blockId: `build_custom_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       packageManager: "pnpm",
       scriptName: "build",
     } as Partial<any>,
@@ -343,7 +370,7 @@ export const nodeRegistry: NodeRegistry = {
       label: "Jest Tests",
       blockType: CICDBlockType.TEST_JEST,
       groupType: CICDBlockGroup.TEST,
-      blockId: `test_jest_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       coverage: true,
       watchMode: false,
     } as Partial<TestJestNodeData>,
@@ -363,7 +390,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_MOCHA].label,
       blockType: CICDBlockType.TEST_MOCHA,
       groupType: CICDBlockGroup.TEST,
-      blockId: `test_mocha_${Date.now()}`,
+      blockId: crypto.randomUUID(),
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
     outputs: { count: 1, position: "bottom" },
@@ -381,7 +408,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_VITEST].label,
       blockType: CICDBlockType.TEST_VITEST,
       groupType: CICDBlockGroup.TEST,
-      blockId: `test_vitest_${Date.now()}`,
+      blockId: crypto.randomUUID(),
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
     outputs: { count: 1, position: "bottom" },
@@ -400,7 +427,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_CUSTOM].label,
       blockType: CICDBlockType.TEST_CUSTOM,
       groupType: CICDBlockGroup.TEST,
-      blockId: `test_custom_${Date.now()}`,
+      blockId: crypto.randomUUID(),
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
     outputs: { count: 1, position: "bottom" },
@@ -422,7 +449,7 @@ export const nodeRegistry: NodeRegistry = {
       label: "Vercel Deploy",
       blockType: CICDBlockType.DEPLOY_VERCEL,
       groupType: CICDBlockGroup.DEPLOY,
-      blockId: `deploy_vercel_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       buildCommand: "npm run build",
       outputDirectory: "dist",
     } as Partial<DeployVercelNodeData>,
@@ -444,7 +471,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.DEPLOY_DOCKER].label,
       blockType: CICDBlockType.DEPLOY_DOCKER,
       groupType: CICDBlockGroup.DEPLOY,
-      blockId: `deploy_docker_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       imageName: "app",
       imageTag: "latest",
     } as Partial<any>,
@@ -465,7 +492,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.DEPLOY_AWS].label,
       blockType: CICDBlockType.DEPLOY_AWS,
       groupType: CICDBlockGroup.DEPLOY,
-      blockId: `deploy_aws_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       service: "lambda",
       region: "us-east-1",
     } as Partial<any>,
@@ -486,7 +513,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.DEPLOY_CUSTOM].label,
       blockType: CICDBlockType.DEPLOY_CUSTOM,
       groupType: CICDBlockGroup.DEPLOY,
-      blockId: `deploy_custom_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       commands: ["echo deploy"],
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
@@ -508,7 +535,7 @@ export const nodeRegistry: NodeRegistry = {
       label: "Slack Notify",
       blockType: CICDBlockType.NOTIFICATION_SLACK,
       groupType: CICDBlockGroup.NOTIFICATION,
-      blockId: `notification_slack_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       webhookUrlEnv: "SLACK_WEBHOOK_URL",
       messageTemplate: "Pipeline {status}: {project} on {branch}",
       channel: "ci-cd",
@@ -529,7 +556,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.NOTIFICATION_EMAIL].label,
       blockType: CICDBlockType.NOTIFICATION_EMAIL,
       groupType: CICDBlockGroup.NOTIFICATION,
-      blockId: `notification_email_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       recipients: ["dev@company.com"],
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
@@ -552,7 +579,7 @@ export const nodeRegistry: NodeRegistry = {
       label: "Condition",
       blockType: CICDBlockType.CONDITION_BRANCH,
       groupType: CICDBlockGroup.UTILITY,
-      blockId: `condition_branch_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       conditionType: "environment",
       conditionConfig: {
         environmentVar: "NODE_ENV",
@@ -581,7 +608,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.PARALLEL_EXECUTION].label,
       blockType: CICDBlockType.PARALLEL_EXECUTION,
       groupType: CICDBlockGroup.UTILITY,
-      blockId: `parallel_execution_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       parallelBranches: [],
       waitForAll: true,
     } as Partial<any>,
@@ -601,7 +628,7 @@ export const nodeRegistry: NodeRegistry = {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.CUSTOM_COMMAND].label,
       blockType: CICDBlockType.CUSTOM_COMMAND,
       groupType: CICDBlockGroup.UTILITY,
-      blockId: `custom_command_${Date.now()}`,
+      blockId: crypto.randomUUID(),
       commands: ["echo hello"],
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
@@ -632,6 +659,7 @@ export const nodeCategories = {
   custom: Object.values(nodeRegistry).filter((n) => n.category === "custom"),
   
   // CI/CD 카테고리 (그룹별 색상 구분)
+  "cicd-start": Object.values(nodeRegistry).filter((n) => n.category === "cicd-start"),
   "cicd-prebuild": Object.values(nodeRegistry).filter((n) => n.category === "cicd-prebuild"),
   "cicd-build": Object.values(nodeRegistry).filter((n) => n.category === "cicd-build"),
   "cicd-test": Object.values(nodeRegistry).filter((n) => n.category === "cicd-test"),
@@ -644,6 +672,15 @@ export const nodeCategories = {
  * CI/CD 전용 카테고리 (색상 정보 포함)
  */
 export const cicdCategories = {
+  start: {
+    name: "Start",
+    icon: CICD_GROUP_COLORS[CICDBlockGroup.START].icon,
+    colorClass: CICD_GROUP_COLORS[CICDBlockGroup.START].colorClass,
+    bgClass: CICD_GROUP_COLORS[CICDBlockGroup.START].bgClass,
+    borderClass: CICD_GROUP_COLORS[CICDBlockGroup.START].borderClass,
+    textClass: CICD_GROUP_COLORS[CICDBlockGroup.START].textClass,
+    nodes: nodeCategories["cicd-start"],
+  },
   prebuild: {
     name: "Prebuild",
     icon: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].icon,
@@ -704,14 +741,27 @@ export const createNodeInstance = (
     throw new Error(`Unknown node type: ${type}`);
   }
 
+  const nodeData: any = { ...config.defaultData, label: config.label };
+  
+  // camelCase를 snake_case로 변환 (CI/CD 노드들을 위해)
+  if (nodeData.blockType) {
+    nodeData.block_type = nodeData.blockType;
+    delete nodeData.blockType;
+  }
+  if (nodeData.groupType) {
+    nodeData.group_type = nodeData.groupType;
+    delete nodeData.groupType;
+  }
+  if (nodeData.blockId) {
+    nodeData.block_id = nodeData.blockId;
+    delete nodeData.blockId;
+  }
+
   return {
-    id: id || `${type}_${Date.now()}`,
+    id: id || crypto.randomUUID(),
     type,
     position,
-    data: {
-      ...config.defaultData,
-      label: config.label,
-    },
+    data: nodeData,
     selectable: true,
     deletable: config.deletable !== false,
   };

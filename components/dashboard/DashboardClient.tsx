@@ -24,14 +24,29 @@ export default function DashboardClient() {
 
     const { nodes, edges } = flowCanvasRef.current.getFlowData();
     
-    // CICD 노드만 필터링 (start 노드 제외)
-    const cicdNodes = nodes.filter(node => node.type !== 'start');
+    // 디버깅: 노드와 엣지 정보 출력
+    console.log("🔍 Raw nodes data:", nodes.map(n => ({ 
+      id: n.id, 
+      type: n.type, 
+      label: n.data.label, 
+      block_id: n.data.block_id 
+    })));
+    console.log("🔍 Raw edges data:", edges.map(e => ({ 
+      source: e.source, 
+      target: e.target, 
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle
+    })));
     
-    // Node ID를 UUID로 매핑
-    const nodeIdMap = new Map<string, string>();
-    cicdNodes.forEach(node => {
-      nodeIdMap.set(node.id, crypto.randomUUID());
-    });
+    // Pipeline Start 노드만 별도 디버깅
+    const pipelineStartNode = nodes.find(n => n.type === 'pipeline_start');
+    if (pipelineStartNode) {
+      const startConnections = edges.filter(e => e.source === pipelineStartNode.id);
+      console.log("🏁 Pipeline Start connections:", startConnections);
+    }
+    
+    // CICD 노드만 필터링 (일반 start 노드 제외, pipeline_start는 포함)
+    const cicdNodes = nodes.filter(node => node.type !== 'start');
 
     // cicd-node.types.ts 타입 구조에 맞게 데이터 구성
     const pipelineBlocks = cicdNodes.map(node => {
@@ -39,21 +54,38 @@ export default function DashboardClient() {
       
       // 해당 노드의 success/failed 연결 찾기
       const successEdge = edges.find(edge => 
-        edge.source === node.id && edge.sourceHandle === 'success-output'
+        edge.source === node.id && (
+          edge.sourceHandle === 'success-output' || 
+          !edge.sourceHandle || // 기본 output handle (Pipeline Start 등)
+          edge.sourceHandle === 'default'
+        )
       );
       const failedEdge = edges.find(edge => 
         edge.source === node.id && edge.sourceHandle === 'failed-output'
       );
+      
+      // 개별 노드 연결 디버깅
+      console.log(`🔗 ${node.type} (${node.id}):`, {
+        successEdge: successEdge ? `${successEdge.target}(${successEdge.sourceHandle})` : null,
+        failedEdge: failedEdge ? `${failedEdge.target}(${failedEdge.sourceHandle})` : null
+      });
+
+      // 연결된 타겟 노드들의 block_id 찾기
+      const getTargetBlockId = (targetNodeId: string | undefined) => {
+        if (!targetNodeId) return null;
+        const targetNode = nodes.find(n => n.id === targetNodeId);
+        return targetNode?.data?.block_id || targetNodeId;
+      };
 
       // snake_case만 사용하여 구조 생성
       const result: any = {
         label: nodeData.label,
         block_type: nodeData.block_type,
         group_type: nodeData.group_type,
-        block_id: nodeIdMap.get(node.id), // UUID 사용
-        // success/failed 연결을 UUID로 변환
-        on_success: successEdge ? nodeIdMap.get(successEdge.target) || null : null,
-        on_failed: failedEdge ? nodeIdMap.get(failedEdge.target) || null : null,
+        block_id: nodeData.block_id || node.id,
+        // success/failed 연결 설정 - 타겟 노드의 block_id 사용
+        on_success: getTargetBlockId(successEdge?.target),
+        on_failed: getTargetBlockId(failedEdge?.target),
       };
 
       // 다른 필드들을 snake_case로 변환
