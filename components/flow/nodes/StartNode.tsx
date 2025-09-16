@@ -8,6 +8,7 @@ import { StartNodeData } from "@/types/node.types";
 
 const StartNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as StartNodeData;
+  
   return (
     <BaseNode
       data={nodeData}
