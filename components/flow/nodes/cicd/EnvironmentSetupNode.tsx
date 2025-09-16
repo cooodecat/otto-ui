@@ -8,7 +8,7 @@ import { Globe, Eye, EyeOff } from "lucide-react";
 
 const EnvironmentSetupNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as EnvironmentSetupNodeData;
-  const [envs, setEnvs] = useState<Record<string, string>>(nodeData.environment_variables || {});
+  const [envs, setEnvs] = useState<Record<string, string>>(nodeData.environmentVariables || {});
   const [keyInput, setKeyInput] = useState("");
   const [valInput, setValInput] = useState("");
   const [showValInput, setShowValInput] = useState(false);

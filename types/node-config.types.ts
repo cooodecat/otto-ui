@@ -24,14 +24,11 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 노드 색상 (Tailwind 클래스)
    */
-  // snake_case 우선, camelCase는 호환용
-  color_class?: string;
   colorClass?: string;
 
   /**
    * 노드 색상 (Hex)
    */
-  color_hex?: string;
   colorHex?: string;
 
   /**
@@ -64,7 +61,6 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 최소 너비
    */
-  min_width?: number;
   minWidth?: number;
 
   /**
@@ -75,7 +71,6 @@ export interface NodeConfig<T extends BaseNodeData = BaseNodeData> {
   /**
    * 기본 데이터
    */
-  default_data?: Partial<T>;
   defaultData?: Partial<T>;
 
   /**

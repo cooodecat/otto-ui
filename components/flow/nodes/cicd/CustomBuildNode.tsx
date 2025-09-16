@@ -8,8 +8,8 @@ import { Hammer } from "lucide-react";
 
 const CustomBuildNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as BuildCustomNodeData;
-  const [manager, setManager] = useState(nodeData.package_manager);
-  const [script, setScript] = useState(nodeData.script_name || 'build');
+  const [manager, setManager] = useState(nodeData.packageManager);
+  const [script, setScript] = useState(nodeData.scriptName || 'build');
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.BUILD];
 
   return (

@@ -9,9 +9,9 @@ import { Edit3, Package } from "lucide-react";
 const OSPackageNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as OSPackageNodeData;
   const [isEditing, setIsEditing] = useState(false);
-  const [packages, setPackages] = useState<string[]>(nodeData.install_packages || []);
-  const [packageManager, setPackageManager] = useState(nodeData.package_manager || 'apt');
-  const [updateList, setUpdateList] = useState<boolean>(nodeData.update_package_list ?? true);
+  const [packages, setPackages] = useState<string[]>(nodeData.installPackages || []);
+  const [packageManager, setPackageManager] = useState(nodeData.packageManager || 'apt');
+  const [updateList, setUpdateList] = useState<boolean>(nodeData.updatePackageList ?? true);
   const [newPackage, setNewPackage] = useState('');
 
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD];
@@ -37,9 +37,9 @@ const OSPackageNode = memo(({ data, id }: NodeProps) => {
     <BaseNode
       data={{
         ...nodeData,
-        install_packages: packages,
-        package_manager: packageManager,
-        update_package_list: updateList,
+        installPackages: packages,
+        packageManager: packageManager,
+        updatePackageList: updateList,
       }}
       id={id}
       colorClass={groupColors.colorClass}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
   Plus,
@@ -14,23 +14,13 @@ import {
   Home,
   Check,
 } from "lucide-react";
+import { cicdCategories } from "@/components/flow/nodes/node-registry";
 import SettingsModal from "../settings/SettingsModal";
-import CreateProjectModal from "../projects/CreateProjectModal";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
 import { SidebarSkeleton, WorkspaceDropdownSkeleton } from "./SidebarSkeleton";
-
-/**
- * 블록 팔레트 아이템의 인터페이스
- */
-interface Block {
-  /** 블록의 표시 이름 */
-  name: string;
-  /** 블록의 이모지 아이콘 */
-  icon: string;
-  /** Tailwind CSS 배경색 클래스 */
-  color: string;
-}
+import { mapProjectId, mapPipelineId } from "@/lib/utils/idMapping";
+import CreateProjectModal from "../projects/CreateProjectModal";
 
 /**
  * 폴더 섹션 아이템의 인터페이스
@@ -81,7 +71,7 @@ interface PipelineItem {
  * ```typescript
  * isCanvasLayoutPath('/pipelines') // true
  * isCanvasLayoutPath('/projects/123/pipelines/456') // true
- * isCanvasLayoutPath('/projects') // false
+ * isCanvasLayoutPath('/projects/1/pipelines/1') // true
  * ```
  */
 const isCanvasLayoutPath = (pathname: string): boolean => {
@@ -109,13 +99,16 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
  */
 const GlobalSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const isCanvasLayout = isCanvasLayoutPath(pathname);
+  /** 글로벌 워크스페이스 검색용 쿼리 */
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   /** 팔레트에서 블록 필터링을 위한 검색 쿼리 */
   const [searchBlocks, setSearchBlocks] = useState<string>("");
 
   /** 현재 선택된 파이프라인 ID */
-  const [_selectedPipelineId, _setSelectedPipelineId] = useState<string | null>(
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(
     null
   );
 
@@ -141,6 +134,7 @@ const GlobalSidebar = () => {
     fetchPipelines: _fetchPipelines,
     setCurrentProject,
     getPipelinesByProject,
+    getLatestPipelineByProject,
   } = usePipelineStore();
 
   /**
@@ -174,10 +168,10 @@ const GlobalSidebar = () => {
     };
   }, []);
 
-  // 데이터 로딩 및 초기화
+  // 데이터 로딩 및 초기화 (컴포넌트 마운트 시 한 번만 실행)
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+  }, []); // 의존성 배열을 빈 배열로 변경하여 무한 루프 방지
 
   // 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옴
   useEffect(() => {
@@ -186,16 +180,37 @@ const GlobalSidebar = () => {
     }
   }, [selectedProjectId, setCurrentProject]);
 
+  // 현재 URL 파라미터에서 프로젝트 ID와 파이프라인 ID 추출 및 동기화
+  useEffect(() => {
+    const pipelineDetailPattern = /^\/projects\/([^/]+)\/pipelines\/([^/]+)$/;
+    const match = pathname.match(pipelineDetailPattern);
+
+    if (match) {
+      const rawUrlProjectId = match[1];
+      const rawUrlPipelineId = match[2];
+
+      // URL 파라미터를 Mock 데이터 ID로 변환
+      const urlProjectId = mapProjectId(rawUrlProjectId);
+      const urlPipelineId = mapPipelineId(rawUrlPipelineId);
+
+      // URL에서 추출한 프로젝트 ID로 상태 동기화 (중복 호출 방지)
+      if (urlProjectId !== selectedProjectId) {
+        setSelectedProject(urlProjectId);
+        // setCurrentProject는 아래 useEffect에서 처리하므로 여기서는 호출하지 않음
+      }
+
+      setSelectedPipelineId(urlPipelineId);
+    } else {
+      setSelectedPipelineId(null);
+    }
+  }, [pathname, selectedProjectId, setSelectedProject]); // setCurrentProject 제거
+
   /**
    * CI/CD 노드 카테고리에서 검색을 위해 플랫 목록 생성
    */
-  const blocks: Block[] = [
-    { name: "Agent", icon: "🤖", color: "bg-purple-500" },
-    { name: "API", icon: "🔗", color: "bg-blue-500" },
-    { name: "Condition", icon: "🔶", color: "bg-orange-500" },
-    { name: "Function", icon: "</>", color: "bg-red-500" },
-    { name: "Knowledge", icon: "🧠", color: "bg-teal-500" },
-  ];
+  const getAllCicdNodes = () => {
+    return Object.values(cicdCategories).flatMap((category) => category.nodes);
+  };
 
   // 현재 선택된 프로젝트의 파이프라인들을 변환
   const currentPipelines: PipelineItem[] = selectedProjectId
@@ -203,7 +218,7 @@ const GlobalSidebar = () => {
         name: pipeline.name || `Pipeline ${pipeline.pipelineId.slice(-6)}`,
         icon: "🔧", // 파이프라인 기본 아이콘
         pipelineId: pipeline.pipelineId,
-        isActive: pipeline.pipelineId === _selectedPipelineId,
+        isActive: pipeline.pipelineId === selectedPipelineId,
       }))
     : [];
 
@@ -238,16 +253,17 @@ const GlobalSidebar = () => {
    */
   const handleBlockDragStart = (
     e: React.DragEvent<HTMLDivElement>,
-    blockType: string
+    nodeType: string
   ) => {
-    e.dataTransfer.setData("application/reactflow", blockType.toLowerCase());
+    // node-registry에서 정의된 타입 문자열을 그대로 전달해야 함
+    e.dataTransfer.setData("application/reactflow", nodeType);
   };
 
   /**
    * 파이프라인 선택 이벤트를 처리합니다
    *
    * 사용자가 파이프라인 목록에서 특정 파이프라인을 클릭했을 때
-   * 해당 파이프라인 페이지로 이동합니다.
+   * 해당 파이프라인 페이지로 네비게이션합니다.
    *
    * @param pipelineId - 선택할 파이프라인의 고유 식별자
    *
@@ -257,9 +273,8 @@ const GlobalSidebar = () => {
    * ```
    */
   const handlePipelineSelect = (pipelineId: string) => {
-    const currentProject = getSelectedProject();
-    if (currentProject) {
-      window.location.href = `/projects/${currentProject.projectId}/pipelines/${pipelineId}`;
+    if (selectedProjectId) {
+      router.push(`/projects/${selectedProjectId}/pipelines/${pipelineId}`);
     }
   };
 
@@ -268,7 +283,7 @@ const GlobalSidebar = () => {
    *
    * 워크스페이스 드롭다운에서 프로젝트를 선택했을 때 호출되며,
    * 선택된 프로젝트를 전역 상태에 저장하고 해당 프로젝트의
-   * 파이프라인들을 자동으로 로드합니다.
+   * 최신 파이프라인으로 자동 이동합니다.
    *
    * @param projectId - 선택할 프로젝트의 고유 식별자
    *
@@ -280,9 +295,27 @@ const GlobalSidebar = () => {
    * @see {@link useProjectStore} - 프로젝트 상태 관리
    * @see {@link usePipelineStore} - 파이프라인 상태 관리
    */
-  const handleProjectSelect = (projectId: string) => {
+  const handleProjectSelect = async (projectId: string) => {
     setSelectedProject(projectId);
     setIsWorkspaceDropdownOpen(false);
+
+    // 해당 프로젝트의 파이프라인을 먼저 로드
+    setCurrentProject(projectId);
+
+    // 잠시 기다린 후 최신 파이프라인 찾기
+    setTimeout(() => {
+      const latestPipeline = getLatestPipelineByProject(projectId);
+
+      if (latestPipeline) {
+        // 최신 파이프라인으로 이동
+        router.push(
+          `/projects/${projectId}/pipelines/${latestPipeline.pipelineId}`
+        );
+      } else {
+        // 파이프라인이 없는 경우 프로젝트의 첫 번째 파이프라인 페이지로 이동 (기본값 사용)
+        router.push(`/projects/${projectId}/pipelines/pipe_1`);
+      }
+    }, 100); // 파이프라인 로딩을 위한 짧은 지연
   };
 
   /**
@@ -323,7 +356,7 @@ const GlobalSidebar = () => {
 
   // 로딩 상태 확인
   const isLoading = isProjectsLoading || isPipelinesLoading;
-  // const _hasError = projectsError || pipelinesError; // 추후 에러 처리 시 사용 예정
+  const _hasError = projectsError || pipelinesError;
 
   // 레이아웃 모드에 따라 다른 positioning 사용
   const containerClassName = isCanvasLayout
@@ -357,9 +390,13 @@ const GlobalSidebar = () => {
    * getFilteredBlocks() // 모든 블록 반환
    * ```
    */
-  const getFilteredBlocks = (): Block[] => {
-    return blocks.filter((block) =>
-      block.name.toLowerCase().includes(searchBlocks.toLowerCase())
+  const getFilteredNodes = () => {
+    const query = searchBlocks.toLowerCase();
+    if (!query) return [];
+    return getAllCicdNodes().filter(
+      (n) =>
+        n.label.toLowerCase().includes(query) ||
+        n.type.toLowerCase().includes(query)
     );
   };
 
@@ -499,6 +536,23 @@ const GlobalSidebar = () => {
             <Copy className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Search Section */}
+        <div className="mt-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="검색하기"
+              className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-0.5 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded shadow-sm">
+              ⌘K
+            </kbd>
+          </div>
+        </div>
       </div>
 
       {/* Pipelines Section Card */}
@@ -567,27 +621,90 @@ const GlobalSidebar = () => {
             />
           </div>
         </div>
-
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-          {getFilteredBlocks().map((block) => (
-            <div
-              key={block.name}
-              className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm"
-              draggable
-              onDragStart={(e) => handleBlockDragStart(e, block.name)}
-            >
-              <div
-                className={`w-8 h-8 ${block.color} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}
-              >
-                <span className="text-white text-sm font-medium">
-                  {block.icon}
-                </span>
-              </div>
-              <span className="text-sm font-medium text-gray-900">
-                {block.name}
-              </span>
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {/* 검색어가 있으면 결과 리스트만 표시 */}
+          {searchBlocks ? (
+            <div className="space-y-2">
+              {getFilteredNodes().map((node) => (
+                <div
+                  key={node.type}
+                  className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm"
+                  draggable
+                  onDragStart={(e) => handleBlockDragStart(e, node.type)}
+                >
+                  <div
+                    className={`w-8 h-8 ${node.colorClass} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}
+                  >
+                    <span className="text-white text-sm font-medium">
+                      {node.icon}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {node.label}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {node.description}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            // 검색어가 없으면 카테고리별 표시 (CICD와 동일 스타일)
+            <>
+              {Object.entries(cicdCategories)
+                .filter(([key]) => key !== "start") // start 카테고리 제외 (이미 캔버스에 초기 노드로 있음)
+                .map(([key, category]) => (
+                  <div key={key} className="space-y-2">
+                    <div
+                      className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}
+                    >
+                      <span className="text-base">{category.icon}</span>
+                      <h3
+                        className={`text-sm font-medium ${category.textClass}`}
+                      >
+                        {category.name}
+                      </h3>
+                      <span
+                        className={`text-xs ${category.textClass} opacity-70`}
+                      >
+                        ({category.nodes.length})
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 ml-2">
+                      {category.nodes.map((node) => (
+                        <div
+                          key={node.type}
+                          className="flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow"
+                          draggable
+                          onDragStart={(e) =>
+                            handleBlockDragStart(e, node.type)
+                          }
+                        >
+                          <div
+                            className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}
+                          >
+                            <span className="text-white text-sm">
+                              {node.icon}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0 ml-3">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {node.label}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {node.description}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+            </>
+          )}
         </div>
       </div>
 
@@ -612,7 +729,7 @@ const GlobalSidebar = () => {
         </div>
       </div>
 
-      {/*
+      {/* 
         Settings Modal - React Portal을 통해 document.body에 직접 렌더링
         전체 화면 중앙에 블러 배경과 함께 표시되며 사이드바 레이아웃 제약을 벗어남
       */}

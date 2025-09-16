@@ -11,8 +11,8 @@ import {CICDBlockGroup} from "@/types/block-enum";
 const TestJestNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as TestJestNodeData;
   const [coverage, setCoverage] = useState<boolean>(Boolean(nodeData.coverage));
-  const [watch, setWatch] = useState<boolean>(Boolean(nodeData.watch_mode));
-  const [workers, setWorkers] = useState<number | ''>(nodeData.max_workers || '');
+  const [watch, setWatch] = useState<boolean>(Boolean(nodeData.watchMode));
+  const [workers, setWorkers] = useState<number | ''>(nodeData.maxWorkers || '');
 
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.TEST];
 
@@ -29,11 +29,11 @@ const TestJestNode = memo(({ data, id }: NodeProps) => {
       <div className="space-y-3 text-sm">
         <div className="grid grid-cols-2 items-center gap-2">
           <div className="text-gray-600">Config File</div>
-          <input className="px-2 py-1 border border-gray-300 rounded" defaultValue={nodeData.config_file || ''} />
+          <input className="px-2 py-1 border border-gray-300 rounded" defaultValue={nodeData.configFile || ''} />
         </div>
         <div className="grid grid-cols-2 items-center gap-2">
           <div className="text-gray-600">Test Pattern</div>
-          <input className="px-2 py-1 border border-gray-300 rounded" defaultValue={nodeData.test_pattern || ''} />
+          <input className="px-2 py-1 border border-gray-300 rounded" defaultValue={nodeData.testPattern || ''} />
         </div>
         <div className="grid grid-cols-2 items-center gap-2">
           <div className="text-gray-600">Coverage</div>

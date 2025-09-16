@@ -90,7 +90,8 @@ export default function ProjectCreationWizard({
     },
     isLoading: false,
     isCreating: false,
-    createdProjectId: null
+    createdProjectId: null,
+    createdProjectNumericId: null
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -170,8 +171,10 @@ export default function ProjectCreationWizard({
 
     try {
       // 실제로는 API를 호출하여 프로젝트 생성
+      // URL에서 사용할 수 있는 숫자 ID 생성
+      const numericProjectId = Math.floor(Math.random() * 1000) + 4; // 4번부터 시작 (기존 1,2,3 피하기)
       const newProject = {
-        projectId: `project_${Date.now()}`,
+        projectId: `proj_${numericProjectId}`,
         name: state.projectConfig.name,
         description: state.projectConfig.description,
         githubOwner: state.repository?.owner || '',
@@ -186,7 +189,8 @@ export default function ProjectCreationWizard({
       setState(prev => ({
         ...prev,
         isCreating: false,
-        createdProjectId: newProject.projectId
+        createdProjectId: newProject.projectId,
+        createdProjectNumericId: numericProjectId.toString()
       }));
     } catch (err) {
       setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -196,12 +200,11 @@ export default function ProjectCreationWizard({
 
   // 프로젝트로 이동
   const handleNavigateToProject = () => {
-    if (state.createdProjectId) {
-      // TODO: /projects/[projectId] 페이지 구현 후 아래 주석 해제
-      // router.push(`/projects/${state.createdProjectId}`);
-
-      // 임시: 대시보드로 이동
-      router.push('/dashboard');
+    if (state.createdProjectNumericId) {
+      // 생성된 프로젝트로 이동 (첫 번째 파이프라인으로 이동)
+      const projectId = state.createdProjectNumericId;
+      const pipelineId = '1'; // 새 프로젝트의 첫 번째 파이프라인
+      router.push(`/projects/${projectId}/pipelines/${pipelineId}`);
       onClose();
     }
   };
