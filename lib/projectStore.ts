@@ -111,12 +111,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         }
       ];
 
-      set({
+      set((state) => ({
         projects: mockProjects,
         isLoading: false,
-        // 첫 번째 프로젝트를 기본 선택
-        selectedProjectId: mockProjects.length > 0 ? mockProjects[0].projectId : null
-      });
+        // 기존 선택된 프로젝트가 있으면 유지, 없으면 첫 번째 선택
+        selectedProjectId: state.selectedProjectId ||
+          (mockProjects.length > 0 ? mockProjects[0].projectId : null)
+      }));
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch projects',

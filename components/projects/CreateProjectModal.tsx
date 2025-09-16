@@ -41,6 +41,11 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   /** 프로젝트 선택 처리 */
   const handleSelectProject = (projectId: string) => {
     setSelectedProject(projectId);
+
+    // 선택 효과를 보여주고 잠시 후 모달 닫기
+    setTimeout(() => {
+      onClose();
+    }, 300); // 0.3초 후 닫기
   };
 
   /** GitHub 리포지토리를 새 탭에서 열기 */
@@ -99,7 +104,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       />
 
       {/* 모달 컨테이너 */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden m-4">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden m-4">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
@@ -118,7 +123,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
         </div>
 
         {/* Modal Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="p-8 overflow-y-auto max-h-[calc(95vh-180px)]">
           {isLoading && projects.length === 0 ? (
             <div className="animate-pulse">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -142,7 +147,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
             </div>
           ) : (
             /* Two Column Layout */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column - GitHub 저장소 */}
               <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
                 <div className="mb-6">
@@ -193,7 +198,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
               </div>
 
               {/* Right Column - 생성된 프로젝트 */}
-              <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 min-w-0">
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">생성된 프로젝트</h3>
                   <p className="text-gray-600 text-sm mb-4">
@@ -214,10 +219,10 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 </div>
 
                 {/* Projects List */}
-                <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-4">
                   {filteredProjects.length === 0 ? (
                     <div className="text-center py-8">
-                      <div className="bg-white rounded-lg p-6 border border-gray-200">
+                      <div className="bg-white rounded-lg p-6 border border-gray-200 mx-2">
                         <GitBranch className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                         <h4 className="text-lg font-semibold text-gray-900 mb-2">
                           {searchQuery ? '검색 결과가 없습니다' : '아직 생성된 프로젝트가 없습니다'}
@@ -233,17 +238,17 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                     filteredProjects.map((project) => (
                       <div
                         key={project.projectId}
-                        className={`rounded-lg border-2 p-4 hover:shadow-md transition-all duration-200 cursor-pointer ${
+                        className={`rounded-lg border-2 p-4 hover:shadow-md transition-all duration-300 cursor-pointer mx-2 ${
                           selectedProjectId === project.projectId
-                            ? 'border-purple-300 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            ? 'border-purple-300 bg-purple-50 shadow-lg scale-[1.005]'
+                            : 'border-gray-200 hover:border-gray-300 bg-white hover:scale-[1.005]'
                         }`}
                         onClick={() => handleSelectProject(project.projectId)}
                       >
                         {/* Project Header */}
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-2">
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-lg font-semibold text-gray-900 truncate mb-1">
+                            <h4 className="text-base font-semibold text-gray-900 truncate mb-1">
                               {project.name}
                             </h4>
                             <div className="flex items-center text-sm text-gray-600">
