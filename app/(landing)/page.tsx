@@ -2,9 +2,48 @@
 
 import { Cpu, Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
+import CICDFlowVisualization from "@/components/landing/CICDFlowVisualization";
+import { useProjectStore } from "@/lib/projectStore";
+import { usePipelineStore } from "@/lib/pipelineStore";
+import { reverseMapId } from "@/lib/utils/idMapping";
 
 export default function Home() {
+  const [latestRoute, setLatestRoute] = useState("/projects/3/pipelines/2"); // 기본값: 가장 최신 예상 경로
+  const { fetchProjects, getLatestProject } = useProjectStore();
+  const { fetchPipelines, getLatestPipelineByProject } = usePipelineStore();
+
+  useEffect(() => {
+    const initializeLatestRoute = async () => {
+      try {
+        // 프로젝트 데이터 로드
+        await fetchProjects();
+        const latestProject = getLatestProject();
+
+        if (latestProject) {
+          // 해당 프로젝트의 파이프라인 데이터 로드
+          await fetchPipelines(latestProject.projectId);
+          const latestPipeline = getLatestPipelineByProject(latestProject.projectId);
+
+          if (latestPipeline) {
+            // NOTE: 데이터베이스에서도 동일한 로직으로 최신 프로젝트/파이프라인 결정 예정
+            // Mock ID를 숫자 ID로 변환하여 URL 생성 (proj_3 -> 3, pipe_4 -> 4)
+            const projectNumericId = reverseMapId(latestProject.projectId);
+            const pipelineNumericId = reverseMapId(latestPipeline.pipelineId);
+
+            setLatestRoute(`/projects/${projectNumericId}/pipelines/${pipelineNumericId}`);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load latest route:", error);
+        // 에러 발생 시 기본값 유지
+      }
+    };
+
+    initializeLatestRoute();
+  }, [fetchProjects, getLatestProject, fetchPipelines, getLatestPipelineByProject]);
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Background Effects */}
@@ -52,12 +91,17 @@ export default function Home() {
             </p>
           </AnimatedSection>
 
-          {/* CTA Button */}
+          {/* CI/CD Flow Visualization */}
           <AnimatedSection delay={150}>
+            <CICDFlowVisualization />
+          </AnimatedSection>
+
+          {/* CTA Button */}
+          <AnimatedSection delay={200}>
             <div className="relative inline-block group">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse" />
               <Link
-                href="/signup"
+                href={latestRoute}
                 className="relative inline-flex group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-10 py-5 rounded-2xl font-semibold text-xl transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 items-center gap-3 transform hover:scale-105"
               >
                 <Zap className="w-6 h-6" />
@@ -66,55 +110,13 @@ export default function Home() {
               </Link>
             </div>
           </AnimatedSection>
-
-          {/* Pipeline Logs Demo Links */}
-          <AnimatedSection delay={200}>
-            <div className="mt-16 space-y-6">
-              <p className="text-lg text-gray-400 mb-6">🧪 Pipeline Logs 데모 (Phase 1-5 완료)</p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
-                <Link
-                  href="/logs"
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105"
-                >
-                  📊 Pipeline Logs
-                </Link>
-                <Link
-                  href="/test-filters"
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-green-500/25 transform hover:scale-105"
-                >
-                  🔍 Filter Panel Test
-                </Link>
-                <Link
-                  href="/test-combined"
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
-                >
-                  🚀 Combined Test
-                </Link>
-                <Link
-                  href="/test-real-api"
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-red-500/25 transform hover:scale-105"
-                >
-                  🔴 Real API Test
-                </Link>
-                <Link
-                  href="/debug-api"
-                  className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-gray-500/25 transform hover:scale-105"
-                >
-                  🔧 API Debug Console
-                </Link>
-              </div>
-              <div className="text-xs text-gray-600 mt-4">
-                완전한 UI, 목업 데이터, 키보드 단축키, 무한 스크롤, 실시간 필터링 + 실제 API 연동 및 SSE 스트리밍
-              </div>
-            </div>
-          </AnimatedSection>
         </div>
       </main>
 
       {/* Simple Footer */}
       <AnimatedSection delay={400} direction="up" className="relative z-10">
         <footer className="py-6 text-center text-gray-600 text-sm">
-          <p>&copy; 2024 Otto. All rights reserved.</p>
+          <p>&copy; 2025 Otto. All rights reserved.</p>
         </footer>
       </AnimatedSection>
     </div>

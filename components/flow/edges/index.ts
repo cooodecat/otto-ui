@@ -1,8 +1,10 @@
 import { EdgeTypes } from "@xyflow/react";
 import AnimatedDashedEdge from "./AnimatedDashedEdge";
+import CICDEdge from "./CICDEdge";
 
 export const edgeTypes: EdgeTypes = {
   animatedDashed: AnimatedDashedEdge,
+  cicdEdge: CICDEdge,
 };
 
 export const defaultEdgeOptions = {
@@ -11,5 +13,17 @@ export const defaultEdgeOptions = {
   style: {
     stroke: "#9ca3af",
     strokeWidth: 2,
+  },
+};
+
+// CI/CD 전용 간선 옵션
+export const cicdEdgeOptions = {
+  type: "cicdEdge",
+  animated: false,
+  selectable: true,
+  deletable: true,
+  style: {
+    stroke: "#10b981", // 기본 성공 색상
+    strokeWidth: 3,
   },
 };
