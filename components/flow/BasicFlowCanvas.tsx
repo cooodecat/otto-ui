@@ -170,7 +170,17 @@ function DropZone({ onInitializeReady }: { onInitializeReady: (fn: () => void) =
   );
 }
 
-function FlowCanvasWithButtons() {
+/**
+ * BasicFlowCanvas 컴포넌트 props
+ */
+interface BasicFlowCanvasProps {
+  /** 프로젝트 ID */
+  projectId: string;
+  /** 파이프라인 ID */
+  pipelineId: string;
+}
+
+function FlowCanvasWithButtons({ projectId: _projectId, pipelineId: _pipelineId }: BasicFlowCanvasProps) {
   const [handleInitialize, setHandleInitialize] = useState<(() => void) | null>(null);
 
   const onInitializeReady = useCallback((fn: () => void) => {
@@ -202,10 +212,16 @@ function FlowCanvasWithButtons() {
   );
 }
 
-export default function BasicFlowCanvas() {
+/**
+ * 파이프라인 에디터 메인 컴포넌트
+ * @param projectId - 프로젝트 ID
+ * @param pipelineId - 파이프라인 ID
+ * @returns 파이프라인 플로우 캔버스
+ */
+export default function BasicFlowCanvas({ projectId, pipelineId }: BasicFlowCanvasProps) {
   return (
     <ReactFlowProvider>
-      <FlowCanvasWithButtons />
+      <FlowCanvasWithButtons projectId={projectId} pipelineId={pipelineId} />
     </ReactFlowProvider>
   );
 }

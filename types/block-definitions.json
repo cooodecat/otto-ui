@@ -1,0 +1,207 @@
+{
+  "block_types": {
+    "os_package": {
+      "label": "OS Packages",
+      "icon": "📦",
+      "group": "prebuild",
+      "description": "Install OS packages using system package manager",
+      "required_fields": ["package_manager", "install_packages"],
+      "optional_fields": ["update_package_list"]
+    },
+    "node_version": {
+      "label": "Node Version",
+      "icon": "🟢",
+      "group": "prebuild", 
+      "description": "Set Node.js version",
+      "required_fields": ["version"],
+      "optional_fields": ["package_manager"]
+    },
+    "environment_setup": {
+      "label": "Environment",
+      "icon": "🌍",
+      "group": "prebuild",
+      "description": "Set environment variables",
+      "required_fields": ["environment_variables"],
+      "optional_fields": ["load_from_file"]
+    },
+    "install_module_node": {
+      "label": "Install Packages",
+      "icon": "📥",
+      "group": "build",
+      "description": "Install Node.js packages",
+      "required_fields": ["package_manager"],
+      "optional_fields": ["install_packages", "install_dev_dependencies", "production_only", "clean_install"]
+    },
+    "build_webpack": {
+      "label": "Webpack Build",
+      "icon": "📦",
+      "group": "build",
+      "description": "Build project using Webpack",
+      "required_fields": ["mode"],
+      "optional_fields": ["config_file", "output_path", "additional_options"]
+    },
+    "build_vite": {
+      "label": "Vite Build",
+      "icon": "⚡",
+      "group": "build",
+      "description": "Build project using Vite",
+      "required_fields": ["mode"],
+      "optional_fields": ["config_file", "base_path", "output_dir"]
+    },
+    "build_custom": {
+      "label": "Custom Build",
+      "icon": "🔨",
+      "group": "build",
+      "description": "Run custom build commands",
+      "required_fields": ["package_manager"],
+      "optional_fields": ["script_name", "custom_commands", "working_directory"]
+    },
+    "test_jest": {
+      "label": "Jest Tests",
+      "icon": "🃏",
+      "group": "test",
+      "description": "Run tests using Jest",
+      "required_fields": [],
+      "optional_fields": ["config_file", "test_pattern", "coverage", "watch_mode", "max_workers", "additional_options"]
+    },
+    "test_mocha": {
+      "label": "Mocha Tests", 
+      "icon": "☕",
+      "group": "test",
+      "description": "Run tests using Mocha",
+      "required_fields": [],
+      "optional_fields": ["test_files", "config_file", "reporter", "timeout", "grep"]
+    },
+    "test_vitest": {
+      "label": "Vitest",
+      "icon": "⚡",
+      "group": "test",
+      "description": "Run tests using Vitest",
+      "required_fields": [],
+      "optional_fields": ["config_file", "coverage", "ui", "watch_mode", "environment"]
+    },
+    "test_playwright": {
+      "label": "Playwright",
+      "icon": "🎭",
+      "group": "test", 
+      "description": "Run E2E tests using Playwright",
+      "required_fields": [],
+      "optional_fields": ["config_file", "project", "headed", "debug", "browsers"]
+    },
+    "test_custom": {
+      "label": "Custom Tests",
+      "icon": "🧪",
+      "group": "test",
+      "description": "Run custom test commands",
+      "required_fields": ["package_manager"],
+      "optional_fields": ["script_name", "custom_commands", "generate_reports", "coverage_threshold"]
+    },
+    "notification_slack": {
+      "label": "Slack Notify",
+      "icon": "💬",
+      "group": "notification",
+      "description": "Send Slack notifications",
+      "required_fields": ["webhook_url_env", "message_template"],
+      "optional_fields": ["channel", "on_success_only", "on_failure_only"]
+    },
+    "notification_email": {
+      "label": "Email Notify",
+      "icon": "📧",
+      "group": "notification",
+      "description": "Send email notifications",
+      "required_fields": ["smtp_config", "recipients", "subject_template", "body_template"],
+      "optional_fields": []
+    },
+    "condition_branch": {
+      "label": "Condition",
+      "icon": "🔀",
+      "group": "utility",
+      "description": "Conditional execution branching",
+      "required_fields": ["condition_type", "condition_config", "on_condition_true", "on_condition_false"],
+      "optional_fields": []
+    },
+    "parallel_execution": {
+      "label": "Parallel",
+      "icon": "⚡", 
+      "group": "utility",
+      "description": "Execute multiple branches in parallel",
+      "required_fields": ["parallel_branches", "on_all_success"],
+      "optional_fields": ["wait_for_all", "fail_fast", "on_any_failure"]
+    },
+    "custom_command": {
+      "label": "Custom Command",
+      "icon": "💻",
+      "group": "utility", 
+      "description": "Execute custom shell commands",
+      "required_fields": ["commands"],
+      "optional_fields": ["working_directory", "shell", "environment_variables", "ignore_errors"]
+    }
+  },
+  "groups": {
+    "prebuild": {
+      "label": "Pre-build",
+      "color": "#3b82f6",
+      "icon": "⚙️",
+      "description": "Environment setup and preparation"
+    },
+    "build": {
+      "label": "Build",
+      "color": "#10b981", 
+      "icon": "🔨",
+      "description": "Code compilation and build processes"
+    },
+    "test": {
+      "label": "Test",
+      "color": "#8b5cf6",
+      "icon": "🧪",
+      "description": "Testing and quality assurance"
+    },
+    "notification": {
+      "label": "Notification",
+      "color": "#eab308",
+      "icon": "📢",
+      "description": "Alerts and notifications"
+    },
+    "utility": {
+      "label": "Utility", 
+      "color": "#6b7280",
+      "icon": "🔧",
+      "description": "Flow control and utility functions"
+    }
+  },
+  "field_types": {
+    "package_manager": {
+      "type": "enum",
+      "values": ["npm", "yarn", "pnpm"]
+    },
+    "os_package_manager": {
+      "type": "enum", 
+      "values": ["apt", "yum", "dnf", "apk", "zypper", "pacman", "brew"]
+    },
+    "build_mode": {
+      "type": "enum",
+      "values": ["development", "production"]
+    },
+    "test_reporter": {
+      "type": "enum",
+      "values": ["spec", "json", "html", "tap", "dot"]
+    },
+    "test_environment": {
+      "type": "enum",
+      "values": ["node", "jsdom", "happy-dom"]
+    },
+    "browsers": {
+      "type": "array",
+      "item_type": "enum",
+      "values": ["chromium", "firefox", "webkit"]
+    },
+    "condition_type": {
+      "type": "enum",
+      "values": ["environment", "file_exists", "command_output", "custom"]
+    },
+    "shell": {
+      "type": "enum",
+      "values": ["bash", "sh", "zsh", "fish"]
+    }
+  }
+}
