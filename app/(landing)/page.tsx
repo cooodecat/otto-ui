@@ -1,7 +1,6 @@
 "use client";
 
-import { Cpu, Zap, ArrowRight, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Cpu, Zap, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedSection from "@/components/ui/AnimatedSection";
@@ -16,13 +15,11 @@ export default function Home() {
   const router = useRouter();
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const { fetchProjects, projects } = useProjectStore();
+  const { fetchProjects } = useProjectStore();
   const { fetchPipelines, getPipelinesByProject } = usePipelineStore();
 
   // 페이지 로드 시에는 자동 라우팅 하지 않음 - 랜딩 페이지 유지
   useEffect(() => {
-    setIsCheckingAuth(false);
   }, []);
 
   const navigateToWorkspace = async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
@@ -16,6 +16,7 @@ import {
   BookOpen,
   Pencil,
   X,
+  HelpCircle,
 } from 'lucide-react';
 import { cicdCategories, nodeRegistry } from '@/components/flow/nodes/node-registry';
 import SettingsModal from '../settings/SettingsModal';
@@ -564,11 +565,6 @@ const GlobalSidebar = () => {
 
   return (
     <div className={containerClassName}>
-      {/* GitHub 설치 콜백 처리 */}
-      <Suspense fallback={null}>
-        <GitHubInstallationHandler onModalOpen={handleModalOpen} />
-      </Suspense>
-
       {/* Workspace Header Card */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between">
