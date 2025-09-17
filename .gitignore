@@ -42,3 +42,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Learning documents
+REACT_NEXTJS_LEARNING.md
+LOG_SYSTEM_FRONTEND_GUIDE.md
+LOG_SYSTEM_IMPLEMENTATION_GUIDE.md

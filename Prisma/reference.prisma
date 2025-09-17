@@ -1,8 +1,4 @@
-// 참고용 스키마 파일입니다 (Prisma Client로 사용하지 않습니다)
-// Supabase에서 생성한 테이블 구조를 기준으로 작성했습니다
-// 테이블 간 관계 및 주요 필드를 문서용으로 정리한 파일입니다
-
-// ENUM 예시 (실제 Supabase Enum과 일치해야 함)
+// Enums (추정 정의, 실제 DB enum에 맞게 수정 필요)
 enum LogLevel {
     DEBUG
     INFO
@@ -16,142 +12,143 @@ enum CollectionStatus {
     ERROR
 }
 
-// 빌드 기록 (CodeBuild 단위)
-model build_histories {
-    id                     String    @id @default(uuid()) // 기본 키 (UUID)
-    user_id                String // Supabase auth.users 참조
-    project_id             String // projects 참조
-    aws_build_id           String    @unique // AWS Build ID
-    build_execution_status String // 빌드 상태
-    build_spec             Json // buildspec 내용 (jsonb)
-    environment_variables  Json? // 환경변수 (jsonb)
-    start_time             DateTime? @db.Timestamptz // 빌드 시작 시간
-    end_time               DateTime? @db.Timestamptz // 빌드 종료 시간
-    duration_seconds       Int? // 실행 시간(초)
-    logs_url               String? // CloudWatch Logs URL
-    build_error_message    String? // 에러 메시지 (실패 시)
-    created_at             DateTime? @default(now()) @db.Timestamptz
-    updated_at             DateTime? @default(now()) @db.Timestamptz
-}
-
-// 빌드 실행 단계 (INSTALL/BUILD/FINALIZE 등)
 model build_execution_phases {
-    id                     String    @id @default(uuid())
-    build_history_id       String // build_histories 참조
-    phase_type             String // 예: INSTALL
-    phase_status           String // 예: SUCCEEDED
-    phase_start_time       DateTime? @db.Timestamptz
-    phase_end_time         DateTime? @db.Timestamptz
-    phase_duration_seconds Int?
-    phase_context_message  String?
-    created_at             DateTime? @default(now()) @db.Timestamptz
+    id                     String    @id @default(uuid()) /// 고유 ID
+    build_history_id       String /// build_histories 테이블 FK
+    phase_type             String /// 빌드 단계 타입
+    phase_status           String /// 단계 상태
+    phase_start_time       DateTime? /// 단계 시작 시간
+    phase_end_time         DateTime? /// 단계 종료 시간
+    phase_duration_seconds Int? /// 단계 소요 시간(초)
+    phase_context_message  String? /// 단계 관련 메시지
+    created_at             DateTime  @default(now()) /// 생성 시각
+
+    build_histories build_histories @relation(fields: [build_history_id], references: [id])
 }
 
-// 실행 로그 (CloudWatch에서 수집된 각 로그 이벤트)
-model job_execution_logs {
-    id           String   @id @default(uuid())
-    execution_id String   @unique // 내부 실행 ID
-    event_id     String   @unique // CloudWatch 이벤트 ID
-    timestamp    DateTime @db.Timestamptz
-    phase        String?
-    state        String?
-    level        LogLevel // 로그 레벨
-    message      String
-    log_stream   String?
-    raw_data     Json? // 원본 이벤트 JSON
-    created_at   DateTime @default(now()) @db.Timestamptz
+model build_histories {
+    id                     String    @id @default(uuid()) /// 고유 ID
+    user_id                String /// 사용자 ID (auth.users FK)
+    project_id             String /// 프로젝트 ID
+    aws_build_id           String    @unique /// AWS 빌드 ID
+    build_execution_status String    @default("pending") /// 빌드 상태 (pending, in_progress, etc.)
+    build_spec             Json /// 빌드 스펙 (jsonb)
+    environment_variables  Json? /// 환경 변수 (jsonb)
+    start_time             DateTime? /// 빌드 시작 시간
+    end_time               DateTime? /// 빌드 종료 시간
+    duration_seconds       Int? /// 빌드 소요 시간(초)
+    logs_url               String? /// 로그 URL
+    build_error_message    String? /// 에러 메시지
+    created_at             DateTime  @default(now()) /// 생성 시각
+    updated_at             DateTime  @default(now()) /// 수정 시각
+
+    build_execution_phases build_execution_phases[]
 }
 
-// 로그 실행 단위 (Job Execution 단위, CodeBuild 빌드 단위와 유사)
-model job_executions {
-    id           String    @id @default(uuid())
-    execution_id String    @unique
-    provider     String // 예: codebuild
-    external_id  String    @unique // AWS Build ID
-    project_name String
-    status       String?
-    started_at   DateTime  @db.Timestamptz
-    ended_at     DateTime? @db.Timestamptz
-    created_at   DateTime  @default(now()) @db.Timestamptz
-}
-
-// 로그 수집 상태 (last_token 기반 추적)
-model log_collection_state {
-    execution_id      String           @id
-    last_token        String
-    last_collected_at DateTime?        @db.Timestamptz
-    collection_status CollectionStatus
-    error_message     String
-    updated_at        DateTime?        @default(now()) @db.Timestamptz
-}
-
-// Supabase 프로젝트와 연결된 pipeline 정의 (JSON 기반)
-model pipeline {
-    pipeline_id String   @id @default(uuid()) // projects.project_id와 동일
-    created_at  DateTime @default(now()) @db.Timestamptz
-    data        Json?
-    env         Json?
-}
-
-// 사용자 프로필 정보 (auth.users를 확장)
-model profiles {
-    id              String    @id // auth.users.id 참조
-    username        String?   @unique
-    display_name    String?
-    bio             String?
-    avatar_url      String?
-    github_username String?
-    github_id       String?
-    created_at      DateTime? @default(now()) @db.Timestamptz
-    updated_at      DateTime? @default(now()) @db.Timestamptz
-}
-
-// 프로젝트 정보 (빌드 대상 저장소 등)
-model projects {
-    project_id              String   @id @default(uuid())
-    name                    String   @unique
-    description             String?
-    github_owner            String
-    github_repo_id          String   @unique
-    github_repo_name        String
-    github_repo_url         String
-    installation_id         String? // GitHub Installation 참조
-    user_id                 String // auth.users.id
-    selected_branch         String?  @default("main")
-    created_at              DateTime @default(now()) @db.Timestamptz
-    updated_at              DateTime @default(now()) @db.Timestamptz
-    codebuild_project_name  String?  @unique
-    build_image             String   @default("aws/codebuild/standard:7.0")
-    compute_type            String   @default("BUILD_GENERAL1_MEDIUM")
-    build_timeout           Int      @default(60)
-    artifact_bucket         String?  @unique
-    artifact_retention_days Int?
-    cloudwatch_log_group    String?  @unique
-    codebuild_status        String?  @default("PENDING")
-    codebuild_error_message String?
-}
-
-// GitHub Installation 정보 (user와 연결)
 model github_installations {
-    installation_id        String    @id @default(uuid())
-    user_id                String
-    account_id             String
-    account_login          String
-    account_type           String
-    github_installation_id String    @unique
-    is_active              Boolean?  @default(true)
-    created_at             DateTime? @default(now()) @db.Timestamptz
-    updated_at             DateTime? @default(now()) @db.Timestamptz
+    installation_id        String   @id @default(uuid()) /// 설치 ID
+    user_id                String /// 사용자 ID (auth.users FK)
+    account_id             String /// GitHub 계정 ID
+    account_login          String /// GitHub 계정 로그인
+    account_type           String /// 계정 타입 (User/Org)
+    github_installation_id String   @unique /// GitHub Installation ID
+    is_active              Boolean  @default(true) /// 활성 여부
+    created_at             DateTime @default(now()) /// 생성 시각
+    updated_at             DateTime @default(now()) /// 수정 시각
 }
 
-// GitHub Push 이벤트 수신 기록
+model job_execution_logs {
+    id           String   @id @default(uuid()) /// 고유 ID
+    execution_id String   @unique /// 실행 ID
+    event_id     String   @unique /// 이벤트 ID
+    timestamp    DateTime /// 로그 발생 시각
+    phase        String? /// 실행 단계
+    state        String? /// 상태
+    level        LogLevel /// 로그 레벨
+    message      String /// 메시지
+    log_stream   String? /// 로그 스트림
+    raw_data     Json? /// 원본 데이터
+    created_at   DateTime @default(now()) /// 생성 시각
+}
+
+model job_executions {
+    id           String    @id @default(uuid()) /// 고유 ID
+    execution_id String    @unique @default("") /// 실행 ID
+    provider     String    @default("") /// 제공자 (예: codebuild)
+    external_id  String    @unique @default("") /// 외부 실행 ID (CodeBuild 등)
+    project_name String    @default("") /// 프로젝트 이름
+    status       String? /// 상태
+    started_at   DateTime /// 시작 시간
+    ended_at     DateTime? /// 종료 시간
+    created_at   DateTime  @default(now()) /// 생성 시각
+}
+
+model log_collection_state {
+    execution_id      String           @id /// 실행 ID
+    last_token        String /// 마지막 토큰
+    last_collected_at DateTime? /// 마지막 수집 시간
+    collection_status CollectionStatus /// 수집 상태
+    error_message     String /// 에러 메시지
+    updated_at        DateTime         @default(now()) /// 수정 시각
+}
+
+model pipeline {
+    pipeline_id String   @id @default(uuid()) /// 파이프라인 ID
+    created_at  DateTime @default(now()) /// 생성 시각
+    data        Json? /// 파이프라인 데이터
+    env         Json? /// 환경 변수
+    project_id  String? /// 프로젝트 ID
+
+    projects projects? @relation(fields: [project_id], references: [project_id])
+}
+
+model profiles {
+    id              String   @id /// 사용자 ID (auth.users FK)
+    username        String?  @unique /// 유저명
+    display_name    String? /// 표시 이름
+    bio             String? /// 소개
+    avatar_url      String? /// 아바타 URL
+    github_username String? /// GitHub 유저명
+    github_id       String? /// GitHub ID
+    created_at      DateTime @default(now()) /// 생성 시각
+    updated_at      DateTime @default(now()) /// 수정 시각
+}
+
+model projects {
+    project_id              String        @id @default(uuid()) /// 프로젝트 ID
+    name                    String        @unique /// 프로젝트 이름
+    description             String? /// 설명
+    github_owner            String /// GitHub 소유자
+    github_repo_id          String        @unique /// GitHub Repo ID
+    github_repo_name        String /// GitHub Repo 이름
+    github_repo_url         String /// GitHub Repo URL
+    installation_id         String? /// GitHub Installation ID
+    user_id                 String /// 사용자 ID
+    selected_branch         String        @default("main") /// 선택 브랜치
+    created_at              DateTime      @default(now()) /// 생성 시각
+    updated_at              DateTime      @default(now()) /// 수정 시각
+    codebuild_project_name  String?       @unique /// CodeBuild 프로젝트 이름
+    build_image             String        @default("aws/codebuild/standard:7.0") /// CodeBuild 이미지
+    compute_type            String        @default("BUILD_GENERAL1_MEDIUM") /// 빌드 컴퓨팅 타입
+    build_timeout           Int           @default(60) /// 빌드 제한 시간 (분)
+    artifact_bucket         String?       @unique /// 아티팩트 버킷
+    artifact_retention_days Int?          @default(7) /// 아티팩트 보존 기간 (일)
+    cloudwatch_log_group    String?       @unique /// CloudWatch 로그 그룹
+    codebuild_status        String?       @default("PENDING") /// CodeBuild 상태
+    codebuild_error_message String? /// CodeBuild 에러 메시지
+    pipeline                pipeline[]
+    push_events             push_events[]
+}
+
 model push_events {
-    event_id           String    @id @default(uuid())
-    project_id         String
-    commit_sha         String
-    commit_message     String?
-    commit_author_name String?
-    pushed_at          DateTime  @db.Timestamptz
-    branch_name        String?
-    created_at         DateTime? @default(now()) @db.Timestamptz
+    event_id           String   @id @default(uuid()) /// 이벤트 ID
+    project_id         String /// 프로젝트 ID
+    commit_sha         String /// 커밋 SHA
+    commit_message     String? /// 커밋 메시지
+    commit_author_name String? /// 커밋 작성자 이름
+    pushed_at          DateTime /// 푸시 시간
+    branch_name        String? /// 브랜치 이름
+    created_at         DateTime @default(now()) /// 생성 시각
+
+    projects projects @relation(fields: [project_id], references: [project_id])
 }
