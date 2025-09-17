@@ -169,7 +169,7 @@ export default function ProjectCreationWizard({
 
     try {
       const response = await apiClient.getGitHubBranches(
-        repoInfo.installationId,
+        repoInfo.installationId.toString(),
         state.repository.owner,
         state.repository.name
       );
@@ -179,24 +179,21 @@ export default function ProjectCreationWizard({
       }
 
       if (response.data?.branches) {
-        const branches: Branch[] = response.data.branches.map(
-          (branch: any) => ({
+        const branches: Branch[] = response.data.branches
+          .filter((branch: any) => branch.commit)
+          .map((branch: any) => ({
             name: branch.name,
-            commit: branch.commit
-              ? {
-                  sha: branch.commit.sha,
-                  message: branch.commit.commit?.message || "No message",
-                  date: branch.commit.commit?.author?.date
-                    ? new Date(
-                        branch.commit.commit.author.date
-                      ).toLocaleDateString()
-                    : "Unknown date",
-                  author:
-                    branch.commit.commit?.author?.name || "Unknown author",
-                }
-              : undefined,
-          })
-        );
+            commit: {
+              sha: branch.commit.sha,
+              message: branch.commit.commit?.message || "No message",
+              date: branch.commit.commit?.author?.date
+                ? new Date(
+                    branch.commit.commit.author.date
+                  ).toLocaleDateString()
+                : "Unknown date",
+              author: branch.commit.commit?.author?.name || "Unknown author",
+            },
+          }));
 
         setState((prev) => ({
           ...prev,
