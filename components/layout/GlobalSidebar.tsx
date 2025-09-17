@@ -6,14 +6,11 @@ import {
   Search,
   Plus,
   Settings,
-  HelpCircle,
   ChevronDown,
   Copy,
-  Home,
   Check,
   ScrollText,
   Filter,
-  BookOpen,
 } from "lucide-react";
 import { cicdCategories } from "@/components/flow/nodes/node-registry";
 import SettingsModal from "../settings/SettingsModal";
@@ -301,14 +298,11 @@ const GlobalSidebar = () => {
 
   /**
    * 하단 네비게이션 아이콘들의 설정
-   * 일반적인 워크스페이스 기능에 빠르게 접근할 수 있게 해줍니다
+   * 실제로 구현된 기능들에만 접근할 수 있게 해줍니다
    */
   const bottomIcons: BottomIcon[] = [
     { icon: Settings, title: "Settings" },
-    { icon: HelpCircle, title: "Help" },
     { icon: ScrollText, title: "Pipeline Logs" },
-    { icon: BookOpen, title: "Resources" },
-    { icon: Home, title: "Home" },
   ];
 
   /**
@@ -830,8 +824,8 @@ const GlobalSidebar = () => {
       {/* Bottom Section Cards */}
       <div className="space-y-2">
         {/* Navigation Icons Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-2 w-fit mx-auto">
+          <div className="flex items-center justify-center gap-6">
             {bottomIcons.map((item, index) => (
               <button
                 key={index}
