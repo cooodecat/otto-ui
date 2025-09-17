@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ProjectList from "@/components/projects/ProjectList";
 import GitHubRepositoryList from "@/components/projects/GitHubRepositoryList";
@@ -11,21 +11,10 @@ import type { GitHubInstallation, GitHubRepository } from "@/types/api";
 
 type ViewMode = "projects" | "repositories" | "wizard";
 
-export default function ProjectsPageClient() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("projects");
-
-  // 프로젝트 생성 마법사 상태
-  const [selectedInstallation, setSelectedInstallation] =
-    useState<GitHubInstallation | null>(null);
-  const [selectedRepository, setSelectedRepository] =
-    useState<GitHubRepository | null>(null);
-
+// URL 파라미터를 처리하는 별도의 컴포넌트
+function GitHubInstallationHandler() {
   const searchParams = useSearchParams();
-  const supabase = createClient();
 
-  // URL 파라미터에서 GitHub 설치 관련 정보 확인
   useEffect(() => {
     const status = searchParams.get("status");
     const githubInstalled = searchParams.get("github_installed");
@@ -54,6 +43,22 @@ export default function ProjectsPageClient() {
       console.log("프로젝트 생성 모달을 열어야 합니다.");
     }
   }, [searchParams]);
+
+  return null;
+}
+
+export default function ProjectsPageClient() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("projects");
+
+  // 프로젝트 생성 마법사 상태
+  const [selectedInstallation, setSelectedInstallation] =
+    useState<GitHubInstallation | null>(null);
+  const [selectedRepository, setSelectedRepository] =
+    useState<GitHubRepository | null>(null);
+
+  const supabase = createClient();
 
   // 인증 상태 확인 및 API 토큰 설정
   useEffect(() => {
@@ -133,6 +138,11 @@ export default function ProjectsPageClient() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* URL 파라미터 처리 */}
+      <Suspense fallback={null}>
+        <GitHubInstallationHandler />
+      </Suspense>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 페이지 헤더 */}
         <div className="mb-8">

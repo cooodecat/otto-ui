@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -106,6 +106,54 @@ const isLogsPage = (pathname: string): boolean => {
 };
 
 /**
+ * GitHub 설치 콜백을 처리하는 별도의 컴포넌트
+ * useSearchParams를 격리하여 Suspense boundary 내에서 처리
+ */
+function GitHubInstallationHandler({
+  onModalOpen,
+}: {
+  onModalOpen: () => void;
+}) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // GitHub 앱 설치 콜백 처리
+    const status = searchParams.get("status");
+    const githubInstalled = searchParams.get("github_installed");
+    const openModal = searchParams.get("open_modal");
+    const installationId = searchParams.get("installation_id");
+    const accountLogin = searchParams.get("account_login");
+
+    if (status === "success" && githubInstalled === "true") {
+      console.log(
+        `GitHub 앱 설치가 완료되었습니다. 계정: ${accountLogin}, 설치 ID: ${installationId}`
+      );
+
+      // 모달을 자동으로 열기
+      onModalOpen();
+
+      // URL 파라미터 정리 (새로고침 시 다시 모달이 열리지 않도록)
+      const url = new URL(window.location.href);
+      url.searchParams.delete("status");
+      url.searchParams.delete("github_installed");
+      url.searchParams.delete("open_modal");
+      url.searchParams.delete("installation_id");
+      url.searchParams.delete("account_login");
+      window.history.replaceState({}, "", url.toString());
+    } else if (openModal === "true") {
+      // 프로젝트 생성 모달 자동으로 열기 (GitHub 설치 없이)
+      onModalOpen();
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("open_modal");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams, onModalOpen]);
+
+  return null;
+}
+
+/**
  * GlobalSidebar 컴포넌트
  *
  * 프로젝트 네비게이션과 파이프라인 관리, 블록 팔레트 기능을 제공하는 사이드바 컴포넌트입니다.
@@ -125,7 +173,6 @@ const isLogsPage = (pathname: string): boolean => {
 const GlobalSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const isCanvasLayout = isCanvasLayoutPath(pathname);
   const showBlockPalette = shouldShowBlockPalette(pathname);
   const isOnLogsPage = isLogsPage(pathname);
@@ -194,42 +241,15 @@ const GlobalSidebar = () => {
     };
   }, []);
 
-  // 데이터 로딩 및 GitHub 콜백 처리
+  // 모달 열기 핸들러
+  const handleModalOpen = useCallback(() => {
+    setIsCreateProjectModalOpen(true);
+  }, []);
+
+  // 데이터 로딩
   useEffect(() => {
     fetchProjects();
-
-    // GitHub 앱 설치 콜백 처리
-    const status = searchParams.get("status");
-    const githubInstalled = searchParams.get("github_installed");
-    const openModal = searchParams.get("open_modal");
-    const installationId = searchParams.get("installation_id");
-    const accountLogin = searchParams.get("account_login");
-
-    if (status === "success" && githubInstalled === "true") {
-      console.log(
-        `GitHub 앱 설치가 완료되었습니다. 계정: ${accountLogin}, 설치 ID: ${installationId}`
-      );
-
-      // 모달을 자동으로 열기
-      setIsCreateProjectModalOpen(true);
-
-      // URL 파라미터 정리 (새로고침 시 다시 모달이 열리지 않도록)
-      const url = new URL(window.location.href);
-      url.searchParams.delete("status");
-      url.searchParams.delete("github_installed");
-      url.searchParams.delete("open_modal");
-      url.searchParams.delete("installation_id");
-      url.searchParams.delete("account_login");
-      window.history.replaceState({}, "", url.toString());
-    } else if (openModal === "true") {
-      // 프로젝트 생성 모달 자동으로 열기 (GitHub 설치 없이)
-      setIsCreateProjectModalOpen(true);
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("open_modal");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, []); // 의존성 배열을 빈 배열로 유지 (searchParams 변경 시 무한 루프 방지)
+  }, [fetchProjects]);
 
   // 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옴
   useEffect(() => {
@@ -506,6 +526,11 @@ const GlobalSidebar = () => {
 
   return (
     <div className={containerClassName}>
+      {/* GitHub 설치 콜백 처리 */}
+      <Suspense fallback={null}>
+        <GitHubInstallationHandler onModalOpen={handleModalOpen} />
+      </Suspense>
+
       {/* Workspace Header Card */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between">
