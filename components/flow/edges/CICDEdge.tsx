@@ -57,14 +57,14 @@ const CICDEdge: React.FC<CICDEdgeProps> = ({
   const getLabel = () => {
     if (isSuccessPath) {
       return {
-        text: "✅ Success",
+        text: "Success",
         bgColor: "#10b981",
         textColor: "white",
         icon: <CheckCircle className="w-3 h-3" />,
       };
     } else if (isFailedPath) {
       return {
-        text: "❌ Failed",
+        text: "Failed",
         bgColor: "#ef4444",
         textColor: "white",
         icon: <XCircle className="w-3 h-3" />,

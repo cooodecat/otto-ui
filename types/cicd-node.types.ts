@@ -63,7 +63,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-purple-50",
     borderClass: "border-purple-200",
     textClass: "text-purple-700",
-    icon: "Play",
   },
   [CICDBlockGroup.PREBUILD]: {
     colorClass: "bg-blue-500",
@@ -71,7 +70,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-blue-50",
     borderClass: "border-blue-200",
     textClass: "text-blue-700",
-    icon: "Settings",
   },
   [CICDBlockGroup.BUILD]: {
     colorClass: "bg-emerald-500",
@@ -79,7 +77,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-emerald-50",
     borderClass: "border-emerald-200",
     textClass: "text-emerald-700",
-    icon: "Hammer",
   },
   [CICDBlockGroup.TEST]: {
     colorClass: "bg-purple-500",
@@ -87,7 +84,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-purple-50",
     borderClass: "border-purple-200",
     textClass: "text-purple-700",
-    icon: "Flask",
   },
   [CICDBlockGroup.DEPLOY]: {
     colorClass: "bg-orange-500",
@@ -95,7 +91,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-orange-50",
     borderClass: "border-orange-200",
     textClass: "text-orange-700",
-    icon: "Rocket",
   },
   [CICDBlockGroup.NOTIFICATION]: {
     colorClass: "bg-yellow-500",
@@ -103,7 +98,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-yellow-50",
     borderClass: "border-yellow-200",
     textClass: "text-yellow-700",
-    icon: "Megaphone",
   },
   [CICDBlockGroup.UTILITY]: {
     colorClass: "bg-gray-500",
@@ -111,7 +105,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-gray-50",
     borderClass: "border-gray-200",
     textClass: "text-gray-700",
-    icon: "Wrench",
   },
 } as const;
 
