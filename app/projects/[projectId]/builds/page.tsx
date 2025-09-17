@@ -70,9 +70,7 @@ export default function BuildsPage() {
 
       // API 응답이 배열인지 확인
       const responseData = response.data;
-      const buildsData = Array.isArray(responseData)
-        ? responseData
-        : (responseData?.builds || responseData?.data || []);
+      const buildsData = Array.isArray(responseData) ? responseData : [];
       
       console.log('Builds API Response:', response.data);
       console.log('Extracted builds:', buildsData);

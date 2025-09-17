@@ -43,18 +43,10 @@ export default function OnboardingPage() {
         apiClient.setSupabaseToken(session.access_token);
       }
 
-      const response = await apiClient.getGithubInstallations();
+      const response = await apiClient.getGitHubInstallations();
 
       // API 응답 구조 처리 개선
-      let installations = [];
-      if (Array.isArray(response.data)) {
-        installations = response.data;
-      } else if (response.data?.installations) {
-        installations = response.data.installations;
-      } else if (response.data && typeof response.data === "object") {
-        // 단일 설치 객체인 경우
-        installations = [response.data];
-      }
+      const installations = response.data?.installations || [];
 
       console.log("GitHub installations check:", {
         responseData: response.data,
@@ -136,14 +128,9 @@ export default function OnboardingPage() {
           apiClient.setSupabaseToken(session.access_token);
         }
 
-        const response = await apiClient.getGithubInstallations();
+        const response = await apiClient.getGitHubInstallations();
         
-        let installations = [];
-        if (Array.isArray(response.data)) {
-          installations = response.data;
-        } else if (response.data?.installations) {
-          installations = response.data.installations;
-        }
+        const installations = response.data?.installations || [];
 
         if (installations.length > 0) {
           // 설치 완료!

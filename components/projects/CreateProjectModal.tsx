@@ -12,8 +12,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useProjectStore } from "@/lib/projectStore";
-import apiClient from "@/lib/api";
+import apiClient, { setApiToken } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+import { useGitHubStatus } from "@/hooks/useGitHubStatus";
+import { useGitHubRepositories } from "@/hooks/useGitHubRepositories";
+import { GitHubInstallation, GitHubRepository } from "@/types/api";
 import ProjectCreationWizard from "./ProjectCreationWizard";
 
 interface CreateProjectModalProps {
@@ -124,13 +127,13 @@ export default function CreateProjectModalFull({
       }
 
       // 먼저 GitHub installations을 가져옵니다
-      const installationsResponse = await apiClient.getGithubInstallations();
-      if (installationsResponse.data && installationsResponse.data.length > 0) {
+      const installationsResponse = await apiClient.getGitHubInstallations();
+      if (installationsResponse.data?.installations && installationsResponse.data.installations.length > 0) {
         // 첫 번째 installation의 repositories를 가져옵니다
-        const installationId = installationsResponse.data[0].installationId || installationsResponse.data[0].installation_id;
-        const reposResponse = await apiClient.getGithubRepositories(installationId);
-        if (reposResponse.data) {
-          setRepositories(reposResponse.data);
+        const installationId = installationsResponse.data.installations[0].installation_id;
+        const reposResponse = await apiClient.getGitHubRepositories(installationId);
+        if (reposResponse.data?.repositories) {
+          setRepositories(reposResponse.data.repositories);
         }
       } else {
         console.log("No GitHub installations found");
@@ -241,7 +244,7 @@ export default function CreateProjectModalFull({
                 <div className="text-center py-8 text-gray-500">
                   Loading repositories...
                 </div>
-              ) : error ? (
+              ) : reposError ? (
                 <div className="text-center py-8 text-red-500">
                   Error loading repositories
                 </div>

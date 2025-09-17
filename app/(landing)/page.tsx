@@ -108,10 +108,8 @@ export default function Home() {
 
       // 3. GitHub App 설치 확인
       console.log('[Home] Checking GitHub installation...');
-      const installResponse = await apiClient.getGithubInstallations();
-      const installations = Array.isArray(installResponse.data) 
-        ? installResponse.data 
-        : (installResponse.data?.installations || []);
+      const installResponse = await apiClient.getGitHubInstallations();
+      const installations = installResponse.data?.installations || [];
       
       if (installations.length === 0) {
         console.log('[Home] No GitHub installation found, redirecting to onboarding');

@@ -146,9 +146,7 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
 
       // API 응답이 배열인지 확인
       const pipelinesData = response.data;
-      const pipelines = Array.isArray(pipelinesData)
-        ? pipelinesData
-        : (pipelinesData?.pipelines || pipelinesData?.data || []);
+      const pipelines = Array.isArray(pipelinesData) ? pipelinesData : [];
       
       console.log('[PipelineStore] Pipeline API Response data:', response.data);
       console.log('[PipelineStore] Extracted pipelines:', pipelines);

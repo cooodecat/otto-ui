@@ -14,7 +14,7 @@ import { CheckCircle, X } from "lucide-react";
 export default function ProjectsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { projects, loading, fetchProjects } = useProjectStore();
+  const { projects, isLoading: loading, fetchProjects } = useProjectStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);

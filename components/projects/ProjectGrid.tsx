@@ -4,17 +4,7 @@ import { useRouter } from "next/navigation";
 import { Calendar, GitBranch, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-
-interface Project {
-  project_id: string;
-  name: string;
-  description?: string;
-  github_owner?: string;
-  github_repo_name?: string;
-  selected_branch?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Project } from "@/types/api";
 
 interface ProjectGridProps {
   projects: Project[];

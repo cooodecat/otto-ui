@@ -66,18 +66,18 @@ export default function ProjectSettingsPage() {
         throw new Error(response.error);
       }
 
-      const project = response.data;
+      const project = response.data?.project;
       
       // Format settings
       const formattedSettings: ProjectSettings = {
-        id: project.id || projectId,
-        name: project.name,
-        description: project.description,
-        repositoryFullName: project.repository_full_name,
-        defaultBranch: project.default_branch || project.branch,
-        githubInstallationId: project.github_installation_id,
-        environment_variables: project.environment_variables || {},
-        cache_settings: project.cache_settings || { enabled: false, paths: [] }
+        id: project?.project_id || projectId,
+        name: project?.name || '',
+        description: project?.description || '',
+        repositoryFullName: project?.github_repo_name || '',
+        defaultBranch: project?.selected_branch || '',
+        githubInstallationId: project?.installation_id || '',
+        environment_variables: {} || {},
+        cache_settings: { enabled: false, paths: [] }
       };
 
       setSettings(formattedSettings);

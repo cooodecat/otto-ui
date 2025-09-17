@@ -1,32 +1,7 @@
 import { create } from 'zustand';
 import apiClient from '@/lib/api';
 import { createClient } from '@/lib/supabase/client';
-
-/**
- * 프로젝트 정보 인터페이스
- */
-export interface Project {
-  /** 프로젝트 고유 ID */
-  projectId: string;
-  /** 프로젝트 이름 */
-  name: string;
-  /** 프로젝트 설명 */
-  description?: string;
-  /** GitHub 소유자 */
-  githubOwner?: string;
-  /** GitHub 리포지토리 이름 */
-  githubRepoName?: string;
-  /** GitHub Installation ID */
-  githubInstallationId?: string;
-  /** GitHub Repository Full Name (owner/repo) */
-  repositoryFullName?: string;
-  /** 기본 브랜치 */
-  defaultBranch?: string;
-  /** 생성일 */
-  createdAt?: string;
-  /** 수정일 */
-  updatedAt?: string;
-}
+import { Project, CreateProjectWithGithubRequest } from '@/types/api';
 
 /**
  * 프로젝트 스토어 상태 인터페이스
@@ -57,12 +32,7 @@ interface ProjectStoreActions {
   /** 프로젝트 추가 */
   addProject: (project: Project) => void;
   /** 프로젝트 생성 (GitHub 연동) */
-  createProjectWithGithub: (data: {
-    name: string;
-    installationId: string;
-    repositoryFullName: string;
-    branch: string;
-  }) => Promise<void>;
+  createProjectWithGithub: (data: CreateProjectWithGithubRequest) => Promise<void>;
   /** 프로젝트 업데이트 */
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   /** 프로젝트 삭제 */
@@ -136,30 +106,14 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       const projectsData = response.data;
       const projects = Array.isArray(projectsData) 
         ? projectsData 
-        : (projectsData?.projects || projectsData?.data || []);
+        : (projectsData?.projects || []);
       
       console.log('[ProjectStore] API Response data:', response.data);
       console.log('[ProjectStore] Extracted projects:', projects);
       console.log('[ProjectStore] Number of projects:', projects?.length || 0);
       
-      // 프로젝트 데이터 형식 변환 (백엔드 응답 형식에 맞게)
-      const formattedProjects: Project[] = Array.isArray(projects) 
-        ? projects.map((project: any) => {
-          console.log('[ProjectStore] Mapping project:', project);
-          return {
-            projectId: project.id || project.project_id,
-            name: project.name,
-            description: project.description,
-            githubOwner: project.github_owner,
-            githubRepoName: project.github_repo_name,
-            githubInstallationId: project.github_installation_id,
-            repositoryFullName: project.repository_full_name,
-            defaultBranch: project.default_branch || project.selected_branch || project.branch,
-            createdAt: project.created_at,
-            updatedAt: project.updated_at
-          };
-        })
-      : [];
+      // 프로젝트 데이터를 그대로 사용 (API Project 타입과 일치)
+      const formattedProjects: Project[] = Array.isArray(projects) ? projects : [];
       
       console.log('[ProjectStore] Formatted projects:', formattedProjects);
 
@@ -168,7 +122,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         isLoading: false,
         // 기존 선택된 프로젝트가 있으면 유지, 없으면 첫 번째 선택
         selectedProjectId: state.selectedProjectId ||
-          (formattedProjects.length > 0 ? formattedProjects[0].projectId : null)
+          (formattedProjects.length > 0 ? formattedProjects[0].project_id : null)
       }));
     } catch (error) {
       console.error('Failed to fetch projects:', error);
@@ -187,7 +141,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   getSelectedProject: () => {
     const { projects, selectedProjectId } = get();
     return (
-      projects.find((project) => project.projectId === selectedProjectId) ||
+      projects.find((project) => project.project_id === selectedProjectId) ||
       null
     );
   },
@@ -198,8 +152,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
     // 생성일 기준으로 최신 프로젝트 반환
     return projects.sort((a, b) => {
-      const dateA = new Date(a.createdAt || 0).getTime();
-      const dateB = new Date(b.createdAt || 0).getTime();
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
       return dateB - dateA; // 내림차순 정렬
     })[0];
   },
@@ -210,12 +164,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }));
   },
 
-  createProjectWithGithub: async (data: {
-    name: string;
-    installationId: string;
-    repositoryFullName: string;
-    branch: string;
-  }) => {
+  createProjectWithGithub: async (data: CreateProjectWithGithubRequest) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -233,21 +182,28 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       
       // 생성된 프로젝트를 스토어에 추가
       const newProject: Project = {
-        projectId: createdProject.id || createdProject.project_id,
+        project_id: createdProject.project_id,
         name: createdProject.name,
         description: createdProject.description,
-        githubOwner: data.repositoryFullName.split('/')[0],
-        githubRepoName: data.repositoryFullName.split('/')[1],
-        githubInstallationId: data.installationId,
-        repositoryFullName: data.repositoryFullName,
-        defaultBranch: data.branch,
-        createdAt: createdProject.created_at,
-        updatedAt: createdProject.updated_at
+        github_owner: data.githubOwner,
+        github_repo_name: data.githubRepoName,
+        github_repo_id: data.githubRepoId,
+        github_repo_url: data.githubRepoUrl,
+        selected_branch: data.selectedBranch,
+        installation_id: data.installationId,
+        user_id: createdProject.user_id,
+        created_at: createdProject.created_at,
+        updated_at: createdProject.updated_at,
+        codebuild_status: null,
+        codebuild_project_name: null,
+        codebuild_project_arn: null,
+        cloudwatch_log_group: null,
+        codebuild_error_message: null
       };
 
       set(state => ({
         projects: [...state.projects, newProject],
-        selectedProjectId: newProject.projectId, // 생성된 프로젝트를 자동 선택
+        selectedProjectId: newProject.project_id, // 생성된 프로젝트를 자동 선택
         isLoading: false
       }));
     } catch (error) {
@@ -263,7 +219,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   updateProject: (projectId: string, updates: Partial<Project>) => {
     set((state) => ({
       projects: state.projects.map((project) =>
-        project.projectId === projectId ? { ...project, ...updates } : project
+        project.project_id === projectId ? { ...project, ...updates } : project
       ),
     }));
   },
@@ -283,7 +239,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
 
       set(state => {
-        const newProjects = state.projects.filter(project => project.projectId !== projectId);
+        const newProjects = state.projects.filter(project => project.project_id !== projectId);
         return {
           projects: newProjects,
           // 삭제된 프로젝트가 선택되어 있었다면 선택 해제

@@ -77,7 +77,7 @@ export default function ProjectCreationWizard({
   onProjectCreated
 }: ProjectCreationWizardProps) {
   const router = useRouter();
-  const { createProject, fetchProjects } = useProjectStore();
+  const { createProjectWithGithub, fetchProjects } = useProjectStore();
 
   const [state, setState] = useState<WizardState>({
     currentStep: 1,
@@ -184,12 +184,10 @@ export default function ProjectCreationWizard({
 
       // GitHub installations 조회
       console.log('Fetching GitHub installations...');
-      const installResponse = await apiClient.getGithubInstallations();
+      const installResponse = await apiClient.getGitHubInstallations();
       console.log('GitHub installations response:', installResponse);
       
-      const installations = Array.isArray(installResponse.data) 
-        ? installResponse.data 
-        : (installResponse.data?.installations || []);
+      const installations = installResponse.data?.installations || [];
       
       console.log(`Found ${installations.length} installations:`, installations);
       
@@ -512,14 +510,9 @@ export default function ProjectCreationWizard({
           apiClient.setSupabaseToken(session.access_token);
         }
 
-        const response = await apiClient.getGithubInstallations();
+        const response = await apiClient.getGitHubInstallations();
         
-        let installations = [];
-        if (Array.isArray(response.data)) {
-          installations = response.data;
-        } else if (response.data?.installations) {
-          installations = response.data.installations;
-        }
+        const installations = response.data?.installations || [];
 
         if (installations.length > 0) {
           // 설치 완료!
@@ -600,7 +593,7 @@ export default function ProjectCreationWizard({
 
     // 새 저장소의 브랜치 목록 로드
     try {
-      const installResponse = await apiClient.getGithubInstallations();
+      const installResponse = await apiClient.getGitHubInstallations();
       const installations = Array.isArray(installResponse.data) 
         ? installResponse.data 
         : (installResponse.data?.installations || []);
@@ -632,7 +625,7 @@ export default function ProjectCreationWizard({
       }
 
       // GitHub installations 조회
-      const installResponse = await apiClient.getGithubInstallations();
+      const installResponse = await apiClient.getGitHubInstallations();
       const installations = Array.isArray(installResponse.data) 
         ? installResponse.data 
         : (installResponse.data?.installations || []);
@@ -673,7 +666,7 @@ export default function ProjectCreationWizard({
       }
 
       // GitHub installations 조회
-      const installResponse = await apiClient.getGithubInstallations();
+      const installResponse = await apiClient.getGitHubInstallations();
       const installations = Array.isArray(installResponse.data) 
         ? installResponse.data 
         : (installResponse.data?.installations || []);
@@ -879,7 +872,7 @@ export default function ProjectCreationWizard({
           } catch (pipelineError) {
             console.error('Failed to create pipeline:', pipelineError);
             // 파이프라인 생성 실패 시에도 프로젝트 페이지로는 이동
-            toast.warning('파이프라인 자동 생성에 실패했습니다. 프로젝트 페이지에서 직접 생성해주세요.');
+            toast.error('파이프라인 자동 생성에 실패했습니다. 프로젝트 페이지에서 직접 생성해주세요.');
           }
         }
       }
@@ -899,25 +892,7 @@ export default function ProjectCreationWizard({
       const pipelineStore = usePipelineStore.getState();
       
       // 프로젝트 선택 상태 업데이트
-      setSelectedProject({
-        project_id: state.createdProjectId,
-        name: state.projectConfig.name,
-        description: state.projectConfig.description || '',
-        user_id: '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        github_installation_id: null,
-        github_repo_url: `https://github.com/${state.repository?.owner}/${state.repository?.name}`,
-        github_repo_name: state.repository?.name || '',
-        github_owner: state.repository?.owner || '',
-        selected_branch: state.selectedBranch,
-        codebuild_status: 'CREATED',
-        codebuild_project_name: null,
-        codebuild_project_arn: null,
-        codebuild_error_message: null,
-        cloudwatch_log_group: null,
-        project_key: state.createdProjectId
-      });
+      setSelectedProject(state.createdProjectId);
       
       // 파이프라인 선택 상태 업데이트
       if (pipelineData) {

@@ -32,10 +32,10 @@ export default function CreatePipelineModal({
   if (!isOpen) return null;
 
   // 현재 프로젝트 정보 가져오기
-  const currentProject = projects.find(p => p.projectId === projectId);
-  const selectedBranch = currentProject?.selectedBranch || 'main';
-  const githubRepo = currentProject?.githubRepoName || '';
-  const githubOwner = currentProject?.githubOwner || '';
+  const currentProject = projects.find(p => p.project_id === projectId);
+  const selectedBranch = currentProject?.selected_branch || 'main';
+  const githubRepo = currentProject?.github_repo_name || '';
+  const githubOwner = currentProject?.github_owner || '';
 
   const handleCreate = async () => {
     if (!pipelineName.trim()) {

@@ -58,8 +58,8 @@ export default function ProjectPipelinesPage() {
   const fetchProject = async () => {
     try {
       const response = await apiClient.getProject(projectId);
-      if (response.data) {
-        setProject(response.data);
+      if (response.data?.project) {
+        setProject(response.data.project);
       }
     } catch (error) {
       console.error("Failed to fetch project:", error);
