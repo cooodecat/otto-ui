@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, AlertCircle, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useProjectStore } from '@/lib/projectStore';
+import apiClient from '@/lib/api';
+import toast from 'react-hot-toast';
+import { createClient } from '@/lib/supabase/client';
 import StepIndicator from './StepIndicator';
 import StepOne from './StepOne';
 import StepTwo from './StepTwo';
@@ -69,7 +72,8 @@ const mockRepository: Repository = {
 export default function ProjectCreationWizard({
   isOpen,
   onClose,
-  repository: repoInfo
+  repository: repoInfo,
+  onProjectCreated
 }: ProjectCreationWizardProps) {
   const router = useRouter();
   const { createProject } = useProjectStore();
@@ -95,8 +99,9 @@ export default function ProjectCreationWizard({
   });
 
   const [error, setError] = useState<string | null>(null);
+  const [hasGithubApp, setHasGithubApp] = useState(false);
 
-  // 프로젝트 이름 검증 (useEffect보다 먼저 정의)
+  // 프로젝트 이름 검증
   const validateProjectName = useCallback(async (name: string) => {
     setState(prev => ({
       ...prev,
@@ -106,63 +111,158 @@ export default function ProjectCreationWizard({
       }
     }));
 
-    // 실제로는 API를 호출하여 중복 검사
-    setTimeout(() => {
+    try {
+      // 기본 유효성 검사
       const isValid = name.length >= 3 && name.length <= 50 && /^[a-z0-9-]+$/.test(name);
-      const nameError = !isValid ? '프로젝트 이름 형식이 올바르지 않습니다' : null;
+      
+      if (!isValid) {
+        setState(prev => ({
+          ...prev,
+          validation: {
+            isNameValid: false,
+            nameError: '프로젝트 이름은 3-50자의 소문자, 숫자, 하이픈만 사용 가능합니다.',
+            isChecking: false
+          }
+        }));
+        return;
+      }
 
+      // TODO: API를 통한 중복 검사 (필요시 추가)
+      // const response = await apiClient.checkProjectName(name);
+      
       setState(prev => ({
         ...prev,
         validation: {
-          isNameValid: isValid && !nameError,
-          nameError,
-          isChecking: false
-        }
-      }));
-    }, 500);
-  }, []);
-
-  // 저장소 정보 초기화
-  useEffect(() => {
-    if (isOpen && repoInfo) {
-      const initialProjectName = repoInfo.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-
-      setState(prev => ({
-        ...prev,
-        repository: {
-          ...mockRepository,
-          name: repoInfo.name,
-          owner: repoInfo.owner,
-          visibility: repoInfo.visibility
-        },
-        projectConfig: {
-          name: initialProjectName,
-          description: mockRepository.description
-        },
-        validation: {
-          isNameValid: true, // 초기값은 유효하다고 가정
+          isNameValid: true,
           nameError: null,
           isChecking: false
         }
       }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        validation: {
+          isNameValid: false,
+          nameError: '프로젝트 이름 검증 중 오류가 발생했습니다.',
+          isChecking: false
+        }
+      }));
+    }
+  }, []);
 
-      // 초기 이름에 대한 유효성 검사 실행
-      validateProjectName(initialProjectName);
+  // 저장소 정보 초기화
+  useEffect(() => {
+    if (isOpen) {
+      if (repoInfo) {
+        const initialProjectName = repoInfo.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+
+        setState(prev => ({
+          ...prev,
+          repository: {
+            ...mockRepository,
+            name: repoInfo.name,
+            owner: repoInfo.owner,
+            visibility: repoInfo.visibility
+          },
+          projectConfig: {
+            name: initialProjectName,
+            description: mockRepository.description
+          },
+          validation: {
+            isNameValid: true, // 초기값은 유효하다고 가정
+            nameError: null,
+            isChecking: false
+          }
+        }));
+
+        // 초기 이름에 대한 유효성 검사 실행
+        validateProjectName(initialProjectName);
+      } else {
+        // repoInfo가 없는 경우 기본값 설정
+        setState(prev => ({
+          ...prev,
+          repository: {
+            ...mockRepository,
+            name: 'my-project',
+            owner: 'user',
+            visibility: 'Public'
+          },
+          branches: mockBranches, // 기본 브랜치 목록 설정
+          selectedBranch: 'main', // 기본 브랜치 선택
+          projectConfig: {
+            name: 'my-project',
+            description: ''
+          },
+          validation: {
+            isNameValid: true,
+            nameError: null,
+            isChecking: false
+          }
+        }));
+      }
     }
   }, [isOpen, repoInfo, validateProjectName]);
 
   // 브랜치 목록 로드
   const loadBranches = useCallback(async () => {
+    if (!state.repository) return;
+    
     setState(prev => ({ ...prev, isLoading: true }));
-    // 실제로는 GitHub API를 호출
-    setTimeout(() => {
+    
+    try {
+      // Supabase 토큰 설정
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
+
+      // GitHub API를 통해 브랜치 목록 가져오기
+      // 임시로 installation ID를 'default'로 사용
+      const response = await apiClient.getGithubBranches(
+        'default',
+        state.repository.owner,
+        state.repository.name
+      );
+      
+      if (response.error) {
+        // GitHub 통합이 없는 경우 기본 브랜치 사용
+        console.log('GitHub integration not available, using default branches');
+        setState(prev => ({
+          ...prev,
+          branches: mockBranches,
+          isLoading: false
+        }));
+        return;
+      }
+      
+      // API 응답을 Branch 타입으로 변환
+      const branches: Branch[] = response.data.map((branch: any) => ({
+        name: branch.name,
+        commit: {
+          sha: branch.commit?.sha || '',
+          message: branch.commit?.message || '',
+          date: branch.commit?.date || new Date().toISOString(),
+          author: branch.commit?.author || 'Unknown'
+        }
+      }));
+      
+      setState(prev => ({
+        ...prev,
+        branches,
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error('Failed to load branches:', error);
+      // 에러 발생 시 mock 데이터 사용 (fallback)
       setState(prev => ({
         ...prev,
         branches: mockBranches,
         isLoading: false
       }));
-    }, 1000);
-  }, []);
+      // GitHub 통합이 없을 때는 에러 메시지를 표시하지 않음
+    }
+  }, [state.repository]);
 
   // 프로젝트 생성
   const handleCreateProject = async () => {
@@ -170,41 +270,82 @@ export default function ProjectCreationWizard({
     setError(null);
 
     try {
-      // 실제로는 API를 호출하여 프로젝트 생성
-      // URL에서 사용할 수 있는 숫자 ID 생성
-      const numericProjectId = Math.floor(Math.random() * 1000) + 4; // 4번부터 시작 (기존 1,2,3 피하기)
-      const newProject = {
-        projectId: `proj_${numericProjectId}`,
+      // Supabase 토큰 설정
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
+
+      const projectData = {
         name: state.projectConfig.name,
         description: state.projectConfig.description,
-        githubOwner: state.repository?.owner || '',
-        githubRepoName: state.repository?.name || '',
-        defaultBranch: state.selectedBranch,
-        createdAt: new Date().toISOString()
+        github_owner: state.repository?.owner || '',
+        github_repo: state.repository?.name || '',
+        default_branch: state.selectedBranch
       };
 
+      console.log('Creating project with data:', projectData);
+
+      // API를 호출하여 프로젝트 생성
+      // GitHub 통합이 없거나 기본값인 경우 일반 프로젝트 생성
+      const response = await apiClient.createProject({
+        name: state.projectConfig.name,
+        description: state.projectConfig.description
+      });
+
+      console.log('API Response:', response);
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      const newProject = response.data;
+
       // Zustand store에 프로젝트 추가
-      createProject(newProject);
+      await fetchProjects(); // 프로젝트 목록 새로고침
 
       setState(prev => ({
         ...prev,
         isCreating: false,
-        createdProjectId: newProject.projectId,
-        createdProjectNumericId: numericProjectId
+        createdProjectId: newProject.id || newProject.projectId,
+        createdProjectNumericId: newProject.id // 실제 DB ID 사용
       }));
+
+      toast.success('프로젝트가 성공적으로 생성되었습니다!');
+
+      // 프로젝트 생성 성공 시 콜백 호출
+      if (onProjectCreated) {
+        // 생성된 프로젝트를 전달
+        onProjectCreated({
+          projectId: newProject.id || newProject.projectId,
+          name: newProject.name
+        });
+        onClose();
+      }
     } catch (err) {
-      setError('프로젝트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      const errorMessage = err instanceof Error ? err.message : '프로젝트 생성 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      toast.error(errorMessage);
       setState(prev => ({ ...prev, isCreating: false }));
     }
   };
 
   // 프로젝트로 이동
   const handleNavigateToProject = () => {
-    if (state.createdProjectNumericId) {
-      // 생성된 프로젝트로 이동 (첫 번째 파이프라인으로 이동)
-      const projectId = state.createdProjectNumericId;
-      const pipelineId = '1'; // 새 프로젝트의 첫 번째 파이프라인
-      router.push(`/projects/${projectId}/pipelines/${pipelineId}`);
+    if (state.createdProjectId) {
+      // onProjectCreated 콜백 호출
+      if (onProjectCreated) {
+        onProjectCreated({
+          projectId: state.createdProjectId,
+          name: state.projectConfig.name
+        });
+      } else {
+        // 콜백이 없으면 직접 라우팅
+        const projectId = state.createdProjectNumericId || state.createdProjectId;
+        const pipelineId = '1'; // 새 프로젝트의 첫 번째 파이프라인
+        router.push(`/projects/${projectId}/pipelines/${pipelineId}`);
+      }
       onClose();
     }
   };
@@ -304,6 +445,33 @@ export default function ProjectCreationWizard({
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {/* GitHub App 설치 안내 */}
+        {state.currentStep === 1 && !state.repository?.owner.includes('github') && (
+          <div className="mx-8 mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-900">
+                  GitHub 저장소 연동 안내
+                </p>
+                <p className="text-sm text-amber-700 mt-1">
+                  실제 GitHub 저장소를 연동하려면 먼저 GitHub App을 설치해야 합니다.
+                  현재는 샘플 데이터로 프로젝트 생성이 진행됩니다.
+                </p>
+                <a
+                  href="https://github.com/apps/your-app-name/installations/new"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700 font-medium mt-2"
+                >
+                  GitHub App 설치하기
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Progress Indicator */}
         <StepIndicator

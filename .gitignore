@@ -47,3 +47,7 @@ next-env.d.ts
 REACT_NEXTJS_LEARNING.md
 LOG_SYSTEM_FRONTEND_GUIDE.md
 LOG_SYSTEM_IMPLEMENTATION_GUIDE.md
+FRONTEND_INTEGRATION_GUIDE.md
+
+# Prisma reference files
+/Prisma/reference.prisma

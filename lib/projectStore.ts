@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import apiClient from '@/lib/api';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * 프로젝트 정보 인터페이스
@@ -11,9 +13,13 @@ export interface Project {
   /** 프로젝트 설명 */
   description?: string;
   /** GitHub 소유자 */
-  githubOwner: string;
+  githubOwner?: string;
   /** GitHub 리포지토리 이름 */
-  githubRepoName: string;
+  githubRepoName?: string;
+  /** GitHub Installation ID */
+  githubInstallationId?: string;
+  /** GitHub Repository Full Name (owner/repo) */
+  repositoryFullName?: string;
   /** 기본 브랜치 */
   defaultBranch?: string;
   /** 생성일 */
@@ -46,16 +52,21 @@ interface ProjectStoreActions {
   setSelectedProject: (projectId: string) => void;
   /** 선택된 프로젝트 정보 가져오기 */
   getSelectedProject: () => Project | null;
-  /** 가장 최신 프로젝트 가져오기 (숫자가 클수록 최신) */
+  /** 가장 최신 프로젝트 가져오기 */
   getLatestProject: () => Project | null;
   /** 프로젝트 추가 */
   addProject: (project: Project) => void;
-  /** 프로젝트 생성 */
-  createProject: (project: Omit<Project, 'updatedAt'>) => void;
+  /** 프로젝트 생성 (GitHub 연동) */
+  createProjectWithGithub: (data: {
+    name: string;
+    installationId: string;
+    repositoryFullName: string;
+    branch: string;
+  }) => Promise<void>;
   /** 프로젝트 업데이트 */
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   /** 프로젝트 삭제 */
-  removeProject: (projectId: string) => void;
+  removeProject: (projectId: string) => Promise<void>;
   /** 에러 설정 */
   setError: (error: string | null) => void;
   /** 로딩 상태 설정 */
@@ -68,6 +79,17 @@ interface ProjectStoreActions {
 type ProjectStore = ProjectStoreState & ProjectStoreActions;
 
 /**
+ * Supabase 토큰 설정 헬퍼 함수
+ */
+async function setAuthToken() {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    apiClient.setSupabaseToken(session.access_token);
+  }
+}
+
+/**
  * 프로젝트 관리를 위한 Zustand 스토어
  *
  * 기능:
@@ -75,6 +97,7 @@ type ProjectStore = ProjectStoreState & ProjectStoreActions;
  * - 현재 선택된 프로젝트 추적
  * - 로딩 및 에러 상태 관리
  * - CRUD 작업 지원
+ * - Supabase DB 연동
  */
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   // 초기 상태
@@ -88,47 +111,50 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      // TODO: 실제 API 호출로 대체
-      // 현재는 mock 데이터 사용
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 가짜 로딩
+      // Supabase 토큰 설정
+      await setAuthToken();
+      
+      // 실제 API 호출
+      const response = await apiClient.getProjects();
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
 
-      // NOTE: 데이터베이스에서도 동일한 규칙 적용 예정
-      // 숫자가 클수록 최신 프로젝트 (proj_3이 가장 최신)
-      const mockProjects: Project[] = [
-        {
-          projectId: 'proj_1',
-          name: 'Otto Frontend',
-          githubOwner: 'dbswl030',
-          githubRepoName: 'otto-frontend',
-          createdAt: '2024-01-15',
-          updatedAt: '2024-01-20'
-        },
-        {
-          projectId: 'proj_2',
-          name: 'Otto Backend',
-          githubOwner: 'dbswl030',
-          githubRepoName: 'otto-backend',
-          createdAt: '2024-01-20',
-          updatedAt: '2024-01-25'
-        },
-        {
-          projectId: 'proj_3',
-          name: 'Data Pipeline',
-          githubOwner: 'dbswl030',
-          githubRepoName: 'data-pipeline',
-          createdAt: '2024-01-25',
-          updatedAt: '2024-01-30'
-        }
-      ];
+      // API 응답이 배열인지 확인 (백엔드가 객체로 래핑해서 보낼 수 있음)
+      const projectsData = response.data;
+      const projects = Array.isArray(projectsData) 
+        ? projectsData 
+        : (projectsData?.projects || projectsData?.data || []);
+      
+      console.log('API Response:', response.data);
+      console.log('Extracted projects:', projects);
+      
+      // 프로젝트 데이터 형식 변환 (백엔드 응답 형식에 맞게)
+      const formattedProjects: Project[] = Array.isArray(projects) 
+        ? projects.map((project: any) => ({
+        projectId: project.id || project.project_id,
+        name: project.name,
+        description: project.description,
+        githubOwner: project.github_owner,
+        githubRepoName: project.github_repo_name,
+        githubInstallationId: project.github_installation_id,
+        repositoryFullName: project.repository_full_name,
+        defaultBranch: project.default_branch || project.branch,
+        createdAt: project.created_at,
+        updatedAt: project.updated_at
+      }))
+      : [];
 
       set((state) => ({
-        projects: mockProjects,
+        projects: formattedProjects,
         isLoading: false,
         // 기존 선택된 프로젝트가 있으면 유지, 없으면 첫 번째 선택
         selectedProjectId: state.selectedProjectId ||
-          (mockProjects.length > 0 ? mockProjects[0].projectId : null)
+          (formattedProjects.length > 0 ? formattedProjects[0].projectId : null)
       }));
     } catch (error) {
+      console.error('Failed to fetch projects:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch projects',
         isLoading: false
@@ -149,12 +175,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const { projects } = get();
     if (projects.length === 0) return null;
 
-    // NOTE: 데이터베이스에서도 동일한 로직 적용 예정
-    // 숫자가 클수록 최신 프로젝트 (proj_3 > proj_2 > proj_1)
+    // 생성일 기준으로 최신 프로젝트 반환
     return projects.sort((a, b) => {
-      const numA = parseInt(a.projectId.replace('proj_', ''));
-      const numB = parseInt(b.projectId.replace('proj_', ''));
-      return numB - numA; // 내림차순 정렬
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA; // 내림차순 정렬
     })[0];
   },
 
@@ -164,19 +189,54 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }));
   },
 
-  createProject: (project: Omit<Project, 'updatedAt'>) => {
-    const newProject: Project = {
-      ...project,
-      updatedAt: new Date().toISOString()
-    };
+  createProjectWithGithub: async (data: {
+    name: string;
+    installationId: string;
+    repositoryFullName: string;
+    branch: string;
+  }) => {
+    set({ isLoading: true, error: null });
 
-    set(state => ({
-      projects: [...state.projects, newProject],
-      selectedProjectId: newProject.projectId // 생성된 프로젝트를 자동 선택
-    }));
+    try {
+      // Supabase 토큰 설정
+      await setAuthToken();
+      
+      // API 호출로 프로젝트 생성 (파이프라인도 자동 생성됨)
+      const response = await apiClient.createProjectWithGithub(data);
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
 
-    // TODO: 실제 API 호출 추가
-    // await api.createProject(newProject);
+      const createdProject = response.data;
+      
+      // 생성된 프로젝트를 스토어에 추가
+      const newProject: Project = {
+        projectId: createdProject.id || createdProject.project_id,
+        name: createdProject.name,
+        description: createdProject.description,
+        githubOwner: data.repositoryFullName.split('/')[0],
+        githubRepoName: data.repositoryFullName.split('/')[1],
+        githubInstallationId: data.installationId,
+        repositoryFullName: data.repositoryFullName,
+        defaultBranch: data.branch,
+        createdAt: createdProject.created_at,
+        updatedAt: createdProject.updated_at
+      };
+
+      set(state => ({
+        projects: [...state.projects, newProject],
+        selectedProjectId: newProject.projectId, // 생성된 프로젝트를 자동 선택
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      set({
+        error: error instanceof Error ? error.message : 'Failed to create project',
+        isLoading: false
+      });
+      throw error; // 상위에서 에러 처리할 수 있도록 다시 던짐
+    }
   },
 
   updateProject: (projectId: string, updates: Partial<Project>) => {
@@ -189,15 +249,37 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }));
   },
 
-  removeProject: (projectId: string) => {
-    set(state => {
-      const newProjects = state.projects.filter(project => project.projectId !== projectId);
-      return {
-        projects: newProjects,
-        // 삭제된 프로젝트가 선택되어 있었다면 선택 해제
-        selectedProjectId: state.selectedProjectId === projectId ? null : state.selectedProjectId
-      };
-    });
+  removeProject: async (projectId: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      // Supabase 토큰 설정
+      await setAuthToken();
+      
+      // API 호출로 프로젝트 삭제
+      const response = await apiClient.deleteProject(projectId);
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      set(state => {
+        const newProjects = state.projects.filter(project => project.projectId !== projectId);
+        return {
+          projects: newProjects,
+          // 삭제된 프로젝트가 선택되어 있었다면 선택 해제
+          selectedProjectId: state.selectedProjectId === projectId ? null : state.selectedProjectId,
+          isLoading: false
+        };
+      });
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      set({
+        error: error instanceof Error ? error.message : 'Failed to delete project',
+        isLoading: false
+      });
+      throw error;
+    }
   },
 
   setError: (error: string | null) => {

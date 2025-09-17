@@ -3,46 +3,71 @@
 import { Cpu, Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import CICDFlowVisualization from "@/components/landing/CICDFlowVisualization";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
-import { reverseMapId } from "@/lib/utils/idMapping";
+import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
 
 export default function Home() {
-  const [latestRoute, setLatestRoute] = useState("/projects/3/pipelines/2"); // 기본값: 가장 최신 예상 경로
-  const { fetchProjects, getLatestProject } = useProjectStore();
+  const router = useRouter();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { fetchProjects, getLatestProject, projects } = useProjectStore();
   const { fetchPipelines, getLatestPipelineByProject } = usePipelineStore();
 
-  useEffect(() => {
-    const initializeLatestRoute = async () => {
-      try {
-        // 프로젝트 데이터 로드
-        await fetchProjects();
-        const latestProject = getLatestProject();
+  const handleGetStarted = async () => {
+    setIsLoading(true);
+    try {
+      // 프로젝트 데이터 로드
+      await fetchProjects();
+      const latestProject = getLatestProject();
 
-        if (latestProject) {
-          // 해당 프로젝트의 파이프라인 데이터 로드
-          await fetchPipelines(latestProject.projectId);
-          const latestPipeline = getLatestPipelineByProject(latestProject.projectId);
+      if (latestProject) {
+        // 해당 프로젝트의 파이프라인 데이터 로드
+        await fetchPipelines(latestProject.projectId);
+        const latestPipeline = getLatestPipelineByProject(latestProject.projectId);
 
-          if (latestPipeline) {
-            // NOTE: 데이터베이스에서도 동일한 로직으로 최신 프로젝트/파이프라인 결정 예정
-            // Mock ID를 숫자 ID로 변환하여 URL 생성 (proj_3 -> 3, pipe_4 -> 4)
-            const projectNumericId = reverseMapId(latestProject.projectId);
-            const pipelineNumericId = reverseMapId(latestPipeline.pipelineId);
-
-            setLatestRoute(`/projects/${projectNumericId}/pipelines/${pipelineNumericId}`);
-          }
+        if (latestPipeline) {
+          // 파이프라인 페이지로 이동
+          router.push(`/projects/${latestProject.projectId}/pipelines/${latestPipeline.pipelineId}`);
+        } else {
+          // 파이프라인이 없으면 프로젝트 페이지로
+          router.push(`/projects/${latestProject.projectId}`);
         }
-      } catch (error) {
-        console.error("Failed to load latest route:", error);
-        // 에러 발생 시 기본값 유지
+      } else {
+        // 프로젝트가 없으면 프로젝트 생성 모달 열기
+        setShowCreateModal(true);
       }
-    };
+    } catch (error) {
+      console.error("Failed to initialize:", error);
+      // 에러 발생 시에도 프로젝트 생성 모달 열기
+      setShowCreateModal(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    initializeLatestRoute();
-  }, [fetchProjects, getLatestProject, fetchPipelines, getLatestPipelineByProject]);
+  const handleProjectCreated = async (project: any) => {
+    // 프로젝트 생성 완료 후 파이프라인 체크 후 이동
+    try {
+      await fetchPipelines(project.projectId);
+      const latestPipeline = getLatestPipelineByProject(project.projectId);
+      
+      if (latestPipeline) {
+        // 파이프라인이 있으면 파이프라인 페이지로 이동
+        router.push(`/projects/${project.projectId}/pipelines/${latestPipeline.pipelineId}`);
+      } else {
+        // 파이프라인이 없으면 프로젝트 페이지로 이동
+        router.push(`/projects/${project.projectId}`);
+      }
+    } catch (error) {
+      console.error("Failed to fetch pipelines for new project:", error);
+      // 에러 발생 시 프로젝트 페이지로 이동
+      router.push(`/projects/${project.projectId}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -100,14 +125,24 @@ export default function Home() {
           <AnimatedSection delay={200}>
             <div className="relative inline-block group">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse" />
-              <Link
-                href={latestRoute}
-                className="relative inline-flex group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-10 py-5 rounded-2xl font-semibold text-xl transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 items-center gap-3 transform hover:scale-105"
+              <button
+                onClick={handleGetStarted}
+                disabled={isLoading}
+                className="relative inline-flex group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-10 py-5 rounded-2xl font-semibold text-xl transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 items-center gap-3 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Zap className="w-6 h-6" />
-                지금 시작하기
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </Link>
+                {isLoading ? (
+                  <>
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    로딩 중...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-6 h-6" />
+                    지금 시작하기
+                    <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
             </div>
           </AnimatedSection>
         </div>
@@ -119,6 +154,14 @@ export default function Home() {
           <p>&copy; 2025 Otto. All rights reserved.</p>
         </footer>
       </AnimatedSection>
+
+      {/* Create Project Modal */}
+      {showCreateModal && (
+        <CreateProjectModal
+          onClose={() => setShowCreateModal(false)}
+          onProjectCreated={handleProjectCreated}
+        />
+      )}
     </div>
   );
 }

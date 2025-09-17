@@ -10,7 +10,7 @@ import type {
 } from "@/types/api";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 // HTTP 클라이언트 클래스
 class ApiClient {
@@ -70,7 +70,7 @@ class ApiClient {
   // 사용자 관련 API
   async getUserProfile(): Promise<ApiResponse<User>> {
     const response = await this.request<{ data?: { user: User }, user?: User }>(
-      "/api/v1/auth/profile"
+      "/auth/profile"
     );
     if (response.data) {
       // 백엔드 응답 형식에 맞게 수정
@@ -83,7 +83,7 @@ class ApiClient {
     updates: UpdateUserProfileRequest
   ): Promise<ApiResponse<User>> {
     const response = await this.request<UpdateUserProfileResponse>(
-      "/api/v1/auth/profile",
+      "/auth/profile",
       {
         method: "PUT",
         body: JSON.stringify(updates),
@@ -93,6 +93,126 @@ class ApiClient {
       return { data: response.data.user };
     }
     return { error: response.error };
+  }
+
+  // 프로젝트 관련 API
+  async getProjects(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>("/projects");
+  }
+
+  async getProject(projectId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/projects/${projectId}`);
+  }
+
+  async createProject(data: {
+    name: string;
+    description?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>("/projects", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createProjectWithGithub(data: {
+    name: string;
+    installationId: string;
+    repositoryFullName: string;
+    branch: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>("/projects/with-github", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteProject(projectId: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/projects/${projectId}`, {
+      method: "DELETE",
+    });
+  }
+
+  // GitHub 관련 API
+  async getGithubInstallations(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>("/projects/github-installations");
+  }
+
+  async getGithubRepositories(installationId: string): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(
+      `/projects/github-installations/${installationId}/repositories`
+    );
+  }
+
+  async getGithubBranches(
+    installationId: string,
+    owner: string,
+    repo: string
+  ): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(
+      `/projects/github-installations/${installationId}/repositories/${owner}/${repo}/branches`
+    );
+  }
+
+  // 파이프라인 관련 API
+  async getPipelines(projectId: string): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(`/pipelines/project/${projectId}`);
+  }
+
+  async getPipeline(pipelineId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/pipelines/${pipelineId}`);
+  }
+
+  async updatePipeline(
+    pipelineId: string,
+    data: {
+      blocks?: any[];
+      artifacts?: string[];
+      environment_variables?: Record<string, string>;
+      cache?: { paths: string[] };
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<any>(`/pipelines/${pipelineId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePipeline(pipelineId: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/pipelines/${pipelineId}`, {
+      method: "DELETE",
+    });
+  }
+
+  // 빌드 관련 API
+  async startBuild(
+    projectId: string,
+    data: {
+      version: string;
+      runtime: string;
+      blocks: any[];
+      environment_variables?: Record<string, string>;
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<any>(`/codebuild/${projectId}/start-flow`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getBuildStatus(buildId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/codebuild/status/${buildId}`);
+  }
+
+  async getProjectBuilds(projectId: string): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(`/builds/projects/${projectId}`);
+  }
+
+  async getBuild(buildId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/builds/${buildId}`);
+  }
+
+  async getBuildStats(projectId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/builds/stats/summary?projectId=${projectId}`);
   }
 }
 

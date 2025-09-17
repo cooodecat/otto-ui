@@ -25,11 +25,10 @@ export default function StepOne({
   const [branchSearch, setBranchSearch] = useState('');
 
   useEffect(() => {
-    // 컴포넌트 마운트 시 브랜치 목록 로드
-    if (branches.length === 0 && !isLoading) {
-      onLoadBranches();
-    }
-  }, [branches.length, isLoading, onLoadBranches]);
+    // 브랜치 목록이 비어있고 로딩중이 아닐 때만 로드
+    // GitHub 통합이 없는 경우를 위해 자동 로드 비활성화
+    // 필요시 수동으로 로드하도록 변경
+  }, []);
 
   const filteredBranches = branches.filter(branch =>
     branch.name.toLowerCase().includes(branchSearch.toLowerCase())
@@ -119,7 +118,17 @@ export default function StepOne({
 
       {/* Branch Selection */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">브랜치 선택</h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-lg font-semibold text-gray-900">브랜치 선택</h4>
+          {branches.length === 0 && !isLoading && (
+            <button
+              onClick={onLoadBranches}
+              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+            >
+              GitHub에서 브랜치 가져오기
+            </button>
+          )}
+        </div>
 
         <div className="relative">
           <button

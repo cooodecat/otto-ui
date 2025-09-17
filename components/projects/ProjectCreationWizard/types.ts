@@ -45,7 +45,8 @@ export interface WizardState {
 export interface ProjectCreationWizardProps {
   isOpen: boolean;
   onClose: () => void;
-  repository: {
+  onProjectCreated?: (project: any) => void;
+  repository?: {
     name: string;
     owner: string;
     visibility: 'Public' | 'Private';
