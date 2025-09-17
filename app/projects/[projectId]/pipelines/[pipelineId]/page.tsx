@@ -5,7 +5,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RotateCcw, Play, Loader2 } from "lucide-react";
 import { ReactFlowProvider } from "@xyflow/react";
-import CICDFlowCanvas, { CICDFlowCanvasRef } from "@/components/flow/CICDFlowCanvas";
+import CICDFlowCanvas, {
+  CICDFlowCanvasRef,
+} from "@/components/flow/CICDFlowCanvas";
 import { BaseCICDNodeData } from "@/types/cicd-node.types";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
@@ -134,9 +136,14 @@ function PipelinePageContent() {
   }, [router, projectId, pipelineId]);
 
   const handleInitialize = useCallback(() => {
-    // TODO: 파이프라인 초기화 로직
-    console.log("🔄 Pipeline initialized!");
-    window.location.reload(); // 임시 해결책
+    if (!flowCanvasRef.current) {
+      console.warn("❌ Flow canvas not ready");
+      return;
+    }
+
+    // Pipeline Start 노드만 남기고 모든 노드 삭제
+    flowCanvasRef.current.resetPipeline();
+    console.log("🔄 Pipeline reset - keeping only Pipeline Start node");
   }, []);
 
   const handleRunPipeline = useCallback(async () => {

@@ -173,8 +173,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch projects:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to fetch projects',
-        isLoading: false
+        error:
+          error instanceof Error ? error.message : "Failed to fetch projects",
+        isLoading: false,
       });
     }
   },
@@ -185,7 +186,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   getSelectedProject: () => {
     const { projects, selectedProjectId } = get();
-    return projects.find(project => project.projectId === selectedProjectId) || null;
+    return (
+      projects.find((project) => project.projectId === selectedProjectId) ||
+      null
+    );
   },
 
   getLatestProject: () => {
@@ -201,8 +205,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   addProject: (project: Project) => {
-    set(state => ({
-      projects: [...state.projects, project]
+    set((state) => ({
+      projects: [...state.projects, project],
     }));
   },
 
@@ -257,12 +261,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   updateProject: (projectId: string, updates: Partial<Project>) => {
-    set(state => ({
-      projects: state.projects.map(project =>
-        project.projectId === projectId
-          ? { ...project, ...updates }
-          : project
-      )
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.projectId === projectId ? { ...project, ...updates } : project
+      ),
     }));
   },
 
@@ -305,5 +307,5 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   setLoading: (loading: boolean) => {
     set({ isLoading: loading });
-  }
+  },
 }));

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export async function GET(
   request: NextRequest,
@@ -8,13 +9,13 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
-    console.log('📄 Fetching pipeline:', id);
-    
+
+    console.log("📄 Fetching pipeline:", id);
+
     const response = await fetch(`${API_BASE_URL}/api/v1/pipelines/${id}`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         // TODO: 인증 헤더 추가 필요
         // 'Authorization': `Bearer ${token}`,
       },
@@ -26,11 +27,10 @@ export async function GET(
 
     const data = await response.json();
     return NextResponse.json(data);
-    
   } catch (error) {
-    console.error('❌ Failed to fetch pipeline:', error);
+    console.error("❌ Failed to fetch pipeline:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch pipeline' },
+      { error: "Failed to fetch pipeline" },
       { status: 500 }
     );
   }
@@ -43,13 +43,13 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    
-    console.log('💾 Updating pipeline:', id, body);
-    
+
+    console.log("💾 Updating pipeline:", id, body);
+
     const response = await fetch(`${API_BASE_URL}/api/v1/pipelines/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         // TODO: 인증 헤더 추가 필요
         // 'Authorization': `Bearer ${token}`,
       },
@@ -62,11 +62,10 @@ export async function PUT(
 
     const data = await response.json();
     return NextResponse.json(data);
-    
   } catch (error) {
-    console.error('❌ Failed to update pipeline:', error);
+    console.error("❌ Failed to update pipeline:", error);
     return NextResponse.json(
-      { error: 'Failed to update pipeline' },
+      { error: "Failed to update pipeline" },
       { status: 500 }
     );
   }
@@ -78,13 +77,13 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
-    console.log('🗑️ Deleting pipeline:', id);
-    
+
+    console.log("🗑️ Deleting pipeline:", id);
+
     const response = await fetch(`${API_BASE_URL}/api/v1/pipelines/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         // TODO: 인증 헤더 추가 필요
         // 'Authorization': `Bearer ${token}`,
       },
@@ -95,11 +94,10 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-    
   } catch (error) {
-    console.error('❌ Failed to delete pipeline:', error);
+    console.error("❌ Failed to delete pipeline:", error);
     return NextResponse.json(
-      { error: 'Failed to delete pipeline' },
+      { error: "Failed to delete pipeline" },
       { status: 500 }
     );
   }

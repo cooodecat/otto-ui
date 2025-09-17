@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { LogListData, LogItem } from '@/types/logs';
-import { fetchLogData, logsApi, LogsApiError } from '@/lib/api/logs-api';
+import { useState, useEffect } from "react";
+import { LogListData, LogItem } from "@/types/logs";
+import { fetchLogData, logsApi, LogsApiError } from "@/lib/api/logs-api";
 
 interface UseLogDataResult {
   logData: LogListData | null;
@@ -24,16 +24,16 @@ interface UseLogDataOptions {
 }
 
 export const useLogData = (
-  buildId: string, 
+  buildId: string,
   options: UseLogDataOptions = {}
 ): UseLogDataResult => {
-  const { 
-    fetchLogData: customFetchLogData, 
-    getMockData, 
+  const {
+    fetchLogData: customFetchLogData,
+    getMockData,
     simulateDelay = 1000,
-    useRealApi = false
+    useRealApi = false,
   } = options;
-  
+
   const [logData, setLogData] = useState<LogListData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +42,12 @@ export const useLogData = (
   // 로그 수집 상태 확인
   const checkCollectionStatus = async () => {
     if (!useRealApi) return;
-    
+
     try {
       const status = await logsApi.getLogStatus(buildId);
       setIsCollecting(status.isActive);
     } catch (err) {
-      console.warn('Failed to check collection status:', err);
+      console.warn("Failed to check collection status:", err);
     }
   };
 
@@ -58,20 +58,20 @@ export const useLogData = (
 
       // 실제 API 사용하는 경우
       if (useRealApi) {
-        const logItems = customFetchLogData 
+        const logItems = customFetchLogData
           ? await customFetchLogData(buildId)
           : await fetchLogData(buildId);
-        
+
         // LogItem[] 배열을 LogData 형식으로 변환
         const logData: LogListData = {
           id: buildId,
           name: `Pipeline ${buildId}`,
-          status: 'running',
+          status: "running",
           logs: logItems,
           total: logItems.length,
-          hasNext: false // SSE로 실시간 업데이트되므로 페이지네이션 불필요
+          hasNext: false, // SSE로 실시간 업데이트되므로 페이지네이션 불필요
         };
-        
+
         setLogData(logData);
         await checkCollectionStatus();
         return;
@@ -94,14 +94,14 @@ export const useLogData = (
       }
 
       // 기본 에러 (API 함수나 모킹 데이터가 없는 경우)
-      throw new Error('No data source provided for useLogData hook');
-
+      throw new Error("No data source provided for useLogData hook");
     } catch (err) {
-      const errorMessage = err instanceof LogsApiError 
-        ? `API Error (${err.status}): ${err.message}`
-        : err instanceof Error 
-        ? err.message 
-        : 'Failed to fetch log data';
+      const errorMessage =
+        err instanceof LogsApiError
+          ? `API Error (${err.status}): ${err.message}`
+          : err instanceof Error
+          ? err.message
+          : "Failed to fetch log data";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -111,16 +111,17 @@ export const useLogData = (
   // 로그 수집 시작
   const startCollection = async () => {
     if (!useRealApi) return;
-    
+
     try {
       setError(null);
       await logsApi.startLogCollection(buildId);
       setIsCollecting(true);
       console.log(`🚀 Started log collection for build: ${buildId}`);
     } catch (err) {
-      const errorMessage = err instanceof LogsApiError
-        ? `Failed to start collection: ${err.message}`
-        : 'Failed to start log collection';
+      const errorMessage =
+        err instanceof LogsApiError
+          ? `Failed to start collection: ${err.message}`
+          : "Failed to start log collection";
       setError(errorMessage);
       throw err;
     }
@@ -129,16 +130,17 @@ export const useLogData = (
   // 로그 수집 중지
   const stopCollection = async () => {
     if (!useRealApi) return;
-    
+
     try {
       setError(null);
       await logsApi.stopLogCollection(buildId);
       setIsCollecting(false);
       console.log(`⏹️ Stopped log collection for build: ${buildId}`);
     } catch (err) {
-      const errorMessage = err instanceof LogsApiError
-        ? `Failed to stop collection: ${err.message}`
-        : 'Failed to stop log collection';
+      const errorMessage =
+        err instanceof LogsApiError
+          ? `Failed to stop collection: ${err.message}`
+          : "Failed to stop log collection";
       setError(errorMessage);
       throw err;
     }

@@ -1,22 +1,22 @@
 /**
  * CI/CD Flow Canvas Component
- * 
+ *
  * 이 컴포넌트는 CI/CD 파이프라인을 시각적으로 구성할 수 있는 드래그 앤 드롭 인터페이스를 제공합니다.
  * React Flow 라이브러리를 기반으로 구축되었으며, 다음과 같은 주요 기능을 포함합니다:
- * 
+ *
  * 주요 기능:
  * - 드래그 앤 드롭으로 블록 추가
  * - success/failed 경로를 가진 조건부 연결
  * - 실시간 플로우 데이터 추출
  * - 1:1 연결 제한 (각 output handle당 최대 1개 연결)
- * 
+ *
  * 사용되는 블록 그룹:
- * - PREBUILD: 환경 설정 (OS Packages, Node Version, Environment)  
+ * - PREBUILD: 환경 설정 (OS Packages, Node Version, Environment)
  * - BUILD: 빌드 프로세스 (Install Packages, Webpack/Vite Build, Custom Build)
  * - TEST: 테스팅 (Jest, Mocha, Vitest, Playwright, Custom Tests)
  * - NOTIFICATION: 알림 (Slack, Email)
  * - UTILITY: 유틸리티 (Condition, Parallel, Custom Command)
- * 
+ *
  * 주의: DEPLOY 블록은 현재 비활성화되어 있음
  */
 "use client";
@@ -44,18 +44,13 @@ import "@/styles/reactflow-overrides.css";
 import { nodeTypes, createNodeInstance } from "./nodes/node-registry";
 import { edgeTypes, cicdEdgeOptions } from "./edges";
 
+
 /**
  * 노드 ID 생성기
- * 하이드레이션 에러를 방지하기 위해 서버/클라이언트 환경을 구분하여 ID 생성
+ * crypto.randomUUID()를 사용하여 고유한 ID 생성
  */
-let nodeId = 0;
 const getId = () => {
-  if (typeof window !== 'undefined') {
-    // 클라이언트 환경: 증가하는 카운터 사용
-    return `cicd_node_${++nodeId}`;
-  }
-  // 서버 환경: 랜덤 문자열 사용
-  return `cicd_node_${Math.random().toString(36).substr(2, 9)}`;
+  return `cicd_node_${crypto.randomUUID()}`;
 };
 
 /**
@@ -63,10 +58,10 @@ const getId = () => {
  */
 const initialNodes: Node[] = [];
 
-function CICDDropZone({ 
-  projectId, 
-  onRef 
-}: { 
+function CICDDropZone({
+  projectId,
+  onRef,
+}: {
   projectId: string;
   onRef?: (ref: CICDFlowCanvasRef) => void;
 }) {
@@ -80,11 +75,13 @@ function CICDDropZone({
     if (!initializedRef.current && projectId) {
       const storageKey = `pipeline-${projectId}`;
       const savedData = localStorage.getItem(storageKey);
-      
+
       if (savedData) {
         try {
           const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedData);
           console.log(`📁 Loading pipeline from localStorage (${storageKey}):`, { nodes: savedNodes.length, edges: savedEdges.length });
+
+
           setNodes(savedNodes);
           setEdges(savedEdges);
         } catch (error) {
@@ -96,117 +93,172 @@ function CICDDropZone({
         // 저장된 데이터가 없으면 기본 노드 생성
         createDefaultPipelineStart();
       }
-      
+
       initializedRef.current = true;
     }
   }, [projectId]);
 
   const createDefaultPipelineStart = () => {
     console.log("🏁 Creating default Pipeline Start node...");
-    const pipelineStartNode = createNodeInstance(
-      'pipeline_start', 
-      { x: 100, y: 100 }, 
-      'pipeline-start-1'
-    );
-    
+
+    const pipelineStartNode = createNodeInstance("pipeline_start", {
+      x: 100,
+      y: 100,
+    }, getId());
+
     // 삭제 불가능하도록 설정
     pipelineStartNode.selectable = false;
     pipelineStartNode.deletable = false;
-    
+
     console.log("🏁 Pipeline Start node created:", pipelineStartNode);
     setNodes([pipelineStartNode]);
   };
 
-  // localStorage에 자동 저장
-  useEffect(() => {
-    if (initializedRef.current && projectId && (nodes.length > 0 || edges.length > 0)) {
+  // localStorage 저장 함수
+  const saveToLocalStorage = useCallback((currentNodes: Node[], currentEdges: Edge[]) => {
+    if (initializedRef.current && projectId && (currentNodes.length > 0 || currentEdges.length > 0)) {
       const storageKey = `pipeline-${projectId}`;
-      const pipelineData = { nodes, edges };
+      const pipelineData = { nodes: currentNodes, edges: currentEdges };
       localStorage.setItem(storageKey, JSON.stringify(pipelineData));
-      console.log(`💾 Auto-saved to localStorage (${storageKey}):`, { nodes: nodes.length, edges: edges.length });
+      console.log(`💾 Saved to localStorage (${storageKey}):`, { nodes: currentNodes.length, edges: currentEdges.length });
     }
-  }, [nodes, edges, projectId]);
+  }, [projectId]);
+
+  // localStorage에 자동 저장 (상태 변경 감지)
+  useEffect(() => {
+    saveToLocalStorage(nodes, edges);
+  }, [nodes, edges, saveToLocalStorage]);
+
+  // 파이프라인 초기화 함수 (Pipeline Start 노드만 남김)
+  const resetPipeline = useCallback(() => {
+    console.log("🔄 Resetting pipeline - keeping only Pipeline Start node");
+
+    // Pipeline Start 노드만 필터링
+    const pipelineStartNodes = nodes.filter(
+      (node) => node.type === "pipeline_start"
+    );
+
+    if (pipelineStartNodes.length === 0) {
+      // Pipeline Start 노드가 없으면 새로 생성
+      createDefaultPipelineStart();
+    } else {
+      // Pipeline Start 노드만 남기고 모든 엣지 제거
+      setNodes(pipelineStartNodes);
+      setEdges([]);
+    }
+
+    // localStorage도 업데이트
+    if (projectId) {
+      const storageKey = `pipeline-${projectId}`;
+      const resetData = {
+        nodes: pipelineStartNodes.length > 0 ? pipelineStartNodes : nodes.filter(n => n.type === "pipeline_start"),
+        edges: []
+      };
+      localStorage.setItem(storageKey, JSON.stringify(resetData));
+      console.log(`💾 Reset saved to localStorage (${storageKey})`);
+    }
+  }, [nodes, projectId]);
 
   // Ref 등록
   React.useEffect(() => {
     if (onRef) {
-      console.log("🔗 CICDFlowCanvas: Registering ref with", nodes.length, "nodes and", edges.length, "edges");
+      console.log(
+        "🔗 CICDFlowCanvas: Registering ref with",
+        nodes.length,
+        "nodes and",
+        edges.length,
+        "edges"
+      );
       onRef({
         getFlowData: () => {
-          console.log("📊 getFlowData called - returning", nodes.length, "nodes and", edges.length, "edges");
+          console.log(
+            "📊 getFlowData called - returning",
+            nodes.length,
+            "nodes and",
+            edges.length,
+            "edges"
+          );
           return { nodes, edges };
-        }
+        },
+        resetPipeline,
       });
     }
-  }, [onRef, nodes, edges]);
+  }, [onRef, nodes, edges, resetPipeline]);
 
   const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    (changes) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
     []
   );
 
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  );
-
-  const onConnect: OnConnect = useCallback(
-    (params) => {
-      setEdges((eds) => {
-        // 연결 전 한 번 더 검증 (현재 edges 상태 사용)
-        const { source, sourceHandle } = params;
-        
-        // 1:1 연결 제한 검증
-        if (sourceHandle === 'success-output' || 
-            sourceHandle === 'failed-output' || 
-            !sourceHandle || 
-            sourceHandle === 'default') {
-          const existingConnection = eds.find(
-            (edge) => edge.source === source && edge.sourceHandle === sourceHandle
-          );
-          
-          if (existingConnection) {
-            console.warn("⚠️ Connection blocked: Already has a connection from this handle");
-            return eds; // 기존 상태 유지 (연결 차단)
-          }
-        }
-
-        // 연결 허용
-        return addEdge(
-          {
-            ...params,
-            ...cicdEdgeOptions, // CI/CD 전용 간선 사용
-            data: {
-              sourceHandle: params.sourceHandle,
-              targetHandle: params.targetHandle,
-            },
-          },
-          eds
-        );
-      });
+    (changes) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
     },
     []
   );
+
+  const onConnect: OnConnect = useCallback((params) => {
+    setEdges((eds) => {
+      // 연결 전 한 번 더 검증 (현재 edges 상태 사용)
+      const { source, sourceHandle } = params;
+
+      // 1:1 연결 제한 검증
+      if (
+        sourceHandle === "success-output" ||
+        sourceHandle === "failed-output" ||
+        !sourceHandle ||
+        sourceHandle === "default"
+      ) {
+        const existingConnection = eds.find(
+          (edge) => edge.source === source && edge.sourceHandle === sourceHandle
+        );
+
+        if (existingConnection) {
+          console.warn(
+            "⚠️ Connection blocked: Already has a connection from this handle"
+          );
+          return eds; // 기존 상태 유지 (연결 차단)
+        }
+      }
+
+      // 연결 허용
+      return addEdge(
+        {
+          ...params,
+          ...cicdEdgeOptions, // CI/CD 전용 간선 사용
+          data: {
+            sourceHandle: params.sourceHandle,
+            targetHandle: params.targetHandle,
+          },
+        },
+        eds
+      );
+    });
+  }, []);
 
   // 연결 유효성 검사: 각 output handle당 최대 1개 연결만 허용
   const isValidConnection = useCallback(
     (connection: any) => {
       const { source, sourceHandle } = connection;
-      
+
       // 모든 출력 핸들에 1:1 연결 제한 적용
-      if (sourceHandle === 'success-output' || 
-          sourceHandle === 'failed-output' || 
-          !sourceHandle || // 기본 output handle
-          sourceHandle === 'default') {
+      if (
+        sourceHandle === "success-output" ||
+        sourceHandle === "failed-output" ||
+        !sourceHandle || // 기본 output handle
+        sourceHandle === "default"
+      ) {
         // 이미 해당 소스 핸들로 연결된 간선이 있는지 확인
         const existingConnection = edges.find(
           (edge) => edge.source === source && edge.sourceHandle === sourceHandle
         );
-        
+
         // 이미 연결이 있으면 새로운 연결 차단
         return !existingConnection;
       }
-      
+
       // 기타 핸들은 제한 없음 (다중 출력이 필요한 특수한 경우)
       return true;
     },
@@ -234,7 +286,7 @@ function CICDDropZone({
       });
 
       try {
-        const newNode = createNodeInstance(type, position, getId());
+        const newNode = createNodeInstance(type, position);
         setNodes((nds) => nds.concat(newNode));
       } catch (error) {
         console.error("Failed to create node:", error);
@@ -270,7 +322,7 @@ function CICDDropZone({
           minZoom={0.3}
           maxZoom={2}
           connectionLineStyle={{
-            stroke: "#10b981",
+            stroke: "#9333ea",
             strokeWidth: 2,
             strokeDasharray: "8 4",
           }}
@@ -282,13 +334,13 @@ function CICDDropZone({
           nodesDraggable={true}
           elementsSelectable={true}
         >
-          <Background 
-            variant={BackgroundVariant.Dots} 
-            gap={20} 
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={20}
             size={1}
             color="#e5e7eb"
           />
-          <Controls 
+          <Controls
             className="bg-white/90 backdrop-blur-sm border border-gray-200/80 rounded-lg shadow-sm"
             position="bottom-right"
           />
@@ -299,13 +351,14 @@ function CICDDropZone({
 }
 
 export interface CICDFlowCanvasRef {
-  getFlowData: () => { nodes: any[], edges: any[] };
+  getFlowData: () => { nodes: any[]; edges: any[] };
+  resetPipeline: () => void;
 }
 
-export default function CICDFlowCanvas({ 
-  projectId, 
-  onRef 
-}: { 
+export default function CICDFlowCanvas({
+  projectId,
+  onRef,
+}: {
   projectId: string;
   onRef?: (ref: CICDFlowCanvasRef) => void;
 }) {

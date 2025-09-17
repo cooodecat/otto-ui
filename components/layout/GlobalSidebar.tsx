@@ -6,7 +6,6 @@ import {
   Search,
   Plus,
   Settings,
-  HelpCircle,
   ChevronDown,
   Eye,
   EyeOff,
@@ -229,7 +228,12 @@ const GlobalSidebar = () => {
     };
   }, []);
 
-  // 데이터 로딩 및 초기화 (컴포넌트 마운트 시 한 번만 실행)
+  // 모달 열기 핸들러
+  const handleModalOpen = useCallback(() => {
+    setIsCreateProjectModalOpen(true);
+  }, []);
+
+  // 데이터 로딩
   useEffect(() => {
     console.log('[GlobalSidebar] Fetching projects on mount...');
     fetchProjects();
@@ -292,7 +296,7 @@ const GlobalSidebar = () => {
 
   /**
    * 하단 네비게이션 아이콘들의 설정
-   * 일반적인 워크스페이스 기능에 빠르게 접근할 수 있게 해줍니다
+   * 실제로 구현된 기능들에만 접근할 수 있게 해줍니다
    */
   const bottomIcons: BottomIcon[] = [
     { icon: Settings, title: 'Settings' },
@@ -560,6 +564,11 @@ const GlobalSidebar = () => {
 
   return (
     <div className={containerClassName}>
+      {/* GitHub 설치 콜백 처리 */}
+      <Suspense fallback={null}>
+        <GitHubInstallationHandler onModalOpen={handleModalOpen} />
+      </Suspense>
+
       {/* Workspace Header Card */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between">
@@ -902,8 +911,8 @@ const GlobalSidebar = () => {
       {/* Bottom Section Cards */}
       <div className="space-y-2">
         {/* Navigation Icons Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-2 w-fit mx-auto">
+          <div className="flex items-center justify-center gap-6">
             {bottomIcons.map((item, index) => (
               <button
                 key={index}

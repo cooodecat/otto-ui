@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 /**
  * 사이드바 로딩 스켈레톤 컴포넌트
@@ -49,7 +49,7 @@ export const SidebarSkeleton = () => {
           {/* Chevron icon skeleton */}
           <div className="w-4 h-4 bg-gray-200 rounded"></div>
         </div>
-        
+
         {/* Search box skeleton */}
         <div className="mt-4">
           <div className="h-10 bg-gray-100 rounded-lg"></div>
@@ -68,11 +68,17 @@ export const SidebarSkeleton = () => {
         <div className="space-y-2">
           {/* Pipeline item skeletons */}
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center p-2.5 rounded-lg border border-gray-100">
+            <div
+              key={i}
+              className="flex items-center p-2.5 rounded-lg border border-gray-100"
+            >
               {/* Icon skeleton */}
               <div className="w-5 h-5 bg-gray-200 rounded mr-3"></div>
               {/* Pipeline name skeleton */}
-              <div className="h-4 bg-gray-200 rounded" style={{ width: `${Math.random() * 40 + 50}%` }}></div>
+              <div
+                className="h-4 bg-gray-200 rounded"
+                style={{ width: `${Math.random() * 40 + 50}%` }}
+              ></div>
             </div>
           ))}
         </div>
@@ -88,7 +94,10 @@ export const SidebarSkeleton = () => {
         {/* Block items skeleton */}
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+            <div
+              key={i}
+              className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100"
+            >
               {/* Block icon skeleton */}
               <div className="w-8 h-8 bg-gray-200 rounded-lg mr-3"></div>
               {/* Block name skeleton */}

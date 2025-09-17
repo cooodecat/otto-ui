@@ -8,7 +8,7 @@ export interface Repository {
   updatedAt: string;
   stars: number;
   forks: number;
-  visibility: 'Public' | 'Private';
+  visibility: "Public" | "Private";
 }
 
 export interface Branch {
@@ -55,7 +55,8 @@ export interface ProjectCreationWizardProps {
   repository?: {
     name: string;
     owner: string;
-    visibility: 'Public' | 'Private';
+    visibility: "Public" | "Private";
     updated: string;
+    installationId?: number;
   };
 }

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
-import GlobalSidebar from './GlobalSidebar';
+import React from "react";
+import { usePathname } from "next/navigation";
+import GlobalSidebar from "./GlobalSidebar";
 
 /**
  * GlobalLayout 컴포넌트의 props 인터페이스
@@ -19,7 +19,7 @@ interface GlobalLayoutProps {
  * @constant
  * @type {string[]}
  */
-const SIDEBAR_EXCLUDED_PATHS = ['/', '/signin'];
+const SIDEBAR_EXCLUDED_PATHS = ["/", "/signin"];
 
 /**
  * 캔버스 레이아웃이 필요한 경로 패턴 확인 함수
@@ -39,7 +39,7 @@ const SIDEBAR_EXCLUDED_PATHS = ['/', '/signin'];
  */
 const isCanvasLayoutPath = (pathname: string): boolean => {
   // /pipelines 페이지 (파이프라인 에디터)
-  if (pathname === '/pipelines') return true;
+  if (pathname === "/pipelines") return true;
 
   // /projects/{project_id}/pipelines/{pipeline_id} 패턴
   const pipelineDetailPattern = /^\/projects\/[^/]+\/pipelines\/[^/]+$/;
@@ -95,8 +95,8 @@ const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   if (!shouldShowSidebar) {
     // 사이드바가 없는 페이지 (랜딩, 로그인 등)
     return (
-      <div className='min-h-screen'>
-        <main className='min-h-screen'>{children}</main>
+      <div className="min-h-screen">
+        <main className="min-h-screen">{children}</main>
       </div>
     );
   }
@@ -104,27 +104,27 @@ const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   if (isCanvasLayout) {
     // 캔버스 레이아웃: 사이드바가 콘텐츠 위에 floating
     return (
-      <div className='min-h-screen relative'>
+      <div className="min-h-screen relative">
         {/* 사이드바는 z-50으로 캔버스 위에 표시 */}
         <GlobalSidebar />
         {/* 메인 콘텐츠는 전체 화면 사용 */}
-        <main className='min-h-screen'>{children}</main>
+        <main className="min-h-screen">{children}</main>
       </div>
     );
   }
 
   // 표준 레이아웃: 사이드바와 콘텐츠가 화면을 분할
   return (
-    <div className='min-h-screen bg-gray-50 flex'>
+    <div className="min-h-screen bg-gray-50 flex">
       {/* 사이드바 컨테이너 - 고정 너비 */}
-      <div className='w-80 flex-shrink-0'>
+      <div className="w-80 flex-shrink-0">
         {/* GlobalSidebar의 fixed positioning을 relative로 변경하기 위한 wrapper */}
-        <div className='sticky top-0 h-screen p-4'>
+        <div className="sticky top-0 h-screen p-4">
           <GlobalSidebar />
         </div>
       </div>
       {/* 메인 콘텐츠 - 나머지 공간 차지 */}
-      <main className='flex-1 min-h-screen'>{children}</main>
+      <main className="flex-1 min-h-screen">{children}</main>
     </div>
   );
 };

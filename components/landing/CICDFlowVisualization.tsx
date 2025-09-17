@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GitBranch, Hammer, CheckCircle, Rocket, ArrowRight } from "lucide-react";
+import {
+  GitBranch,
+  Hammer,
+  CheckCircle,
+  Rocket,
+  ArrowRight,
+} from "lucide-react";
 
 interface FlowStep {
   id: number;
@@ -19,7 +25,7 @@ const flowSteps: FlowStep[] = [
     title: "GitHub 웹훅",
     description: "코드 푸시 감지",
     color: "from-purple-500 to-purple-600",
-    bgGradient: "from-purple-500/20 to-purple-600/20"
+    bgGradient: "from-purple-500/20 to-purple-600/20",
   },
   {
     id: 2,
@@ -27,7 +33,7 @@ const flowSteps: FlowStep[] = [
     title: "빌드",
     description: "자동 빌드 실행",
     color: "from-blue-500 to-blue-600",
-    bgGradient: "from-blue-500/20 to-blue-600/20"
+    bgGradient: "from-blue-500/20 to-blue-600/20",
   },
   {
     id: 3,
@@ -35,7 +41,7 @@ const flowSteps: FlowStep[] = [
     title: "테스트",
     description: "품질 검증",
     color: "from-green-500 to-green-600",
-    bgGradient: "from-green-500/20 to-green-600/20"
+    bgGradient: "from-green-500/20 to-green-600/20",
   },
   {
     id: 4,
@@ -43,8 +49,8 @@ const flowSteps: FlowStep[] = [
     title: "배포",
     description: "프로덕션 릴리즈",
     color: "from-orange-500 to-orange-600",
-    bgGradient: "from-orange-500/20 to-orange-600/20"
-  }
+    bgGradient: "from-orange-500/20 to-orange-600/20",
+  },
 ];
 
 export default function CICDFlowVisualization() {
@@ -79,7 +85,9 @@ export default function CICDFlowVisualization() {
             <div
               key={step.id}
               className={`relative transition-all duration-500 transform ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+                isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-10"
               }`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
@@ -119,7 +127,9 @@ export default function CICDFlowVisualization() {
                 >
                   {/* Icon container */}
                   <div
-                    className={`inline-flex p-4 rounded-xl bg-gradient-to-r ${step.color} mb-6 transition-all duration-500 ${
+                    className={`inline-flex p-4 rounded-xl bg-gradient-to-r ${
+                      step.color
+                    } mb-6 transition-all duration-500 ${
                       activeStep === index + 1 ? "scale-110 shadow-lg" : ""
                     }`}
                   >
@@ -130,9 +140,7 @@ export default function CICDFlowVisualization() {
                   <h3 className="text-2xl font-bold text-white mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-lg text-gray-400">
-                    {step.description}
-                  </p>
+                  <p className="text-lg text-gray-400">{step.description}</p>
 
                   {/* Progress indicator */}
                   {activeStep === index + 1 && (
@@ -163,12 +171,12 @@ export default function CICDFlowVisualization() {
         {/* Floating particles effect */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[
-            { left: '10%', top: '20%' },
-            { left: '25%', top: '60%' },
-            { left: '45%', top: '30%' },
-            { left: '60%', top: '70%' },
-            { left: '75%', top: '40%' },
-            { left: '90%', top: '15%' }
+            { left: "10%", top: "20%" },
+            { left: "25%", top: "60%" },
+            { left: "45%", top: "30%" },
+            { left: "60%", top: "70%" },
+            { left: "75%", top: "40%" },
+            { left: "90%", top: "15%" },
           ].map((position, i) => (
             <div
               key={i}
@@ -177,7 +185,7 @@ export default function CICDFlowVisualization() {
                 left: position.left,
                 top: position.top,
                 animationDelay: `${i * 0.5}s`,
-                animationDuration: `${10 + i * 2}s`
+                animationDuration: `${10 + i * 2}s`,
               }}
             />
           ))}

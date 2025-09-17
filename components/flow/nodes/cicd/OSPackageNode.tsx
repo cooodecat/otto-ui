@@ -3,23 +3,33 @@
 import { memo, useState } from "react";
 import { NodeProps } from "@xyflow/react";
 import BaseNode from "../BaseNode";
-import { OSPackageNodeData, CICD_GROUP_COLORS, CICDBlockGroup } from "@/types/cicd-node.types";
+import {
+  OSPackageNodeData,
+  CICD_GROUP_COLORS,
+  CICDBlockGroup,
+} from "@/types/cicd-node.types";
 import { Edit3, Package } from "lucide-react";
 
 const OSPackageNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as OSPackageNodeData;
   const [isEditing, setIsEditing] = useState(false);
-  const [packages, setPackages] = useState<string[]>(nodeData.installPackages || []);
-  const [packageManager, setPackageManager] = useState(nodeData.packageManager || 'apt');
-  const [updateList, setUpdateList] = useState<boolean>(nodeData.updatePackageList ?? true);
-  const [newPackage, setNewPackage] = useState('');
+  const [packages, setPackages] = useState<string[]>(
+    nodeData.installPackages || []
+  );
+  const [packageManager, setPackageManager] = useState(
+    nodeData.packageManager || "apt"
+  );
+  const [updateList, setUpdateList] = useState<boolean>(
+    nodeData.updatePackageList ?? true
+  );
+  const [newPackage, setNewPackage] = useState("");
 
   const groupColors = CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD];
 
   const handleAddPackage = () => {
     if (newPackage.trim() && !packages.includes(newPackage.trim())) {
       setPackages([...packages, newPackage.trim()]);
-      setNewPackage('');
+      setNewPackage("");
     }
   };
 
@@ -28,7 +38,7 @@ const OSPackageNode = memo(({ data, id }: NodeProps) => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleAddPackage();
     }
   };
@@ -50,7 +60,9 @@ const OSPackageNode = memo(({ data, id }: NodeProps) => {
     >
       <div className="space-y-3">
         {/* 기본 정보 */}
-        <div className={`p-3 rounded ${groupColors.bgClass} ${groupColors.borderClass} border`}>
+        <div
+          className={`p-3 rounded ${groupColors.bgClass} ${groupColors.borderClass} border`}
+        >
           <div className="flex items-center justify-between mb-2">
             <div className={`text-sm font-medium ${groupColors.textClass}`}>
               {packageManager} ({packages.length} packages)
@@ -63,12 +75,15 @@ const OSPackageNode = memo(({ data, id }: NodeProps) => {
               <Edit3 size={14} className="text-gray-500" />
             </button>
           </div>
-          
+
           {/* 패키지 목록 미리보기 */}
           {!isEditing && (
             <div className="space-y-1">
               {packages.slice(0, 3).map((pkg, idx) => (
-                <div key={idx} className="text-xs text-gray-600 font-mono bg-white px-2 py-1 rounded">
+                <div
+                  key={idx}
+                  className="text-xs text-gray-600 font-mono bg-white px-2 py-1 rounded"
+                >
                   {pkg}
                 </div>
               ))}
@@ -114,7 +129,9 @@ const OSPackageNode = memo(({ data, id }: NodeProps) => {
                   checked={updateList}
                   onChange={(e) => setUpdateList(e.target.checked)}
                 />
-                <span className="text-sm text-gray-600">{updateList ? 'Yes' : 'No'}</span>
+                <span className="text-sm text-gray-600">
+                  {updateList ? "Yes" : "No"}
+                </span>
               </div>
             </div>
 
@@ -152,7 +169,9 @@ const OSPackageNode = memo(({ data, id }: NodeProps) => {
                     key={idx}
                     className="flex items-center justify-between bg-white px-2 py-1 rounded border"
                   >
-                    <span className="text-sm font-mono text-gray-700">{pkg}</span>
+                    <span className="text-sm font-mono text-gray-700">
+                      {pkg}
+                    </span>
                     <button
                       onClick={() => handleRemovePackage(idx)}
                       className="text-red-500 hover:text-red-700 text-xs"
@@ -173,7 +192,7 @@ const OSPackageNode = memo(({ data, id }: NodeProps) => {
 
         {/* 설정 옵션 */}
         <div className="text-xs text-gray-500">
-          <div>Update package list: {updateList ? 'Yes' : 'No'}</div>
+          <div>Update package list: {updateList ? "Yes" : "No"}</div>
           {nodeData.timeout && <div>Timeout: {nodeData.timeout}s</div>}
         </div>
       </div>

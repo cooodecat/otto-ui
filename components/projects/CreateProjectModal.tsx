@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   Search,
@@ -9,6 +9,7 @@ import {
   GitBranch,
   X,
   Plus,
+  RefreshCw,
 } from "lucide-react";
 import { useProjectStore } from "@/lib/projectStore";
 import apiClient from "@/lib/api";
@@ -55,31 +56,62 @@ export default function CreateProjectModalFull({
   onProjectCreated,
 }: CreateProjectModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRepository, setSelectedRepository] = useState<{
-    name: string;
-    owner: string;
-    visibility: "Public" | "Private";
-    updated: string;
-  } | null>(null);
+  const [searchRepoQuery, setSearchRepoQuery] = useState("");
+  const [selectedInstallation, setSelectedInstallation] = useState<GitHubInstallation | null>(null);
+  const [selectedRepository, setSelectedRepository] = useState<GitHubRepository | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [repositories, setRepositories] = useState<any[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
 
   const {
     projects,
-    isLoading,
-    error,
+    isLoading: projectsLoading,
+    error: projectsError,
     fetchProjects,
     selectedProjectId,
     setSelectedProject,
   } = useProjectStore();
 
+  const { status: gitHubStatus, loading: statusLoading, refetch: refetchGitHubStatus } = useGitHubStatus();
+  const {
+    repositories: hookRepositories,
+    loading: reposLoading,
+    error: reposError,
+    fetchRepositories,
+  } = useGitHubRepositories();
+
+  // Supabase 토큰 설정 및 데이터 페치
   useEffect(() => {
+    const initializeAuth = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.access_token) {
+        setApiToken(session.access_token);
+      }
+
+      if (isOpen) {
+        fetchProjects();
+        refetchGitHubStatus();
+      }
+    };
+
     if (isOpen) {
       fetchProjects();
       loadGithubRepositories();
     }
-  }, [isOpen, fetchProjects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); // fetchProjects와 refetchGitHubStatus는 안정적인 함수로 가정
+
+  // 첫 번째 GitHub 설치를 자동으로 선택
+  useEffect(() => {
+    if (gitHubStatus?.installations?.length && !selectedInstallation && isOpen) {
+      const firstInstallation = gitHubStatus.installations[0];
+      setSelectedInstallation(firstInstallation);
+      fetchRepositories(firstInstallation.installation_id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gitHubStatus?.installations?.length, isOpen]); // selectedInstallation은 의도적으로 제외 (한 번만 설정)
 
   const loadGithubRepositories = async () => {
     setIsLoadingRepos(true);

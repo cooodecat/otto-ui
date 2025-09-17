@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -9,7 +9,7 @@ import { useKeyboardShortcuts } from '@/hooks/logs/useKeyboardShortcuts';
 
 /**
  * Log Details Panel Component
- * 
+ *
  * 파이프라인 로그의 상세 정보를 표시하는 모달 패널
  * Summary/Expanded 뷰 모드 지원
  */
@@ -19,7 +19,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
   onClose,
   onNavigate,
 }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('summary');
+  const [viewMode, setViewMode] = useState<ViewMode>("summary");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // 실시간 빌드 로그 + 캐시 통합 훅
@@ -40,7 +40,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
   } = useBuildLogs(buildId, { autoScroll: true, idleCheckSeconds: 20 });
 
   const toggleViewMode = () => {
-    setViewMode(prev => prev === 'summary' ? 'expanded' : 'summary');
+    setViewMode((prev) => (prev === "summary" ? "expanded" : "summary"));
   };
 
   const handleOpenInNewWindow = () => {
@@ -65,10 +65,10 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
 
   // 뷰 모드에 따른 모달 크기
   const getModalWidth = () => {
-    if (viewMode === 'summary') {
-      return 'max-w-2xl lg:max-w-3xl';
+    if (viewMode === "summary") {
+      return "max-w-2xl lg:max-w-3xl";
     } else {
-      return 'max-w-7xl';
+      return "max-w-7xl";
     }
   };
 
@@ -98,7 +98,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />
-        <Dialog.Content 
+        <Dialog.Content
           className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full ${getModalWidth()} max-h-[90vh] bg-white rounded-xl shadow-2xl z-50 flex flex-col`}
         >
           {/* 헤더 */}
@@ -120,14 +120,14 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleViewMode}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 title={viewMode === 'summary' ? 'Expand view' : 'Collapse view'}
               >
-                {viewMode === 'summary' ? (
+                {viewMode === "summary" ? (
                   <Maximize2 className="w-4 h-4 text-gray-600" />
                 ) : (
                   <Minimize2 className="w-4 h-4 text-gray-600" />
@@ -161,7 +161,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
               >
                 <ExternalLink className="w-4 h-4 text-gray-600" />
               </button>
-              
+
               <button
                 onClick={downloadLogs}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
@@ -169,7 +169,7 @@ const LogDetailsPanel: React.FC<LogDetailsPanelProps> = ({
               >
                 <Download className="w-4 h-4 text-gray-600" />
               </button>
-              
+
               <Dialog.Close asChild>
                 <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
                   <X className="w-4 h-4 text-gray-600" />

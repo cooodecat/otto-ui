@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import apiClient from '@/lib/api';
-import { createClient } from '@/lib/supabase/client';
+import { create } from "zustand";
+import apiClient from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * 파이프라인 정보 인터페이스
@@ -15,7 +15,7 @@ export interface Pipeline {
   /** 파이프라인 설명 */
   description?: string;
   /** 파이프라인 상태 */
-  status?: 'active' | 'inactive' | 'draft';
+  status?: "active" | "inactive" | "draft";
   /** 블록 데이터 */
   blocks?: any[];
   /** 아티팩트 경로 */
@@ -122,10 +122,9 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
     console.log('[PipelineStore] fetchPipelines called for projectId:', projectId);
     const { loadedProjects } = get();
 
-    // 이미 해당 프로젝트의 파이프라인이 로드되어 있는지 확인
     if (loadedProjects.has(projectId)) {
       // 이미 로드된 경우에도 다시 로드 (캐시 무시)
-      console.log('[PipelineStore] Project already loaded, but re-fetching:', projectId);
+      console.log("[PipelineStore] Project already loaded, but re-fetching:", projectId);
       // return; // 캐시 무시하고 다시 로드
     }
 
@@ -197,8 +196,9 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch pipelines:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to fetch pipelines',
-        isLoading: false
+        error:
+          error instanceof Error ? error.message : "Failed to fetch pipelines",
+        isLoading: false,
       });
     }
   },
@@ -277,12 +277,16 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
 
   getPipelinesByProject: (projectId: string) => {
     const { pipelines } = get();
-    return pipelines.filter(pipeline => pipeline.projectId === projectId);
+    return pipelines.filter((pipeline) => pipeline.projectId === projectId);
   },
 
   getSelectedPipeline: () => {
     const { pipelines, selectedPipelineId } = get();
-    return pipelines.find(pipeline => pipeline.pipelineId === selectedPipelineId) || null;
+    return (
+      pipelines.find(
+        (pipeline) => pipeline.pipelineId === selectedPipelineId
+      ) || null
+    );
   },
 
   getLatestPipelineByProject: (projectId: string) => {
@@ -300,8 +304,8 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
   },
 
   addPipeline: (pipeline: Pipeline) => {
-    set(state => ({
-      pipelines: [...state.pipelines, pipeline]
+    set((state) => ({
+      pipelines: [...state.pipelines, pipeline],
     }));
   },
 

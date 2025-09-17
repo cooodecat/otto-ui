@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { PipelineLogsPageProps, LogItem } from '@/types/logs';
@@ -36,7 +36,7 @@ const buttonStyles = {
 
 /**
  * Pipeline Logs Page Component
- * 
+ *
  * 파이프라인 로그의 메인 페이지 컴포넌트
  * 헤더, 필터링, 테이블, 무한 스크롤 등 모든 기능 통합
  * 실제 Supabase 데이터와 목업 데이터를 모두 지원
@@ -87,7 +87,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     refetch: _refetch,
     isCollecting,
     startCollection,
-    stopCollection
+    stopCollection,
   } = useLogData(buildId, {
     useRealApi: false, // Pipeline logs에서는 별도 관리
     getMockData: getMockData,
@@ -174,7 +174,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     connect: connectSSE,
     disconnect: disconnectSSE,
     isConnected: sseConnected,
-    hasError: sseHasError
+    hasError: sseHasError,
   } = useSSELogStream(
     buildId,
     // 새로운 로그 수신 시 처리
@@ -188,7 +188,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
           // 새 로그 ID 추가 및 뱃지 증가
           setNewLogIds(prevIds => {
             const newSet = new Set(prevIds);
-            uniqueNewLogs.forEach(log => newSet.add(log.id));
+            uniqueNewLogs.forEach((log) => newSet.add(log.id));
             return newSet;
           });
           setUnreadCount(prev => prev + uniqueNewLogs.length);
@@ -211,7 +211,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     {
       autoConnect: false, // 수동 연결
       reconnectInterval: 3000,
-      maxReconnectAttempts: 5
+      maxReconnectAttempts: 5,
     }
   );
 
@@ -375,17 +375,16 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   }, [isLive, connectSSE, disconnectSSE, refresh, displayedLogs, makeStorageKey]);
 
   // 로그 읽음 처리
-  const handleMarkAsRead = useCallback((logId: string) => {
-    setNewLogIds(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(logId);
-      return newSet;
-    });
-    
-    if (newLogIds.has(logId)) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
-  }, [newLogIds]);
+  const handleMarkAsRead = useCallback(
+    (logId: string) => {
+      setNewLogIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(logId);
+        return newSet;
+      });
+    },
+    []
+  );
 
   // 로그 클릭 핸들러 - 상세 뷰 열기
   const handleLogClick = useCallback((log: LogItem) => {
