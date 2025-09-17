@@ -74,7 +74,8 @@ export default function StepThree({
           </div>
           <button
             onClick={onNavigateToProject}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            disabled={false}
+            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer"
           >
             프로젝트로 이동
             <ArrowRight className="w-4 h-4" />

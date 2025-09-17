@@ -43,7 +43,8 @@ export default function GitHubInstallPage() {
     const state = btoa(JSON.stringify(stateData));
 
     // GitHub App 설치 URL 생성
-    const installUrl = `https://github.com/apps/codecat-otto-dev/installations/new?state=${encodeURIComponent(state)}`;
+    const appName = process.env.NEXT_PUBLIC_GITHUB_APP_NAME || 'codecat-otto-dev';
+    const installUrl = `https://github.com/apps/${appName}/installations/new?state=${encodeURIComponent(state)}`;
     
     // GitHub App 설치 페이지로 이동
     window.location.href = installUrl;

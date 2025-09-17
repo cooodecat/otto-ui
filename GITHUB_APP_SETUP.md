@@ -2,10 +2,11 @@
 
 ## 현재 상태
 
-- ✅ 백엔드 서버 실행 중
+- ✅ 백엔드 서버 실행 중  
 - ✅ Supabase 인증 작동
-- ❌ GitHub App 미설치 (Installation 0개)
-- ❌ GitHub 저장소 연동 불가
+- ✅ Supabase Edge Function 배포됨
+- ⚠️ GitHub App Callback URL 설정 필요
+- ❌ GitHub 저장소 연동 불가 (App 설정 필요)
 
 ## GitHub App 설치 절차
 
@@ -28,9 +29,21 @@
    ```
    App name: otto-ci-cd (또는 원하는 이름)
    Homepage URL: http://localhost:3000
-   Webhook URL: http://localhost:4000/api/v1/github/webhook
+   
+   # ⚠️ 중요: Callback URL (설치 후 리다이렉트)
+   Callback URL: https://yodwrmwzkghrpyuarhet.supabase.co/functions/v1/github-callback
+   
+   # Webhook URL (이벤트 수신용) - 두 가지 중 선택
+   # 옵션 1: Supabase Edge Function (권장)
+   Webhook URL: https://yodwrmwzkghrpyuarhet.supabase.co/functions/v1/github-webhook/webhooks/github
+   
+   # 옵션 2: 로컬 백엔드 서버 (개발용)
+   # Webhook URL: http://localhost:4000/api/v1/github/webhook
    Webhook secret: [안전한 랜덤 문자열]
    ```
+   
+   **주의**: Callback URL은 GitHub App 설치 후 사용자를 리다이렉트할 Supabase Edge Function URL입니다.
+   이 URL이 정확하지 않으면 설치 정보가 DB에 저장되지 않습니다.
 
 #### 2.2 권한 설정 (Permissions)
 
@@ -91,6 +104,21 @@ OTTO_GITHUB_APP_WEBHOOK_SECRET=your-webhook-secret
 
 ## 트러블슈팅
 
+### ⚠️ 중요: GitHub App이 설치되었지만 DB에 저장되지 않는 경우
+
+**문제**: GitHub App을 설치했지만 프로젝트 생성 마법사에서 "설치된 GitHub App이 없습니다"라고 표시됨
+
+**원인**: GitHub App의 Callback URL이 잘못 설정되어 있음
+
+**해결 방법**:
+1. GitHub App 설정 페이지로 이동: https://github.com/settings/apps/[your-app-name]
+2. "General" 탭에서 다음 URL 확인 및 수정:
+   - **Callback URL**: `https://yodwrmwzkghrpyuarhet.supabase.co/functions/v1/github-callback`
+3. 변경사항 저장
+4. GitHub App을 다시 설치:
+   - https://github.com/settings/installations 에서 기존 설치 제거
+   - GitHub App 페이지에서 다시 설치
+
 ### Installation이 여전히 0개인 경우:
 
 1. **백엔드 로그 확인**:
@@ -98,6 +126,41 @@ OTTO_GITHUB_APP_WEBHOOK_SECRET=your-webhook-secret
    ```bash
    # 백엔드 서버 로그 확인
    tail -f /Users/roarjang/otto/otto-server/logs/*.log
+   ```
+
+## 📌 중요 설정 체크리스트
+
+GitHub App이 정상적으로 작동하려면 다음 설정이 모두 올바르게 구성되어야 합니다:
+
+### GitHub App 설정 (https://github.com/settings/apps/[your-app-name])
+- [ ] **Callback URL**: `https://yodwrmwzkghrpyuarhet.supabase.co/functions/v1/github-callback`
+- [ ] **Webhook URL**: `https://yodwrmwzkghrpyuarhet.supabase.co/functions/v1/github-webhook/webhooks/github`
+- [ ] **Request user authorization (OAuth) during installation**: ✅ 체크됨
+- [ ] **권한 설정**: Repository permissions 설정 완료
+- [ ] **이벤트 구독**: Push, Pull request, Installation 등 구독
+
+### 환경 변수 설정
+**Frontend (.env.development)**:
+```env
+NEXT_PUBLIC_GITHUB_APP_NAME=codecat-otto-dev
+```
+
+**Backend (.env)**:
+```env
+OTTO_GITHUB_APP_ID=[App ID]
+OTTO_GITHUB_APP_PRIVATE_KEY=[Private Key]
+OTTO_GITHUB_APP_CLIENT_ID=[Client ID]
+OTTO_GITHUB_APP_CLIENT_SECRET=[Client Secret]
+```
+
+**Supabase Edge Function**:
+- Edge Function이 배포되어 있고 접근 가능한지 확인
+- 환경 변수가 Supabase 프로젝트에 설정되어 있는지 확인
+
+### 설치 후 확인
+1. GitHub App 설치 후 DB의 `github_installations` 테이블 확인
+2. 프로젝트 생성 마법사에서 GitHub 저장소 목록이 표시되는지 확인
+3. 문제 발생시 Supabase Edge Function 로그 확인
    ```
 
 2. **Webhook 이벤트 확인**:

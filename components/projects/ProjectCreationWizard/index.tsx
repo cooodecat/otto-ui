@@ -743,19 +743,21 @@ export default function ProjectCreationWizard({
     }
   };
 
+  // 네비게이션 진행 중 플래그 (컴포넌트 레벨)
+  const [isNavigating, setIsNavigating] = useState(false);
+
   // 프로젝트로 이동 (파이프라인 조회 후 에디터로 이동)
   const handleNavigateToProject = async () => {
     console.log('=== handleNavigateToProject started ===');
     console.log('state.createdProjectId:', state.createdProjectId);
     console.log('state.projectConfig.name:', state.projectConfig.name);
+    console.log('isNavigating:', isNavigating);
     
     // 중복 실행 방지
-    const isNavigatingKey = `navigating_${state.createdProjectId}`;
-    if (sessionStorage.getItem(isNavigatingKey) === 'true') {
-      console.log('Already navigating to project, skipping...');
+    if (isNavigating) {
+      console.log('Already navigating, skipping...');
       return;
     }
-    sessionStorage.setItem(isNavigatingKey, 'true');
     
     if (!state.createdProjectId) {
       console.error('No createdProjectId available');
@@ -763,6 +765,8 @@ export default function ProjectCreationWizard({
       return;
     }
 
+    setIsNavigating(true); // 네비게이션 시작
+    
     try {
       // 잠시 대기하여 백엔드에서 파이프라인 생성 완료를 기다림
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -774,7 +778,15 @@ export default function ProjectCreationWizard({
       
       while (retryCount < maxRetries && !pipelineData) {
         console.log(`Fetching pipelines for project (attempt ${retryCount + 1}/${maxRetries}):`, state.createdProjectId);
-        const pipelineResponse = await apiClient.getPipelines(state.createdProjectId);
+        console.log('Type of createdProjectId:', typeof state.createdProjectId, 'Value:', state.createdProjectId);
+        
+        // 타입 체크 및 변환
+        const projectId = typeof state.createdProjectId === 'object' 
+          ? (state.createdProjectId as any).project_id || String(state.createdProjectId)
+          : String(state.createdProjectId);
+        
+        console.log('Using projectId for API call:', projectId);
+        const pipelineResponse = await apiClient.getPipelines(projectId);
         
         if (pipelineResponse.data && Array.isArray(pipelineResponse.data) && pipelineResponse.data.length > 0) {
           // 첫 번째 파이프라인을 사용
@@ -793,13 +805,25 @@ export default function ProjectCreationWizard({
       
       let targetUrl = `/projects/${state.createdProjectId}`;
       
-      // 파이프라인이 없으면 새로 생성 시도
+      // 파이프라인이 없으면 새로 생성 시도 (백엔드가 자동 생성하지 않는 경우만)
       if (!pipelineData) {
-        console.log('Creating default pipeline...');
+        console.log('No pipelines found after waiting. Checking if we should create one...');
         
-        try {
-          // 기본 파이프라인 생성
-          const createPipelineResponse = await apiClient.createPipeline(state.createdProjectId, {
+        // 파이프라인이 정말 없는지 한 번 더 확인
+        const projectId = typeof state.createdProjectId === 'object' 
+          ? (state.createdProjectId as any).project_id || String(state.createdProjectId)
+          : String(state.createdProjectId);
+        
+        const finalCheck = await apiClient.getPipelines(projectId);
+        if (finalCheck.data && Array.isArray(finalCheck.data) && finalCheck.data.length > 0) {
+          pipelineData = finalCheck.data[0];
+          console.log('Found pipeline on final check:', pipelineData);
+        } else {
+          // 정말로 파이프라인이 없을 때만 생성
+          console.log('No pipelines exist. Creating default pipeline...');
+          
+          try {
+            const createPipelineResponse = await apiClient.createPipeline(projectId, {
             name: 'Pipeline #1',
             blocks: [
               {
@@ -852,10 +876,11 @@ export default function ProjectCreationWizard({
           } else {
             throw new Error('파이프라인 생성 응답이 비어있습니다.');
           }
-        } catch (pipelineError) {
-          console.error('Failed to create pipeline:', pipelineError);
-          // 파이프라인 생성 실패 시에도 프로젝트 페이지로는 이동
-          toast.warning('파이프라인 자동 생성에 실패했습니다. 프로젝트 페이지에서 직접 생성해주세요.');
+          } catch (pipelineError) {
+            console.error('Failed to create pipeline:', pipelineError);
+            // 파이프라인 생성 실패 시에도 프로젝트 페이지로는 이동
+            toast.warning('파이프라인 자동 생성에 실패했습니다. 프로젝트 페이지에서 직접 생성해주세요.');
+          }
         }
       }
       
@@ -923,6 +948,8 @@ export default function ProjectCreationWizard({
       }
     } catch (error) {
       console.error('Failed to navigate to project:', error);
+      setIsNavigating(false); // 에러 발생 시 플래그 리셋
+      
       // 에러 발생 시 기본 URL로 이동
       const fallbackUrl = `/projects/${state.createdProjectId}/pipelines`;
       
@@ -941,9 +968,8 @@ export default function ProjectCreationWizard({
         }, 100);
       }
     } finally {
-      // 네비게이션 완료 후 플래그 제거
-      const isNavigatingKey = `navigating_${state.createdProjectId}`;
-      sessionStorage.removeItem(isNavigatingKey);
+      // 네비게이션 완료 후 플래그 리셋
+      setTimeout(() => setIsNavigating(false), 200);
     }
   };
 
