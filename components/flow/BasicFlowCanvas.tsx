@@ -24,23 +24,15 @@ import "@/styles/reactflow-overrides.css";
 import { nodeTypes, nodeConfigs } from "./nodes";
 import { edgeTypes, defaultEdgeOptions } from "./edges";
 
-let nodeId = 0;
-const getId = () => `node_${++nodeId}`;
+const getId = () => {
+    return `cicd_node_${crypto.randomUUID()}`;
+};
+
 
 // Initial start node - protected from deletion
 // 화면 중앙에 위치
 const initialNodes: Node[] = [
-  {
-    id: "start-1",
-    type: "start",
-    position: { x: 0, y: 0 }, // fitView로 자동 중앙 정렬
-    data: {
-      label: "Start",
-      type: "start",
-    },
-    selectable: false, // 선택 불가
-    deletable: false, // 삭제 불가
-  },
+
 ];
 
 function DropZone({
