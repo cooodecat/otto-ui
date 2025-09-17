@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useProjectStore } from "@/lib/projectStore";
+import { apiClient } from "@/lib/api";
 import StepIndicator from "./StepIndicator";
 import StepOne from "./StepOne";
 import StepTwo from "./StepTwo";
@@ -158,16 +159,61 @@ export default function ProjectCreationWizard({
 
   // 브랜치 목록 로드
   const loadBranches = useCallback(async () => {
+    if (!state.repository || !repoInfo?.installationId) {
+      console.error("Repository or installationId not found");
+      return;
+    }
+
     setState((prev) => ({ ...prev, isLoading: true }));
-    // 실제로는 GitHub API를 호출
-    setTimeout(() => {
-      setState((prev) => ({
-        ...prev,
-        branches: mockBranches,
-        isLoading: false,
-      }));
-    }, 1000);
-  }, []);
+    setError(null);
+
+    try {
+      const response = await apiClient.getGitHubBranches(
+        repoInfo.installationId,
+        state.repository.owner,
+        state.repository.name
+      );
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      if (response.data?.branches) {
+        const branches: Branch[] = response.data.branches.map(
+          (branch: any) => ({
+            name: branch.name,
+            commit: branch.commit
+              ? {
+                  sha: branch.commit.sha,
+                  message: branch.commit.commit?.message || "No message",
+                  date: branch.commit.commit?.author?.date
+                    ? new Date(
+                        branch.commit.commit.author.date
+                      ).toLocaleDateString()
+                    : "Unknown date",
+                  author:
+                    branch.commit.commit?.author?.name || "Unknown author",
+                }
+              : undefined,
+          })
+        );
+
+        setState((prev) => ({
+          ...prev,
+          branches,
+          isLoading: false,
+        }));
+      } else {
+        throw new Error("브랜치 데이터를 찾을 수 없습니다");
+      }
+    } catch (err) {
+      console.error("Failed to load branches:", err);
+      setError(
+        err instanceof Error ? err.message : "브랜치를 불러오는데 실패했습니다"
+      );
+      setState((prev) => ({ ...prev, isLoading: false }));
+    }
+  }, [state.repository, repoInfo?.installationId]);
 
   // 프로젝트 생성
   const handleCreateProject = async () => {
@@ -339,6 +385,7 @@ export default function ProjectCreationWizard({
               }
               isLoading={state.isLoading}
               onLoadBranches={loadBranches}
+              error={error}
             />
           )}
 
