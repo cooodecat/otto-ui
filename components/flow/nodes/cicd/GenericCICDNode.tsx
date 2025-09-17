@@ -17,8 +17,10 @@ import {
  */
 const GenericCICDNode = memo(({ data, id }: NodeProps) => {
   const nodeData = data as unknown as BaseCICDNodeData;
-  const group = BLOCK_TYPE_TO_GROUP[nodeData.blockType as CICDBlockType];
-  const groupColors = CICD_GROUP_COLORS[group];
+  const group = nodeData.blockType
+    ? BLOCK_TYPE_TO_GROUP[nodeData.blockType as CICDBlockType]
+    : CICDBlockGroup.UTILITY; // 기본값으로 UTILITY 사용
+  const groupColors = CICD_GROUP_COLORS[group] || CICD_GROUP_COLORS[CICDBlockGroup.UTILITY];
 
   // 표시에서 제외할 필드
   const hiddenKeys = new Set(["label", "blockType", "groupType", "blockId"]);
