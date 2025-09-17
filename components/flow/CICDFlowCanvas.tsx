@@ -44,6 +44,15 @@ import "@/styles/reactflow-overrides.css";
 import { nodeTypes, createNodeInstance } from "./nodes/node-registry";
 import { edgeTypes, cicdEdgeOptions } from "./edges";
 
+
+/**
+ * 노드 ID 생성기
+ * crypto.randomUUID()를 사용하여 고유한 ID 생성
+ */
+const getId = () => {
+  return `cicd_node_${crypto.randomUUID()}`;
+};
+
 /**
  * 초기 노드 구성 - 빈 캔버스에서 시작
  */
@@ -69,12 +78,9 @@ function CICDDropZone({
 
       if (savedData) {
         try {
-          const { nodes: savedNodes, edges: savedEdges } =
-            JSON.parse(savedData);
-          console.log(
-            `📁 Loading pipeline from localStorage (${storageKey}):`,
-            { nodes: savedNodes.length, edges: savedEdges.length }
-          );
+          const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedData);
+          console.log(`📁 Loading pipeline from localStorage (${storageKey}):`, { nodes: savedNodes.length, edges: savedEdges.length });
+
 
           setNodes(savedNodes);
           setEdges(savedEdges);
@@ -94,10 +100,11 @@ function CICDDropZone({
 
   const createDefaultPipelineStart = () => {
     console.log("🏁 Creating default Pipeline Start node...");
+
     const pipelineStartNode = createNodeInstance("pipeline_start", {
       x: 100,
       y: 100,
-    });
+    }, getId());
 
     // 삭제 불가능하도록 설정
     pipelineStartNode.selectable = false;
@@ -108,24 +115,14 @@ function CICDDropZone({
   };
 
   // localStorage 저장 함수
-  const saveToLocalStorage = useCallback(
-    (currentNodes: Node[], currentEdges: Edge[]) => {
-      if (
-        initializedRef.current &&
-        projectId &&
-        (currentNodes.length > 0 || currentEdges.length > 0)
-      ) {
-        const storageKey = `pipeline-${projectId}`;
-        const pipelineData = { nodes: currentNodes, edges: currentEdges };
-        localStorage.setItem(storageKey, JSON.stringify(pipelineData));
-        console.log(`💾 Saved to localStorage (${storageKey}):`, {
-          nodes: currentNodes.length,
-          edges: currentEdges.length,
-        });
-      }
-    },
-    [projectId]
-  );
+  const saveToLocalStorage = useCallback((currentNodes: Node[], currentEdges: Edge[]) => {
+    if (initializedRef.current && projectId && (currentNodes.length > 0 || currentEdges.length > 0)) {
+      const storageKey = `pipeline-${projectId}`;
+      const pipelineData = { nodes: currentNodes, edges: currentEdges };
+      localStorage.setItem(storageKey, JSON.stringify(pipelineData));
+      console.log(`💾 Saved to localStorage (${storageKey}):`, { nodes: currentNodes.length, edges: currentEdges.length });
+    }
+  }, [projectId]);
 
   // localStorage에 자동 저장 (상태 변경 감지)
   useEffect(() => {
@@ -157,13 +154,19 @@ function CICDDropZone({
     }
   }, [onRef, nodes, edges]);
 
-  const onNodesChange: OnNodesChange = useCallback((changes) => {
-    setNodes((nds) => applyNodeChanges(changes, nds));
-  }, []);
+  const onNodesChange: OnNodesChange = useCallback(
+    (changes) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
+    []
+  );
 
-  const onEdgesChange: OnEdgesChange = useCallback((changes) => {
-    setEdges((eds) => applyEdgeChanges(changes, eds));
-  }, []);
+  const onEdgesChange: OnEdgesChange = useCallback(
+    (changes) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+    },
+    []
+  );
 
   const onConnect: OnConnect = useCallback((params) => {
     setEdges((eds) => {
