@@ -85,7 +85,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.START].colorHex,
     component: PipelineStartNode as ComponentType<NodeProps>, // Pipeline Start 전용 컴포넌트
     category: "cicd-start",
-    description: "CI/CD 파이프라인 시작점",
+    description: "파이프라인 시작",
     minWidth: 280,
     deletable: false,
     defaultData: {
@@ -214,7 +214,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].colorHex,
     component: OSPackageNode as ComponentType<NodeProps>,
     category: "cicd-prebuild",
-    description: "OS 패키지 설치 (apt, yum, brew 등)",
+    description: "OS 패키지 설치",
     defaultData: {
       label: "OS Packages",
       blockType: CICDBlockType.OS_PACKAGE,
@@ -280,7 +280,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorHex,
     component: BuildWebpackNode as ComponentType<NodeProps>,
     category: "cicd-build",
-    description: "Webpack으로 프로젝트 빌드",
+    description: "Webpack 빌드",
     defaultData: {
       label: "Webpack Build",
       blockType: CICDBlockType.BUILD_WEBPACK,
@@ -301,7 +301,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorHex,
     component: InstallPackagesNode as ComponentType<NodeProps>,
     category: "cicd-build",
-    description: "의존성 패키지 설치",
+    description: "패키지 설치",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.INSTALL_MODULE_NODE].label,
       blockType: CICDBlockType.INSTALL_MODULE_NODE,
@@ -321,7 +321,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorHex,
     component: ViteBuildNode as ComponentType<NodeProps>,
     category: "cicd-build",
-    description: "Vite로 프로젝트 빌드",
+    description: "Vite 빌드",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.BUILD_VITE].label,
       blockType: CICDBlockType.BUILD_VITE,
@@ -363,7 +363,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorHex,
     component: TestJestNode as ComponentType<NodeProps>,
     category: "cicd-test",
-    description: "Jest 단위 테스트 실행",
+    description: "Jest 테스트",
     defaultData: {
       label: "Jest Tests",
       blockType: CICDBlockType.TEST_JEST,
@@ -383,7 +383,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorHex,
     component: TestMochaNode as ComponentType<NodeProps>,
     category: "cicd-test",
-    description: "Mocha 테스트 실행",
+    description: "Mocha 테스트",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_MOCHA].label,
       blockType: CICDBlockType.TEST_MOCHA,
@@ -420,7 +420,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorHex,
     component: TestCustomNode as ComponentType<NodeProps>,
     category: "cicd-test",
-    description: "커스텀 테스트 실행",
+    description: "커스텀 테스트",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_CUSTOM].label,
       blockType: CICDBlockType.TEST_CUSTOM,
@@ -571,8 +571,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorHex,
     component: ConditionBranchNode as ComponentType<NodeProps>,
     category: "cicd-utility",
-    description:
-      "환경, 파일 또는 명령어에 따른 조건부 분기",
+    description: "조건부 분기",
     minWidth: 320,
     defaultData: {
       label: "Condition",
@@ -602,7 +601,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorHex,
     component: GenericCICDNode as ComponentType<NodeProps>,
     category: "cicd-utility",
-    description: "병렬로 분기 실행",
+    description: "병렬 실행",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.PARALLEL_EXECUTION].label,
       blockType: CICDBlockType.PARALLEL_EXECUTION,
@@ -622,7 +621,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorHex,
     component: GenericCICDNode as ComponentType<NodeProps>,
     category: "cicd-utility",
-    description: "커스텀 명령어 실행",
+    description: "커스텀 명령",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.CUSTOM_COMMAND].label,
       blockType: CICDBlockType.CUSTOM_COMMAND,
