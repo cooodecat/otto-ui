@@ -288,7 +288,7 @@ function CICDDropZone({
           minZoom={0.3}
           maxZoom={2}
           connectionLineStyle={{
-            stroke: "#10b981",
+            stroke: "#9333ea",
             strokeWidth: 2,
             strokeDasharray: "8 4",
           }}

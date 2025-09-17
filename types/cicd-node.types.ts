@@ -58,11 +58,11 @@ export enum CICDBlockGroup {
 // 그룹별 색상 매핑
 export const CICD_GROUP_COLORS = {
   [CICDBlockGroup.START]: {
-    colorClass: "bg-green-500",
-    colorHex: "#10b981",
-    bgClass: "bg-green-50",
-    borderClass: "border-green-200",
-    textClass: "text-green-700",
+    colorClass: "bg-purple-600",
+    colorHex: "#9333ea",
+    bgClass: "bg-purple-50",
+    borderClass: "border-purple-200",
+    textClass: "text-purple-700",
     icon: "Play",
   },
   [CICDBlockGroup.PREBUILD]: {
