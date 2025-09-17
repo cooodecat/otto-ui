@@ -60,7 +60,7 @@ export const nodeRegistry: NodeRegistry = {
   start: {
     type: "start",
     label: "Start",
-    icon: "▶️",
+    icon: "Play",
     colorClass: "bg-blue-500",
     colorHex: "#3b82f6",
     component: StartNode as ComponentType<NodeProps>,
@@ -103,7 +103,7 @@ export const nodeRegistry: NodeRegistry = {
   agent: {
     type: "agent",
     label: "Agent",
-    icon: "🤖",
+    icon: "Bot",
     colorClass: "bg-purple-500",
     colorHex: "#a855f7",
     component: AgentNode as ComponentType<NodeProps>,
@@ -119,7 +119,7 @@ export const nodeRegistry: NodeRegistry = {
   api: {
     type: "api",
     label: "API",
-    icon: "🔗",
+    icon: "Link",
     colorClass: "bg-blue-500",
     colorHex: "#3b82f6",
     component: ApiNode as ComponentType<NodeProps>,
@@ -135,7 +135,7 @@ export const nodeRegistry: NodeRegistry = {
   condition: {
     type: "condition",
     label: "Condition",
-    icon: "🔶",
+    icon: "Diamond",
     colorClass: "bg-orange-500",
     colorHex: "#f97316",
     component: ConditionNode as ComponentType<NodeProps>,
@@ -156,7 +156,7 @@ export const nodeRegistry: NodeRegistry = {
   function: {
     type: "function",
     label: "Function",
-    icon: "</>",
+    icon: "Code",
     colorClass: "bg-red-500",
     colorHex: "#ef4444",
     component: FunctionNode as ComponentType<NodeProps>,
@@ -172,7 +172,7 @@ export const nodeRegistry: NodeRegistry = {
   knowledge: {
     type: "knowledge",
     label: "Knowledge",
-    icon: "🧠",
+    icon: "Brain",
     colorClass: "bg-teal-500",
     colorHex: "#14b8a6",
     component: KnowledgeNode as ComponentType<NodeProps>,
@@ -188,7 +188,7 @@ export const nodeRegistry: NodeRegistry = {
   developer: {
     type: "developer",
     label: "Developer",
-    icon: "👨‍💻",
+    icon: "User",
     colorClass: "bg-green-500",
     colorHex: "#10b981",
     component: DeveloperNode as ComponentType<NodeProps>,
