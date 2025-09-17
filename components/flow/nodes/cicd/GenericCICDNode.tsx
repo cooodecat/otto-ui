@@ -8,6 +8,7 @@ import {
   CICD_GROUP_COLORS,
   BLOCK_TYPE_TO_GROUP,
   CICDBlockType,
+  CICDBlockGroup,
 } from "@/types/cicd-node.types";
 
 /**
