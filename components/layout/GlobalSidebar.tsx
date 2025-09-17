@@ -562,7 +562,7 @@ const GlobalSidebar = () => {
                         onClick={() => handleProjectSelect(project.projectId)}
                         className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
                           project.projectId === selectedProjectId
-                            ? "bg-blue-50"
+                            ? "bg-purple-50"
                             : ""
                         }`}
                       >
@@ -570,7 +570,7 @@ const GlobalSidebar = () => {
                           <div
                             className={`font-medium truncate ${
                               project.projectId === selectedProjectId
-                                ? "text-blue-900"
+                                ? "text-purple-900"
                                 : "text-gray-900"
                             }`}
                           >
@@ -581,7 +581,7 @@ const GlobalSidebar = () => {
                           </div>
                         </div>
                         {project.projectId === selectedProjectId && (
-                          <Check className="w-4 h-4 text-blue-600" />
+                          <Check className="w-4 h-4 text-purple-600" />
                         )}
                       </button>
                     ))
@@ -644,7 +644,7 @@ const GlobalSidebar = () => {
                 key={pipeline.pipelineId}
                 className={`flex items-center p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
                   pipeline.isActive
-                    ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
+                    ? "bg-purple-50 text-purple-700 border border-purple-200 shadow-sm"
                     : "hover:bg-gray-50 text-gray-700 border border-transparent"
                 }`}
                 onClick={() => handlePipelineSelect(pipeline.pipelineId)}
@@ -805,7 +805,7 @@ const GlobalSidebar = () => {
                 key={filter.id}
                 className={`w-full flex items-center p-3 rounded-lg transition-all text-left cursor-pointer ${
                   filter.isActive
-                    ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                    ? "bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100"
                     : "hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-200"
                 }`}
               >
