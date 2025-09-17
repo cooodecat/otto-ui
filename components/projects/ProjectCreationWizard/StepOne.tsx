@@ -20,6 +20,7 @@ interface StepOneProps {
   onBranchChange: (branch: string) => void;
   isLoading: boolean;
   onLoadBranches: () => void;
+  error?: string | null;
 }
 
 export default function StepOne({
@@ -29,16 +30,17 @@ export default function StepOne({
   onBranchChange,
   isLoading,
   onLoadBranches,
+  error,
 }: StepOneProps) {
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [branchSearch, setBranchSearch] = useState("");
 
   useEffect(() => {
     // 컴포넌트 마운트 시 브랜치 목록 로드
-    if (branches.length === 0 && !isLoading) {
+    if (branches.length === 0 && !isLoading && !error) {
       onLoadBranches();
     }
-  }, [branches.length, isLoading, onLoadBranches]);
+  }, [branches.length, isLoading, error, onLoadBranches]);
 
   const filteredBranches = branches.filter((branch) =>
     branch.name.toLowerCase().includes(branchSearch.toLowerCase())
@@ -151,6 +153,23 @@ export default function StepOne({
         <h4 className="text-lg font-semibold text-gray-900 mb-4">
           브랜치 선택
         </h4>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <span className="text-sm font-medium text-red-800">오류</span>
+            </div>
+            <p className="text-sm text-red-700 mt-1">{error}</p>
+            <button
+              onClick={onLoadBranches}
+              className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
 
         <div className="relative">
           <button

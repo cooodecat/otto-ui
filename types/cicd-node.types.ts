@@ -58,12 +58,11 @@ export enum CICDBlockGroup {
 // 그룹별 색상 매핑
 export const CICD_GROUP_COLORS = {
   [CICDBlockGroup.START]: {
-    colorClass: "bg-green-500",
-    colorHex: "#10b981",
-    bgClass: "bg-green-50",
-    borderClass: "border-green-200",
-    textClass: "text-green-700",
-    icon: "▶️",
+    colorClass: "bg-purple-600",
+    colorHex: "#9333ea",
+    bgClass: "bg-purple-50",
+    borderClass: "border-purple-200",
+    textClass: "text-purple-700",
   },
   [CICDBlockGroup.PREBUILD]: {
     colorClass: "bg-blue-500",
@@ -71,7 +70,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-blue-50",
     borderClass: "border-blue-200",
     textClass: "text-blue-700",
-    icon: "⚙️",
   },
   [CICDBlockGroup.BUILD]: {
     colorClass: "bg-emerald-500",
@@ -79,7 +77,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-emerald-50",
     borderClass: "border-emerald-200",
     textClass: "text-emerald-700",
-    icon: "🔨",
   },
   [CICDBlockGroup.TEST]: {
     colorClass: "bg-purple-500",
@@ -87,7 +84,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-purple-50",
     borderClass: "border-purple-200",
     textClass: "text-purple-700",
-    icon: "🧪",
   },
   [CICDBlockGroup.DEPLOY]: {
     colorClass: "bg-orange-500",
@@ -95,7 +91,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-orange-50",
     borderClass: "border-orange-200",
     textClass: "text-orange-700",
-    icon: "🚀",
   },
   [CICDBlockGroup.NOTIFICATION]: {
     colorClass: "bg-yellow-500",
@@ -103,7 +98,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-yellow-50",
     borderClass: "border-yellow-200",
     textClass: "text-yellow-700",
-    icon: "📢",
   },
   [CICDBlockGroup.UTILITY]: {
     colorClass: "bg-gray-500",
@@ -111,7 +105,6 @@ export const CICD_GROUP_COLORS = {
     bgClass: "bg-gray-50",
     borderClass: "border-gray-200",
     textClass: "text-gray-700",
-    icon: "🔧",
   },
 } as const;
 
@@ -408,35 +401,35 @@ export const BLOCK_TYPE_TO_GROUP: Record<CICDBlockType, CICDBlockGroup> = {
 
 // 블록 타입별 기본 라벨과 아이콘
 export const CICD_BLOCK_CONFIGS = {
-  [CICDBlockType.PIPELINE_START]: { label: "Pipeline Start", icon: "▶️" },
+  [CICDBlockType.PIPELINE_START]: { label: "Pipeline Start", icon: "Play" },
 
-  [CICDBlockType.OS_PACKAGE]: { label: "OS Packages", icon: "📦" },
-  [CICDBlockType.NODE_VERSION]: { label: "Node Version", icon: "🟢" },
-  [CICDBlockType.ENVIRONMENT_SETUP]: { label: "Environment", icon: "🌍" },
+  [CICDBlockType.OS_PACKAGE]: { label: "OS Packages", icon: "Package" },
+  [CICDBlockType.NODE_VERSION]: { label: "Node Version", icon: "Circle" },
+  [CICDBlockType.ENVIRONMENT_SETUP]: { label: "Environment", icon: "Globe" },
 
   [CICDBlockType.INSTALL_MODULE_NODE]: {
     label: "Install Packages",
-    icon: "📥",
+    icon: "Download",
   },
-  [CICDBlockType.BUILD_WEBPACK]: { label: "Webpack Build", icon: "📦" },
-  [CICDBlockType.BUILD_VITE]: { label: "Vite Build", icon: "⚡" },
-  [CICDBlockType.BUILD_CUSTOM]: { label: "Custom Build", icon: "🔨" },
+  [CICDBlockType.BUILD_WEBPACK]: { label: "Webpack Build", icon: "Package" },
+  [CICDBlockType.BUILD_VITE]: { label: "Vite Build", icon: "Zap" },
+  [CICDBlockType.BUILD_CUSTOM]: { label: "Custom Build", icon: "Hammer" },
 
-  [CICDBlockType.TEST_JEST]: { label: "Jest Tests", icon: "🃏" },
-  [CICDBlockType.TEST_MOCHA]: { label: "Mocha Tests", icon: "☕" },
-  [CICDBlockType.TEST_VITEST]: { label: "Vitest", icon: "⚡" },
-  [CICDBlockType.TEST_PLAYWRIGHT]: { label: "Playwright", icon: "🎭" },
-  [CICDBlockType.TEST_CUSTOM]: { label: "Custom Tests", icon: "🧪" },
+  [CICDBlockType.TEST_JEST]: { label: "Jest Tests", icon: "TestTube" },
+  [CICDBlockType.TEST_MOCHA]: { label: "Mocha Tests", icon: "Coffee" },
+  [CICDBlockType.TEST_VITEST]: { label: "Vitest", icon: "Zap" },
+  [CICDBlockType.TEST_PLAYWRIGHT]: { label: "Playwright", icon: "Theater" },
+  [CICDBlockType.TEST_CUSTOM]: { label: "Custom Tests", icon: "Flask" },
 
   // [CICDBlockType.DEPLOY_DOCKER]: { label: 'Docker Deploy', icon: '🐳' },
   // [CICDBlockType.DEPLOY_VERCEL]: { label: 'Vercel Deploy', icon: '▲' },
   // [CICDBlockType.DEPLOY_AWS]: { label: 'AWS Deploy', icon: '☁️' },
   // [CICDBlockType.DEPLOY_CUSTOM]: { label: 'Custom Deploy', icon: '🚀' },
 
-  [CICDBlockType.NOTIFICATION_SLACK]: { label: "Slack Notify", icon: "💬" },
-  [CICDBlockType.NOTIFICATION_EMAIL]: { label: "Email Notify", icon: "📧" },
+  [CICDBlockType.NOTIFICATION_SLACK]: { label: "Slack Notify", icon: "MessageSquare" },
+  [CICDBlockType.NOTIFICATION_EMAIL]: { label: "Email Notify", icon: "Mail" },
 
-  [CICDBlockType.CONDITION_BRANCH]: { label: "Condition", icon: "🔀" },
-  [CICDBlockType.PARALLEL_EXECUTION]: { label: "Parallel", icon: "⚡" },
-  [CICDBlockType.CUSTOM_COMMAND]: { label: "Custom Command", icon: "💻" },
+  [CICDBlockType.CONDITION_BRANCH]: { label: "Condition", icon: "GitBranch" },
+  [CICDBlockType.PARALLEL_EXECUTION]: { label: "Parallel", icon: "Zap" },
+  [CICDBlockType.CUSTOM_COMMAND]: { label: "Custom Command", icon: "Terminal" },
 } as const;

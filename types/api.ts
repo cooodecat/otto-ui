@@ -52,3 +52,128 @@ export interface ApiError {
   message: string;
   error: string;
 }
+
+// GitHub Integration API 타입들
+export interface GitHubInstallation {
+  installation_id: string;
+  user_id: string;
+  account_id: string;
+  account_login: string;
+  account_type: string;
+  github_installation_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GitHubInstallationsResponse {
+  installations: GitHubInstallation[];
+  totalInstallations: number;
+}
+
+export interface GitHubInstallUrlResponse {
+  installUrl: string;
+  state: string;
+}
+
+export interface GitHubStatusResponse {
+  hasInstallation: boolean;
+  totalInstallations: number;
+  totalConnectedProjects: number;
+  installations: GitHubInstallation[];
+}
+
+export interface GitHubRepository {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  private: boolean;
+  default_branch: string;
+  language: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  updated_at: string | null;
+}
+
+export interface GitHubRepositoriesResponse {
+  repositories: GitHubRepository[];
+  totalRepositories: number;
+}
+
+export interface GitHubBranch {
+  name: string;
+  protected: boolean;
+  commit: {
+    sha: string;
+    url: string;
+  };
+}
+
+export interface GitHubBranchesResponse {
+  branches: GitHubBranch[];
+  totalBranches: number;
+}
+
+// Projects API 타입들
+export interface Project {
+  project_id: string;
+  name: string;
+  description: string | null;
+  github_owner: string | null;
+  github_repo_id: string | null;
+  github_repo_name: string | null;
+  github_repo_url: string | null;
+  selected_branch: string | null;
+  installation_id: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  codebuild_status: string | null;
+  codebuild_project_name: string | null;
+  codebuild_project_arn: string | null;
+  cloudwatch_log_group: string | null;
+  codebuild_error_message: string | null;
+}
+
+export interface ProjectsResponse {
+  projects: Project[];
+  totalProjects: number;
+}
+
+export interface ProjectDetailResponse {
+  project: Project;
+}
+
+export interface CreateProjectWithGithubRequest {
+  name: string;
+  description: string;
+  installationId: string;
+  githubRepoId: string;
+  githubRepoUrl: string;
+  githubRepoName: string;
+  githubOwner: string;
+  selectedBranch: string;
+}
+
+export interface CreateProjectWithGithubResponse {
+  project: Project;
+}
+
+export interface UpdateProjectRequest {
+  name?: string;
+  description?: string;
+  selectedBranch?: string;
+}
+
+export interface UpdateProjectResponse {
+  project: Project;
+}
+
+export interface DeleteProjectResponse {
+  message: string;
+}
+
+export interface RetryCodeBuildResponse {
+  message: string;
+}

@@ -129,6 +129,36 @@ function CICDDropZone({
     saveToLocalStorage(nodes, edges);
   }, [nodes, edges, saveToLocalStorage]);
 
+  // 파이프라인 초기화 함수 (Pipeline Start 노드만 남김)
+  const resetPipeline = useCallback(() => {
+    console.log("🔄 Resetting pipeline - keeping only Pipeline Start node");
+
+    // Pipeline Start 노드만 필터링
+    const pipelineStartNodes = nodes.filter(
+      (node) => node.type === "pipeline_start"
+    );
+
+    if (pipelineStartNodes.length === 0) {
+      // Pipeline Start 노드가 없으면 새로 생성
+      createDefaultPipelineStart();
+    } else {
+      // Pipeline Start 노드만 남기고 모든 엣지 제거
+      setNodes(pipelineStartNodes);
+      setEdges([]);
+    }
+
+    // localStorage도 업데이트
+    if (projectId) {
+      const storageKey = `pipeline-${projectId}`;
+      const resetData = {
+        nodes: pipelineStartNodes.length > 0 ? pipelineStartNodes : nodes.filter(n => n.type === "pipeline_start"),
+        edges: []
+      };
+      localStorage.setItem(storageKey, JSON.stringify(resetData));
+      console.log(`💾 Reset saved to localStorage (${storageKey})`);
+    }
+  }, [nodes, projectId]);
+
   // Ref 등록
   React.useEffect(() => {
     if (onRef) {
@@ -150,9 +180,10 @@ function CICDDropZone({
           );
           return { nodes, edges };
         },
+        resetPipeline,
       });
     }
-  }, [onRef, nodes, edges]);
+  }, [onRef, nodes, edges, resetPipeline]);
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
@@ -291,7 +322,7 @@ function CICDDropZone({
           minZoom={0.3}
           maxZoom={2}
           connectionLineStyle={{
-            stroke: "#10b981",
+            stroke: "#9333ea",
             strokeWidth: 2,
             strokeDasharray: "8 4",
           }}
@@ -321,6 +352,7 @@ function CICDDropZone({
 
 export interface CICDFlowCanvasRef {
   getFlowData: () => { nodes: any[]; edges: any[] };
+  resetPipeline: () => void;
 }
 
 export default function CICDFlowCanvas({

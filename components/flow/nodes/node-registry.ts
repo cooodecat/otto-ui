@@ -60,12 +60,12 @@ export const nodeRegistry: NodeRegistry = {
   start: {
     type: "start",
     label: "Start",
-    icon: "▶️",
+    icon: "Play",
     colorClass: "bg-blue-500",
     colorHex: "#3b82f6",
     component: StartNode as ComponentType<NodeProps>,
     category: "trigger",
-    description: "Workflow starting point",
+    description: "워크플로우 시작점",
     minWidth: 280,
     deletable: false,
     defaultData: {
@@ -85,7 +85,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.START].colorHex,
     component: PipelineStartNode as ComponentType<NodeProps>, // Pipeline Start 전용 컴포넌트
     category: "cicd-start",
-    description: "CI/CD Pipeline starting point",
+    description: "파이프라인 시작",
     minWidth: 280,
     deletable: false,
     defaultData: {
@@ -103,12 +103,12 @@ export const nodeRegistry: NodeRegistry = {
   agent: {
     type: "agent",
     label: "Agent",
-    icon: "🤖",
+    icon: "Bot",
     colorClass: "bg-purple-500",
     colorHex: "#a855f7",
     component: AgentNode as ComponentType<NodeProps>,
     category: "action",
-    description: "AI Agent for processing",
+    description: "AI 에이전트 처리",
     defaultData: {
       label: "Agent",
       model: "gpt-4",
@@ -119,12 +119,12 @@ export const nodeRegistry: NodeRegistry = {
   api: {
     type: "api",
     label: "API",
-    icon: "🔗",
+    icon: "Link",
     colorClass: "bg-blue-500",
     colorHex: "#3b82f6",
     component: ApiNode as ComponentType<NodeProps>,
     category: "action",
-    description: "External API call",
+    description: "외부 API 호출",
     defaultData: {
       label: "API",
       method: "GET",
@@ -135,12 +135,12 @@ export const nodeRegistry: NodeRegistry = {
   condition: {
     type: "condition",
     label: "Condition",
-    icon: "🔶",
+    icon: "Diamond",
     colorClass: "bg-orange-500",
     colorHex: "#f97316",
     component: ConditionNode as ComponentType<NodeProps>,
     category: "control",
-    description: "Conditional branching",
+    description: "조건부 분기",
     minWidth: 320,
     defaultData: {
       label: "Condition",
@@ -156,12 +156,12 @@ export const nodeRegistry: NodeRegistry = {
   function: {
     type: "function",
     label: "Function",
-    icon: "</>",
+    icon: "Code",
     colorClass: "bg-red-500",
     colorHex: "#ef4444",
     component: FunctionNode as ComponentType<NodeProps>,
     category: "action",
-    description: "Custom function",
+    description: "커스텀 함수",
     defaultData: {
       label: "Function",
       language: "javascript",
@@ -172,12 +172,12 @@ export const nodeRegistry: NodeRegistry = {
   knowledge: {
     type: "knowledge",
     label: "Knowledge",
-    icon: "🧠",
+    icon: "Brain",
     colorClass: "bg-teal-500",
     colorHex: "#14b8a6",
     component: KnowledgeNode as ComponentType<NodeProps>,
     category: "data",
-    description: "Knowledge base query",
+    description: "지식 베이스 쿼리",
     defaultData: {
       label: "Knowledge",
       topK: 5,
@@ -188,12 +188,12 @@ export const nodeRegistry: NodeRegistry = {
   developer: {
     type: "developer",
     label: "Developer",
-    icon: "👨‍💻",
+    icon: "User",
     colorClass: "bg-green-500",
     colorHex: "#10b981",
     component: DeveloperNode as ComponentType<NodeProps>,
     category: "custom",
-    description: "Developer assignment",
+    description: "개발자 할당",
     defaultData: {
       label: "Developer",
       skills: ["TypeScript", "React"],
@@ -214,7 +214,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].colorHex,
     component: OSPackageNode as ComponentType<NodeProps>,
     category: "cicd-prebuild",
-    description: "Install OS packages (apt, yum, brew, etc.)",
+    description: "OS 패키지 설치",
     defaultData: {
       label: "OS Packages",
       blockType: CICDBlockType.OS_PACKAGE,
@@ -238,7 +238,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].colorHex,
     component: NodeVersionNode as ComponentType<NodeProps>,
     category: "cicd-prebuild",
-    description: "Set Node.js version",
+    description: "Node.js 버전 설정",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.NODE_VERSION].label,
       blockType: CICDBlockType.NODE_VERSION,
@@ -258,7 +258,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].colorHex,
     component: EnvironmentSetupNode as ComponentType<NodeProps>,
     category: "cicd-prebuild",
-    description: "Setup environment variables",
+    description: "환경 변수 설정",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.ENVIRONMENT_SETUP].label,
       blockType: CICDBlockType.ENVIRONMENT_SETUP,
@@ -280,7 +280,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorHex,
     component: BuildWebpackNode as ComponentType<NodeProps>,
     category: "cicd-build",
-    description: "Build project with Webpack",
+    description: "Webpack 빌드",
     defaultData: {
       label: "Webpack Build",
       blockType: CICDBlockType.BUILD_WEBPACK,
@@ -301,7 +301,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorHex,
     component: InstallPackagesNode as ComponentType<NodeProps>,
     category: "cicd-build",
-    description: "Install dependencies",
+    description: "패키지 설치",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.INSTALL_MODULE_NODE].label,
       blockType: CICDBlockType.INSTALL_MODULE_NODE,
@@ -321,7 +321,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorHex,
     component: ViteBuildNode as ComponentType<NodeProps>,
     category: "cicd-build",
-    description: "Build project with Vite",
+    description: "Vite 빌드",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.BUILD_VITE].label,
       blockType: CICDBlockType.BUILD_VITE,
@@ -340,7 +340,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorHex,
     component: CustomBuildNode as ComponentType<NodeProps>,
     category: "cicd-build",
-    description: "Run custom build",
+    description: "커스텀 빌드 실행",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.BUILD_CUSTOM].label,
       blockType: CICDBlockType.BUILD_CUSTOM,
@@ -363,7 +363,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorHex,
     component: TestJestNode as ComponentType<NodeProps>,
     category: "cicd-test",
-    description: "Run Jest unit tests",
+    description: "Jest 테스트",
     defaultData: {
       label: "Jest Tests",
       blockType: CICDBlockType.TEST_JEST,
@@ -383,7 +383,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorHex,
     component: TestMochaNode as ComponentType<NodeProps>,
     category: "cicd-test",
-    description: "Run Mocha tests",
+    description: "Mocha 테스트",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_MOCHA].label,
       blockType: CICDBlockType.TEST_MOCHA,
@@ -401,7 +401,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorHex,
     component: TestVitestNode as ComponentType<NodeProps>,
     category: "cicd-test",
-    description: "Run Vitest",
+    description: "Vitest 실행",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_VITEST].label,
       blockType: CICDBlockType.TEST_VITEST,
@@ -420,7 +420,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorHex,
     component: TestCustomNode as ComponentType<NodeProps>,
     category: "cicd-test",
-    description: "Run custom tests",
+    description: "커스텀 테스트",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.TEST_CUSTOM].label,
       blockType: CICDBlockType.TEST_CUSTOM,
@@ -528,7 +528,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].colorHex,
     component: NotificationSlackNode as ComponentType<NodeProps>,
     category: "cicd-notification",
-    description: "Send Slack notifications",
+    description: "Slack 알림 전송",
     defaultData: {
       label: "Slack Notify",
       blockType: CICDBlockType.NOTIFICATION_SLACK,
@@ -549,7 +549,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].colorHex,
     component: NotificationEmailNode as ComponentType<NodeProps>,
     category: "cicd-notification",
-    description: "Send Email notifications",
+    description: "이메일 알림 전송",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.NOTIFICATION_EMAIL].label,
       blockType: CICDBlockType.NOTIFICATION_EMAIL,
@@ -571,8 +571,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorHex,
     component: ConditionBranchNode as ComponentType<NodeProps>,
     category: "cicd-utility",
-    description:
-      "Conditional branching based on environment, files, or commands",
+    description: "조건부 분기",
     minWidth: 320,
     defaultData: {
       label: "Condition",
@@ -602,7 +601,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorHex,
     component: GenericCICDNode as ComponentType<NodeProps>,
     category: "cicd-utility",
-    description: "Run branches in parallel",
+    description: "병렬 실행",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.PARALLEL_EXECUTION].label,
       blockType: CICDBlockType.PARALLEL_EXECUTION,
@@ -622,7 +621,7 @@ export const nodeRegistry: NodeRegistry = {
     colorHex: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorHex,
     component: GenericCICDNode as ComponentType<NodeProps>,
     category: "cicd-utility",
-    description: "Run custom commands",
+    description: "커스텀 명령",
     defaultData: {
       label: CICD_BLOCK_CONFIGS[CICDBlockType.CUSTOM_COMMAND].label,
       blockType: CICDBlockType.CUSTOM_COMMAND,
@@ -687,7 +686,6 @@ export const nodeCategories = {
 export const cicdCategories = {
   start: {
     name: "Start",
-    icon: CICD_GROUP_COLORS[CICDBlockGroup.START].icon,
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.START].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.START].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.START].borderClass,
@@ -696,7 +694,6 @@ export const cicdCategories = {
   },
   prebuild: {
     name: "Prebuild",
-    icon: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].icon,
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].borderClass,
@@ -705,7 +702,6 @@ export const cicdCategories = {
   },
   build: {
     name: "Build",
-    icon: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].icon,
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].borderClass,
@@ -714,7 +710,6 @@ export const cicdCategories = {
   },
   test: {
     name: "Test",
-    icon: CICD_GROUP_COLORS[CICDBlockGroup.TEST].icon,
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.TEST].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.TEST].borderClass,
@@ -723,7 +718,6 @@ export const cicdCategories = {
   },
   notification: {
     name: "Notification",
-    icon: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].icon,
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].borderClass,
@@ -732,7 +726,6 @@ export const cicdCategories = {
   },
   utility: {
     name: "Utility",
-    icon: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].icon,
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].borderClass,

@@ -70,9 +70,14 @@ function PipelinePageContent() {
   ]);
 
   const handleInitialize = useCallback(() => {
-    // TODO: 파이프라인 초기화 로직
-    console.log("🔄 Pipeline initialized!");
-    window.location.reload(); // 임시 해결책
+    if (!flowCanvasRef.current) {
+      console.warn("❌ Flow canvas not ready");
+      return;
+    }
+
+    // Pipeline Start 노드만 남기고 모든 노드 삭제
+    flowCanvasRef.current.resetPipeline();
+    console.log("🔄 Pipeline reset - keeping only Pipeline Start node");
   }, []);
 
   const handleRunPipeline = useCallback(() => {

@@ -50,5 +50,6 @@ export interface ProjectCreationWizardProps {
     owner: string;
     visibility: "Public" | "Private";
     updated: string;
+    installationId?: number;
   };
 }
