@@ -137,7 +137,7 @@ export default function CreateProjectModal({
     setIsWizardOpen(false);
     setSelectedRepository(null);
     setSelectedInstallation(null);
-    fetchProjects(true); // 프로젝트 목록 강제 새로고침
+    fetchProjects(); // 프로젝트 목록 새로고침
     // 모달은 열어둡니다 - 사용자가 직접 닫을 수 있게
   }, [fetchProjects]);
 
