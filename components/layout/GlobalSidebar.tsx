@@ -14,11 +14,13 @@ import {
   ScrollText,
   Filter,
   BookOpen,
+  Wrench,
 } from "lucide-react";
 import { cicdCategories } from "@/components/flow/nodes/node-registry";
 import SettingsModal from "../settings/SettingsModal";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
+import { renderIcon } from "@/lib/utils/icons";
 import { SidebarSkeleton, WorkspaceDropdownSkeleton } from "./SidebarSkeleton";
 import { mapProjectId, mapPipelineId } from "@/lib/utils/idMapping";
 import CreateProjectModal from "../projects/CreateProjectModal";
@@ -39,8 +41,8 @@ interface BottomIcon {
 interface PipelineItem {
   /** 파이프라인 표시 이름 */
   name: string;
-  /** 파이프라인 이모지 아이콘 */
-  icon: string;
+  /** 파이프라인 아이콘 컴포넌트 */
+  icon: React.ReactElement;
   /** 파이프라인 ID */
   pipelineId: string;
   /** 현재 파이프라인이 활성/선택 상태인지 여부 */
@@ -129,8 +131,6 @@ const GlobalSidebar = () => {
   const isCanvasLayout = isCanvasLayoutPath(pathname);
   const showBlockPalette = shouldShowBlockPalette(pathname);
   const isOnLogsPage = isLogsPage(pathname);
-  /** 글로벌 워크스페이스 검색용 쿼리 */
-  const [searchQuery, setSearchQuery] = useState<string>("");
 
   /** 팔레트에서 블록 필터링을 위한 검색 쿼리 */
   const [searchBlocks, setSearchBlocks] = useState<string>("");
@@ -244,7 +244,7 @@ const GlobalSidebar = () => {
   const currentPipelines: PipelineItem[] = selectedProjectId
     ? getPipelinesByProject(selectedProjectId).map((pipeline) => ({
         name: pipeline.name || `Pipeline ${pipeline.pipelineId.slice(-6)}`,
-        icon: "🔧", // 파이프라인 기본 아이콘
+        icon: <Wrench className="w-4 h-4" />, // 파이프라인 기본 아이콘
         pipelineId: pipeline.pipelineId,
         isActive: pipeline.pipelineId === selectedPipelineId,
       }))
@@ -563,23 +563,6 @@ const GlobalSidebar = () => {
             <Copy className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Search Section */}
-        <div className="mt-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="검색하기"
-              className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-0.5 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded shadow-sm">
-              ⌘K
-            </kbd>
-          </div>
-        </div>
       </div>
 
       {/* Pipelines Section Card */}
@@ -618,7 +601,7 @@ const GlobalSidebar = () => {
                 }`}
                 onClick={() => handlePipelineSelect(pipeline.pipelineId)}
               >
-                <span className="mr-3 text-lg">{pipeline.icon}</span>
+                <span className="mr-3 flex items-center justify-center">{pipeline.icon}</span>
                 <span className="text-sm font-medium truncate">
                   {pipeline.name}
                 </span>
@@ -664,8 +647,8 @@ const GlobalSidebar = () => {
                     <div
                       className={`w-8 h-8 ${node.colorClass} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}
                     >
-                      <span className="text-white text-sm font-medium">
-                        {node.icon}
+                      <span className="text-white">
+                        {renderIcon(node.icon, "w-4 h-4")}
                       </span>
                     </div>
                     <div className="min-w-0">
@@ -689,7 +672,7 @@ const GlobalSidebar = () => {
                       <div
                         className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}
                       >
-                        <span className="text-base">{category.icon}</span>
+                        <span className="text-base flex items-center">{renderIcon(category.icon, "w-4 h-4")}</span>
                         <h3
                           className={`text-sm font-medium ${category.textClass}`}
                         >
@@ -715,8 +698,8 @@ const GlobalSidebar = () => {
                             <div
                               className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}
                             >
-                              <span className="text-white text-sm">
-                                {node.icon}
+                              <span className="text-white">
+                                {renderIcon(node.icon, "w-4 h-4")}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0 ml-3">
