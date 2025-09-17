@@ -6,14 +6,11 @@ import {
   Search,
   Plus,
   Settings,
-  HelpCircle,
   ChevronDown,
   Copy,
-  Home,
   Check,
   ScrollText,
   Filter,
-  BookOpen,
 } from "lucide-react";
 import { cicdCategories } from "@/components/flow/nodes/node-registry";
 import SettingsModal from "../settings/SettingsModal";
@@ -301,14 +298,11 @@ const GlobalSidebar = () => {
 
   /**
    * 하단 네비게이션 아이콘들의 설정
-   * 일반적인 워크스페이스 기능에 빠르게 접근할 수 있게 해줍니다
+   * 실제로 구현된 기능들에만 접근할 수 있게 해줍니다
    */
   const bottomIcons: BottomIcon[] = [
     { icon: Settings, title: "Settings" },
-    { icon: HelpCircle, title: "Help" },
     { icon: ScrollText, title: "Pipeline Logs" },
-    { icon: BookOpen, title: "Resources" },
-    { icon: Home, title: "Home" },
   ];
 
   /**
@@ -568,7 +562,7 @@ const GlobalSidebar = () => {
                         onClick={() => handleProjectSelect(project.projectId)}
                         className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
                           project.projectId === selectedProjectId
-                            ? "bg-blue-50"
+                            ? "bg-purple-50"
                             : ""
                         }`}
                       >
@@ -576,7 +570,7 @@ const GlobalSidebar = () => {
                           <div
                             className={`font-medium truncate ${
                               project.projectId === selectedProjectId
-                                ? "text-blue-900"
+                                ? "text-purple-900"
                                 : "text-gray-900"
                             }`}
                           >
@@ -587,7 +581,7 @@ const GlobalSidebar = () => {
                           </div>
                         </div>
                         {project.projectId === selectedProjectId && (
-                          <Check className="w-4 h-4 text-blue-600" />
+                          <Check className="w-4 h-4 text-purple-600" />
                         )}
                       </button>
                     ))
@@ -650,7 +644,7 @@ const GlobalSidebar = () => {
                 key={pipeline.pipelineId}
                 className={`flex items-center p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
                   pipeline.isActive
-                    ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
+                    ? "bg-purple-50 text-purple-700 border border-purple-200 shadow-sm"
                     : "hover:bg-gray-50 text-gray-700 border border-transparent"
                 }`}
                 onClick={() => handlePipelineSelect(pipeline.pipelineId)}
@@ -811,7 +805,7 @@ const GlobalSidebar = () => {
                 key={filter.id}
                 className={`w-full flex items-center p-3 rounded-lg transition-all text-left cursor-pointer ${
                   filter.isActive
-                    ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                    ? "bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100"
                     : "hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-200"
                 }`}
               >
@@ -830,8 +824,8 @@ const GlobalSidebar = () => {
       {/* Bottom Section Cards */}
       <div className="space-y-2">
         {/* Navigation Icons Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-2 w-fit mx-auto">
+          <div className="flex items-center justify-center gap-6">
             {bottomIcons.map((item, index) => (
               <button
                 key={index}
