@@ -76,7 +76,7 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({
               
               <div className="flex items-center gap-1">
                 <Hash className="w-3 h-3" />
-                <span>{log.buildNumber}</span>
+                <span>{log.id.slice(0, 7)}</span>
               </div>
               
               <div className="flex items-center gap-1">
@@ -139,7 +139,7 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({
               onClick={() => {
                 // AWS CodeBuild 콘솔로 이동
                 window.open(
-                  `https://console.aws.amazon.com/codesuite/codebuild/projects/${log.projectName}/build/${log.id}`,
+                  `https://console.aws.amazon.com/codesuite/codebuild/projects/${log.pipelineName}/build/${log.id}`,
                   '_blank'
                 );
               }}

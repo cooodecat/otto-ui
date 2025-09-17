@@ -165,6 +165,7 @@ export interface PipelineLogsTableProps {
   isLoading: boolean;
   searchQuery: string;
   onMarkAsRead: (logId: string) => void;
+  onLogClick?: (log: LogItem) => void;
 }
 
 // Additional Types

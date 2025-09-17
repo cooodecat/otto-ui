@@ -106,9 +106,9 @@ export async function getProjectBuildHistories(
 
   // 빌드 데이터에 프로젝트 정보 추가
   const buildsWithProject = (data || []).map(build => ({
-    ...(build as any),
+    ...build,
     projects: project
-  } as BuildHistoryRow));
+  }));
 
   return {
     builds: buildsWithProject,
@@ -178,17 +178,17 @@ export async function getAllUserBuildHistories(
   const hasMore = count ? offset + limit < count : false;
 
   // 빌드 데이터에 해당 프로젝트 정보 추가
-  const buildsWithProject = (data || []).map((build: any) => {
-    const project = projects?.find((p: any) => p.project_id === build.project_id);
+  const buildsWithProject = (data || []).map(build => {
+    const project = projects?.find(p => p.project_id === build.project_id);
     return {
-      ...(build as any),
+      ...build,
       projects: project ? {
         name: project.name,
         github_repo_name: project.github_repo_name,
         selected_branch: project.selected_branch,
         github_owner: project.github_owner
       } : undefined
-    } as BuildHistoryRow & { projects?: any };
+    };
   });
 
   return {
@@ -369,17 +369,17 @@ export async function searchBuildHistories(
   const hasMore = count ? offset + limit < count : false;
 
   // 빌드 데이터에 해당 프로젝트 정보 추가
-  const buildsWithProject = (data || []).map((build: any) => {
-    const project = projects?.find((p: any) => p.project_id === build.project_id);
+  const buildsWithProject = (data || []).map(build => {
+    const project = projects?.find(p => p.project_id === build.project_id);
     return {
-      ...(build as any),
+      ...build,
       projects: project ? {
         name: project.name,
         github_repo_name: project.github_repo_name,
         selected_branch: project.selected_branch,
         github_owner: project.github_owner
       } : undefined
-    } as BuildHistoryRow & { projects?: any };
+    };
   });
 
   return {

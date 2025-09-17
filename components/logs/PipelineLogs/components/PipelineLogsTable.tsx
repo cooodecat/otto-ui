@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, Circle, GitBranch, User, Clock, Hash } from 'lucide-react';
-import { PipelineLogsTableProps } from '@/types/logs';
+import { LogItem, PipelineLogsTableProps } from '@/types/logs';
 import { truncateMessage } from '@/lib/logs';
 import LogDetailsDualPanel from './LogDetailsDualPanel';
 
@@ -12,9 +12,7 @@ import LogDetailsDualPanel from './LogDetailsDualPanel';
  * 파이프라인 로그 목록을 테이블 형태로 표시
  * 무한 스크롤, 상세보기, 읽음 처리 기능 포함
  */
-const PipelineLogsTable: React.FC<PipelineLogsTableProps & {
-  onLogClick?: (log: any) => void;
-}> = ({
+const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
   logs,
   newLogIds,
   onLoadMore,
@@ -67,7 +65,7 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps & {
   };
 
   // 행 클릭 처리
-  const handleRowClick = (log: any) => {
+  const handleRowClick = (log: LogItem) => {
     markLogAsRead(log.id);
     if (onLogClick) {
       onLogClick(log);

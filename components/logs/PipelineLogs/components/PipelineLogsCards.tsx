@@ -5,7 +5,7 @@ import {
   Check, Circle, GitBranch, User, Clock, Hash, 
   ChevronRight, AlertCircle, Activity, Zap
 } from 'lucide-react';
-import { PipelineLogsTableProps } from '@/types/logs';
+import { LogItem, PipelineLogsTableProps } from '@/types/logs';
 import { truncateMessage } from '@/lib/logs';
 import LogDetailsDualPanel from './LogDetailsDualPanel';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ const PipelineLogsCards: React.FC<PipelineLogsCardsProps> = ({
   isLoading,
   searchQuery,
   onMarkAsRead,
+  onLogClick,
 }) => {
   const [selectedBuildId, setSelectedBuildId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -66,10 +67,14 @@ const PipelineLogsCards: React.FC<PipelineLogsCardsProps> = ({
   };
 
   // 카드 클릭 처리
-  const handleCardClick = (logId: string) => {
-    markLogAsRead(logId);
-    setSelectedBuildId(logId);
-    setIsDetailsOpen(true);
+  const handleCardClick = (log: LogItem) => {
+    markLogAsRead(log.id);
+    if (onLogClick) {
+      onLogClick(log);
+    } else {
+      setSelectedBuildId(log.id);
+      setIsDetailsOpen(true);
+    }
   };
 
   // 상세보기 닫기
@@ -148,8 +153,24 @@ const PipelineLogsCards: React.FC<PipelineLogsCardsProps> = ({
       'Older': []
     };
 
-    logsToGroup.forEach((log: any) => {
-      const logDate = new Date(log.timestamp);
+    logsToGroup.forEach((log: LogItem) => {
+      // trigger.time 형식: "2h ago", "3d ago" 등을 파싱해서 Date로 변환
+      const getDateFromTimeAgo = (timeAgo: string): Date => {
+        const now = new Date();
+        const match = timeAgo.match(/(\d+)([mhd])/);
+        if (!match) return now;
+        
+        const [, value, unit] = match;
+        const num = parseInt(value);
+        
+        if (unit === 'm') now.setMinutes(now.getMinutes() - num);
+        else if (unit === 'h') now.setHours(now.getHours() - num);
+        else if (unit === 'd') now.setDate(now.getDate() - num);
+        
+        return now;
+      };
+      
+      const logDate = getDateFromTimeAgo(log.trigger.time);
       if (logDate >= today) {
         groups['Today'].push(log);
       } else if (logDate >= yesterday) {
@@ -199,7 +220,7 @@ const PipelineLogsCards: React.FC<PipelineLogsCardsProps> = ({
 
               {/* Log Cards */}
               <div className='grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'>
-                {groupLogs.map((log: any, index: number) => {
+                {groupLogs.map((log: LogItem, index: number) => {
                   const statusStyle = getStatusStyle(log.status);
                   const StatusIcon = statusStyle.icon;
                   const isUnread = unreadLogIds.has(log.id);
@@ -209,7 +230,7 @@ const PipelineLogsCards: React.FC<PipelineLogsCardsProps> = ({
                     <div
                       key={log.id}
                       ref={isLastItem && hasMore ? observerRef : null}
-                      onClick={() => handleCardClick(log.id)}
+                      onClick={() => handleCardClick(log)}
                       className={cn(
                         'group relative bg-gradient-to-r rounded-xl border-2 p-5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02]',
                         statusStyle.gradient,
