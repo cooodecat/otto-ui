@@ -14,7 +14,6 @@ import {
   ScrollText,
   Filter,
   BookOpen,
-  Wrench,
 } from "lucide-react";
 import { cicdCategories } from "@/components/flow/nodes/node-registry";
 import SettingsModal from "../settings/SettingsModal";
@@ -41,8 +40,6 @@ interface BottomIcon {
 interface PipelineItem {
   /** 파이프라인 표시 이름 */
   name: string;
-  /** 파이프라인 아이콘 컴포넌트 */
-  icon: React.ReactElement;
   /** 파이프라인 ID */
   pipelineId: string;
   /** 현재 파이프라인이 활성/선택 상태인지 여부 */
@@ -244,7 +241,6 @@ const GlobalSidebar = () => {
   const currentPipelines: PipelineItem[] = selectedProjectId
     ? getPipelinesByProject(selectedProjectId).map((pipeline) => ({
         name: pipeline.name || `Pipeline ${pipeline.pipelineId.slice(-6)}`,
-        icon: <Wrench className="w-4 h-4" />, // 파이프라인 기본 아이콘
         pipelineId: pipeline.pipelineId,
         isActive: pipeline.pipelineId === selectedPipelineId,
       }))
@@ -601,8 +597,7 @@ const GlobalSidebar = () => {
                 }`}
                 onClick={() => handlePipelineSelect(pipeline.pipelineId)}
               >
-                <span className="mr-3 flex items-center justify-center">{pipeline.icon}</span>
-                <span className="text-sm font-medium truncate">
+                <span className="text-sm font-medium">
                   {pipeline.name}
                 </span>
               </div>
@@ -672,7 +667,6 @@ const GlobalSidebar = () => {
                       <div
                         className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}
                       >
-                        <span className="text-base flex items-center">{renderIcon(category.icon, "w-4 h-4")}</span>
                         <h3
                           className={`text-sm font-medium ${category.textClass}`}
                         >
