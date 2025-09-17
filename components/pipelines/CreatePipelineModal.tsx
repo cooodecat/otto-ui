@@ -27,6 +27,8 @@ export default function CreatePipelineModal({
   const { projects } = useProjectStore();
   const router = useRouter();
 
+  console.log('[CreatePipelineModal] Modal state:', { isOpen, projectId, projectName });
+
   if (!isOpen) return null;
 
   // 현재 프로젝트 정보 가져오기

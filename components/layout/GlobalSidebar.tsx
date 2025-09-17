@@ -8,7 +8,8 @@ import {
   Settings,
   HelpCircle,
   ChevronDown,
-  Copy,
+  Eye,
+  EyeOff,
   Home,
   Check,
   ScrollText,
@@ -17,7 +18,7 @@ import {
   Pencil,
   X,
 } from 'lucide-react';
-import { cicdCategories } from '@/components/flow/nodes/node-registry';
+import { cicdCategories, nodeRegistry } from '@/components/flow/nodes/node-registry';
 import SettingsModal from '../settings/SettingsModal';
 import { useProjectStore } from '@/lib/projectStore';
 import { usePipelineStore } from '@/lib/pipelineStore';
@@ -133,6 +134,9 @@ const GlobalSidebar = () => {
   const isCanvasLayout = isCanvasLayoutPath(pathname);
   const showBlockPalette = shouldShowBlockPalette(pathname);
   const isOnLogsPage = isLogsPage(pathname);
+  
+  /** 로그 페이지 필터 상태 */
+  const [activeFilterId, setActiveFilterId] = useState<string>('all');
   /** 글로벌 워크스페이스 검색용 쿼리 */
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -190,10 +194,19 @@ const GlobalSidebar = () => {
   /** 편집 중인 파이프라인 이름 */
   const [editingPipelineName, setEditingPipelineName] = useState<string>("");
 
+  /** 카드 표시/숨김 상태 */
+  const [showPipelinesPalette, setShowPipelinesPalette] = useState<boolean>(true);
+  
+  /** 파이프라인 드롭다운 열림/닫힘 상태 */
+  const [isPipelinesDropdownOpen, setIsPipelinesDropdownOpen] = useState<boolean>(false);
+
   /** 워크스페이스 드롭다운 참조 */
   const workspaceDropdownRef = useRef<HTMLDivElement>(null);
+  
+  /** 파이프라인 드롭다운 참조 */
+  const pipelinesDropdownRef = useRef<HTMLDivElement>(null);
 
-  // 워크스페이스 드롭다운 외부 클릭 시 닫기
+  // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -201,6 +214,12 @@ const GlobalSidebar = () => {
         !workspaceDropdownRef.current.contains(event.target as Node)
       ) {
         setIsWorkspaceDropdownOpen(false);
+      }
+      if (
+        pipelinesDropdownRef.current &&
+        !pipelinesDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsPipelinesDropdownOpen(false);
       }
     };
 
@@ -625,245 +644,247 @@ const GlobalSidebar = () => {
             )}
           </div>
 
-          {/* 복사 버튼 */}
-          <button className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg ml-2 transition-colors'>
-            <Copy className='w-4 h-4' />
+          {/* 카드 숨기기/표시 버튼 */}
+          <button 
+            onClick={() => setShowPipelinesPalette(!showPipelinesPalette)}
+            className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg ml-2 transition-colors'
+            title={showPipelinesPalette ? "카드 숨기기" : "카드 보이기"}
+          >
+            {showPipelinesPalette ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
           </button>
-        </div>
-
-        {/* Search Section */}
-        <div className="mt-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="검색하기"
-              className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-0.5 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded shadow-sm">
-              ⌘K
-            </kbd>
-          </div>
         </div>
       </div>
 
-      {/* Pipelines Section Card */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-800">
-            {getSelectedProjectInfo()?.name
-              ? `${getSelectedProjectInfo()?.name} Pipelines`
-              : "Pipelines"}
-          </h3>
-          <button 
-            onClick={() => {
-              if (selectedProjectId) {
-                setIsCreatePipelineModalOpen(true);
-              } else {
-                toast.error("먼저 프로젝트를 선택해주세요.");
-              }
-            }}
-            className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'
-            title="새 파이프라인 만들기"
-          >
-            <Plus className='w-3 h-3' />
-          </button>
-        </div>
+      {/* Pipelines Section Card - 숨김 가능 */}
+      {showPipelinesPalette && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-800">Pipelines</h3>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => {
+                  if (selectedProjectId) {
+                    setIsCreatePipelineModalOpen(true);
+                  } else {
+                    toast.error("먼저 프로젝트를 선택해주세요.");
+                  }
+                }}
+                className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'
+                title="새 파이프라인 만들기"
+              >
+                <Plus className='w-3 h-3' />
+              </button>
+            </div>
+          </div>
 
-        <div className="space-y-2">
-          {isPipelinesLoading ? (
-            // 파이프라인 로딩 스켈레톤
-            Array.from({ length: 2 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center p-2.5 rounded-lg border border-gray-100 animate-pulse"
-              >
-                <div className="w-5 h-5 bg-gray-200 rounded mr-3"></div>
-                <div className="h-4 bg-gray-200 rounded flex-1"></div>
-              </div>
-            ))
-          ) : currentPipelines.length > 0 ? (
-            currentPipelines.map((pipeline) => (
-              <div
-                key={pipeline.pipelineId}
-                className={`group flex items-center p-2.5 rounded-lg transition-all duration-200 ${
-                  pipeline.isActive
-                    ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
-                    : "hover:bg-gray-50 text-gray-700 border border-transparent"
+          {/* 파이프라인 드롭다운 */}
+          <div className="relative" ref={pipelinesDropdownRef}>
+            <button
+              onClick={() => setIsPipelinesDropdownOpen(!isPipelinesDropdownOpen)}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-gray-700 truncate">
+                {selectedPipelineId && currentPipelines.find(p => p.isActive)?.name || "파이프라인 선택"}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 transition-transform ${
+                  isPipelinesDropdownOpen ? "rotate-180" : ""
                 }`}
-              >
-                <div
-                  className="flex items-center flex-1 cursor-pointer"
-                  onClick={() => handlePipelineSelect(pipeline.pipelineId)}
-                >
-                  {editingPipelineId === pipeline.pipelineId ? (
-                    <input
-                      type="text"
-                      value={editingPipelineName}
-                      onChange={(e) => setEditingPipelineName(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleUpdatePipelineName();
-                        } else if (e.key === 'Escape') {
-                          setEditingPipelineId(null);
-                          setEditingPipelineName("");
-                        }
-                      }}
-                      onBlur={handleUpdatePipelineName}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      autoFocus
-                    />
+              />
+            </button>
+
+            {/* 드롭다운 메뉴 */}
+            {isPipelinesDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
+                <div className="py-1">
+                  {isPipelinesLoading ? (
+                    // 파이프라인 로딩 스켈레톤
+                    Array.from({ length: 2 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center px-3 py-2.5 animate-pulse"
+                      >
+                        <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                      </div>
+                    ))
+                  ) : currentPipelines.length > 0 ? (
+                    currentPipelines.map((pipeline) => (
+                      <div
+                        key={pipeline.pipelineId}
+                        className={`group flex items-center justify-between px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                          pipeline.isActive ? "bg-blue-50" : ""
+                        }`}
+                      >
+                        {editingPipelineId === pipeline.pipelineId ? (
+                          <input
+                            type="text"
+                            value={editingPipelineName}
+                            onChange={(e) => setEditingPipelineName(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleUpdatePipelineName();
+                              } else if (e.key === 'Escape') {
+                                setEditingPipelineId(null);
+                                setEditingPipelineName("");
+                              }
+                            }}
+                            onBlur={handleUpdatePipelineName}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            autoFocus
+                          />
+                        ) : (
+                          <button
+                            onClick={() => {
+                              handlePipelineSelect(pipeline.pipelineId);
+                              setIsPipelinesDropdownOpen(false);
+                            }}
+                            className={`flex-1 text-left truncate ${
+                              pipeline.isActive ? "text-blue-700 font-medium" : "text-gray-700"
+                            }`}
+                          >
+                            {pipeline.name}
+                          </button>
+                        )}
+                        <div className="flex items-center gap-1 ml-2">
+                          {editingPipelineId !== pipeline.pipelineId && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditPipelineName(pipeline.pipelineId, pipeline.name);
+                              }}
+                              className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="이름 변경"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {pipeline.isActive && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                        </div>
+                      </div>
+                    ))
                   ) : (
-                    <span className="text-sm font-medium truncate">
-                      {pipeline.name}
-                    </span>
+                    <div className="px-3 py-2.5 text-sm text-gray-500">
+                      파이프라인이 없습니다
+                    </div>
                   )}
                 </div>
-                
-                {/* 편집 버튼 - hover 시에만 표시 */}
-                {editingPipelineId === pipeline.pipelineId ? (
-                  <div className="flex gap-1 ml-2">
-                    <button
-                      onClick={handleUpdatePipelineName}
-                      className="p-1 text-green-600 hover:bg-green-50 rounded"
-                      title="저장"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingPipelineId(null);
-                        setEditingPipelineName("");
-                      }}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
-                      title="취소"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditPipelineName(pipeline.pipelineId, pipeline.name);
-                    }}
-                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                    title="이름 변경"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
-            ))
-          ) : (
-            <div className="text-center py-4 text-gray-500 text-sm">
-              {selectedProjectId
-                ? "파이프라인이 없습니다"
-                : "프로젝트를 선택하세요"}
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Blocks Palette Section Card - 파이프라인 에디터 페이지에서만 표시 */}
-      {showBlockPalette && (
-        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex-1 flex flex-col min-h-0'>
-          <div className='mb-4'>
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
+      {/* Block Palette Card - 파이프라인 에디터에서만 표시 & 숨김 가능 */}
+      {showBlockPalette && showPipelinesPalette && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex-1 overflow-hidden">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-800">Block Palette</h3>
+            <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              <Filter className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* 블록 검색 */}
+          <div className="mb-3">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
               <input
-                type='text'
-                placeholder='블록 검색...'
-                className='w-full pl-10 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50'
+                type="text"
+                placeholder="Search blocks..."
+                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={searchBlocks}
                 onChange={(e) => setSearchBlocks(e.target.value)}
               />
             </div>
           </div>
 
-          <div className='flex-1 overflow-y-auto space-y-4 pr-1'>
-            {/* 검색어가 있으면 결과 리스트만 표시 */}
+          {/* 블록 리스트 */}
+          <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
             {searchBlocks ? (
-              <div className='space-y-2'>
+              // 검색 결과
+              <div className="space-y-2">
                 {getFilteredNodes().map((node) => (
                   <div
                     key={node.type}
-                    className='flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm'
                     draggable
                     onDragStart={(e) => handleBlockDragStart(e, node.type)}
+                    className="flex items-center p-2 bg-gray-50 rounded-lg cursor-grab hover:bg-gray-100 transition-colors"
                   >
-                    <div className={`w-8 h-8 ${node.colorClass} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}>
-                      <span className='text-white text-sm font-medium'>{node.icon}</span>
-                    </div>
-                    <div className='min-w-0'>
-                      <div className='text-sm font-medium text-gray-900 truncate'>{node.label}</div>
-                      <div className='text-xs text-gray-500 truncate'>{node.description}</div>
-                    </div>
+                    <span className="text-lg mr-2">{node.icon}</span>
+                    <span className="text-sm text-gray-700">{node.label}</span>
                   </div>
                 ))}
+                {getFilteredNodes().length === 0 && (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    No blocks found
+                  </div>
+                )}
               </div>
             ) : (
-              // 검색어가 없으면 카테고리별 표시 (CICD와 동일 스타일)
-              <>
-                {Object.entries(cicdCategories)
-                  .filter(([key]) => key !== 'start') // start 카테고리 제외 (이미 캔버스에 초기 노드로 있음)
-                  .map(([key, category]) => (
-                  <div key={key} className='space-y-2'>
+              // 카테고리별 표시
+              Object.entries(cicdCategories)
+                .filter(([key]) => key !== 'start')
+                .map(([key, category]) => (
+                  <div key={key} className="space-y-2">
                     <div className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}>
-                      <span className='text-base'>{category.icon}</span>
+                      <span className="text-base">{category.icon}</span>
                       <h3 className={`text-sm font-medium ${category.textClass}`}>{category.name}</h3>
                       <span className={`text-xs ${category.textClass} opacity-70`}>({category.nodes.length})</span>
                     </div>
 
-                    <div className='space-y-1 ml-2'>
+                    <div className="space-y-1 ml-2">
                       {category.nodes.map((node) => (
                         <div
                           key={node.type}
-                          className='flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow'
+                          className="flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow"
                           draggable
                           onDragStart={(e) => handleBlockDragStart(e, node.type)}
                         >
                           <div className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}>
-                            <span className='text-white text-sm'>{node.icon}</span>
+                            <span className="text-white text-sm">{node.icon}</span>
                           </div>
-                          <div className='flex-1 min-w-0 ml-3'>
-                            <div className='text-sm font-medium text-gray-900 truncate'>{node.label}</div>
-                            <div className='text-xs text-gray-500 truncate'>{node.description}</div>
+                          <div className="flex-1 min-w-0 ml-3">
+                            <div className="text-sm font-medium text-gray-900 truncate">{node.label}</div>
+                            <div className="text-xs text-gray-500 truncate">{node.description}</div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </>
+                ))
             )}
           </div>
         </div>
       )}
 
+
+
       {/* Filter - 로그 페이지 전용 */}
       {isOnLogsPage && (
         <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
-          <div className='flex items-center gap-2 mb-4'>
-            <Filter className='w-4 h-4 text-gray-600' />
+          <div className='mb-4'>
             <h3 className='text-sm font-semibold text-gray-800'>Filter</h3>
           </div>
 
           {/* Filter Buttons */}
           <div className='space-y-2'>
             {[
-              { id: 'all', label: '전체 로그', desc: '모든 파이프라인 로그', isActive: true },
-              { id: 'failed', label: '실패한 빌드', desc: 'Status: failed', isActive: false },
-              { id: 'running', label: '실행 중', desc: 'Status: running', isActive: false },
-              { id: '24h', label: '최근 24시간', desc: '지난 24시간 내 로그', isActive: false },
+              { id: 'all', label: '전체 로그', desc: '모든 파이프라인 로그' },
+              { id: 'failed', label: '실패한 빌드', desc: 'Status: failed' },
+              { id: 'running', label: '실행 중', desc: 'Status: running' },
+              { id: '24h', label: '최근 24시간', desc: '지난 24시간 내 로그' },
             ].map((filter) => (
               <button 
                 key={filter.id}
+                onClick={() => {
+                  setActiveFilterId(filter.id);
+                  // 필터 적용 로직 - 나중에 로그 페이지와 연동
+                  console.log('[GlobalSidebar] Filter selected:', filter.id);
+                  // TODO: 로그 페이지로 필터 정보 전달
+                }}
                 className={`w-full flex items-center p-3 rounded-lg transition-all text-left cursor-pointer ${
-                  filter.isActive 
+                  activeFilterId === filter.id 
                     ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100' 
                     : 'hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-200'
                 }`}

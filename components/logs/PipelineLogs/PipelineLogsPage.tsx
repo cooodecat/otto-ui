@@ -25,6 +25,8 @@ import EmptyLogsState from './components/EmptyLogsState';
 import LogDetailModal from './components/LogDetailModal';
 import { useProjectStore } from '@/lib/projectStore';
 import { usePipelineStore } from '@/lib/pipelineStore';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 // Common button styles
 const buttonStyles = {
@@ -48,6 +50,8 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   userId
 }) => {
   const { user } = useAuth();
+  const router = useRouter();
+  const supabase = createClient();
   const { showSuccess, showError, showInfo } = useToast();
   const { preferences } = useUserPreferences(user?.id);
   const scopedUserId = user?.id || 'anon';
@@ -118,6 +122,51 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   const { pipelines } = usePipelineStore();
   
   const currentProject = projects.find(p => p.projectId === _projectId);
+
+  // 프로젝트 존재 여부 및 GitHub 설치 확인
+  useEffect(() => {
+    const checkProjectAndRedirect = async () => {
+      if (_projectId && _projectId !== 'default') {
+        // 프로젝트 ID가 있는 경우에만 체크
+        if (!user?.id) {
+          // 로그인하지 않은 경우
+          router.push('/auth');
+          return;
+        }
+
+        // Supabase에서 프로젝트 존재 여부 확인
+        const { data: project, error } = await supabase
+          .from('projects')
+          .select('project_id')
+          .eq('project_id', _projectId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (error || !project) {
+          // 프로젝트가 없거나 접근 권한이 없는 경우
+          showError('프로젝트를 찾을 수 없습니다');
+          router.push('/projects');
+          return;
+        }
+
+        // GitHub 설치 확인
+        const { data: installations } = await supabase
+          .from('github_installations')
+          .select('installation_id')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (!installations || installations.length === 0) {
+          // GitHub App이 설치되지 않은 경우
+          showInfo('GitHub App 설치가 필요합니다');
+          router.push('/onboarding');
+          return;
+        }
+      }
+    };
+
+    checkProjectAndRedirect();
+  }, [_projectId, user?.id, router, supabase, showError, showInfo]);
 
   // SSE Real-time Log Streaming
   const {

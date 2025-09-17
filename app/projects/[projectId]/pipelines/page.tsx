@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, GitBranch, Clock, Activity } from "lucide-react";
 import apiClient from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+import CreatePipelineModal from "@/components/pipelines/CreatePipelineModal";
 
 interface Pipeline {
   pipeline_id: string;
@@ -32,6 +33,7 @@ export default function ProjectPipelinesPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     initializeAndFetch();
@@ -71,7 +73,16 @@ export default function ProjectPipelinesPage() {
       const pipelinesData = Array.isArray(response.data) 
         ? response.data 
         : (response.data?.pipelines || []);
-      setPipelines(pipelinesData);
+      
+      // pipeline_id가 있는지 확인하고 필터링
+      const validPipelines = pipelinesData.filter((p: any) => 
+        p && (p.pipeline_id || p.pipelineId || p.id)
+      ).map((p: any) => ({
+        ...p,
+        pipeline_id: p.pipeline_id || p.pipelineId || p.id
+      }));
+      
+      setPipelines(validPipelines);
     } catch (error) {
       console.error("Failed to fetch pipelines:", error);
       setPipelines([]);
@@ -81,7 +92,12 @@ export default function ProjectPipelinesPage() {
   };
 
   const handleCreatePipeline = () => {
-    router.push(`/projects/${projectId}/pipelines/new`);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsCreateModalOpen(false);
+    fetchPipelines(); // 모달 닫을 때 파이프라인 목록 새로고침
   };
 
   const handlePipelineClick = (pipelineId: string) => {
@@ -164,9 +180,9 @@ export default function ProjectPipelinesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pipelines.map((pipeline) => (
+            {pipelines.map((pipeline, index) => (
               <div
-                key={pipeline.pipeline_id}
+                key={pipeline.pipeline_id || `pipeline-${index}`}
                 onClick={() => handlePipelineClick(pipeline.pipeline_id)}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
               >
@@ -214,6 +230,14 @@ export default function ProjectPipelinesPage() {
           </div>
         )}
       </div>
+
+      {/* CreatePipeline Modal */}
+      <CreatePipelineModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseModal}
+        projectId={projectId}
+        projectName={project?.name}
+      />
     </div>
   );
 }

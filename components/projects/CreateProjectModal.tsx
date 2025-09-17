@@ -91,9 +91,18 @@ export default function CreateProjectModalFull({
         apiClient.setSupabaseToken(session.access_token);
       }
 
-      const response = await apiClient.getGithubRepos();
-      if (response.data) {
-        setRepositories(response.data);
+      // 먼저 GitHub installations을 가져옵니다
+      const installationsResponse = await apiClient.getGithubInstallations();
+      if (installationsResponse.data && installationsResponse.data.length > 0) {
+        // 첫 번째 installation의 repositories를 가져옵니다
+        const installationId = installationsResponse.data[0].installationId || installationsResponse.data[0].installation_id;
+        const reposResponse = await apiClient.getGithubRepositories(installationId);
+        if (reposResponse.data) {
+          setRepositories(reposResponse.data);
+        }
+      } else {
+        console.log("No GitHub installations found");
+        setRepositories([]);
       }
     } catch (error) {
       console.error("Failed to load GitHub repositories:", error);

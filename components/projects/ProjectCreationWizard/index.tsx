@@ -749,6 +749,14 @@ export default function ProjectCreationWizard({
     console.log('state.createdProjectId:', state.createdProjectId);
     console.log('state.projectConfig.name:', state.projectConfig.name);
     
+    // 중복 실행 방지
+    const isNavigatingKey = `navigating_${state.createdProjectId}`;
+    if (sessionStorage.getItem(isNavigatingKey) === 'true') {
+      console.log('Already navigating to project, skipping...');
+      return;
+    }
+    sessionStorage.setItem(isNavigatingKey, 'true');
+    
     if (!state.createdProjectId) {
       console.error('No createdProjectId available');
       toast.error('프로젝트 ID를 찾을 수 없습니다.');
@@ -768,19 +776,18 @@ export default function ProjectCreationWizard({
         console.log(`Fetching pipelines for project (attempt ${retryCount + 1}/${maxRetries}):`, state.createdProjectId);
         const pipelineResponse = await apiClient.getPipelines(state.createdProjectId);
         
-        if (pipelineResponse.data && pipelineResponse.data.length > 0) {
+        if (pipelineResponse.data && Array.isArray(pipelineResponse.data) && pipelineResponse.data.length > 0) {
           // 첫 번째 파이프라인을 사용
           pipelineData = pipelineResponse.data[0];
-          console.log('Found pipeline:', pipelineData);
-        } else if (retryCount < maxRetries - 1) {
+          console.log('Found existing pipeline:', pipelineData);
+          break; // 파이프라인을 찾았으므로 즉시 종료
+        }
+        
+        retryCount++;
+        if (retryCount < maxRetries) {
           // 재시도 전 잠시 대기
           console.log(`No pipelines found yet, retrying in 1 second...`);
           await new Promise(resolve => setTimeout(resolve, 1000));
-          retryCount++;
-        } else {
-          // 마지막 시도에서도 파이프라인이 없으면 생성
-          console.warn('No pipelines found after retries! Creating default pipeline...');
-          break;
         }
       }
       
@@ -793,6 +800,7 @@ export default function ProjectCreationWizard({
         try {
           // 기본 파이프라인 생성
           const createPipelineResponse = await apiClient.createPipeline(state.createdProjectId, {
+            name: 'Pipeline #1',
             blocks: [
               {
                 id: 'trigger',
@@ -932,6 +940,10 @@ export default function ProjectCreationWizard({
           router.push(fallbackUrl);
         }, 100);
       }
+    } finally {
+      // 네비게이션 완료 후 플래그 제거
+      const isNavigatingKey = `navigating_${state.createdProjectId}`;
+      sessionStorage.removeItem(isNavigatingKey);
     }
   };
 

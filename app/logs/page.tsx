@@ -12,11 +12,13 @@ import PipelineLogsPage from '@/components/logs/PipelineLogs/PipelineLogsPage';
  * - /projects/[projectId]/logs - 프로젝트별 로그
  * - /projects/[projectId]/pipelines/[pipelineId]/logs - 파이프라인별 로그
  */
-export default function LogsPage({
+export default async function LogsPage({
   searchParams,
 }: {
-  searchParams?: { projectId?: string };
+  searchParams: Promise<{ projectId?: string }>;
 }) {
+  const params = await searchParams;
+  
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="container mx-auto px-4 py-8">
@@ -29,7 +31,7 @@ export default function LogsPage({
           </div>
         }>
           <PipelineLogsPage 
-            projectId={searchParams?.projectId}
+            projectId={params?.projectId}
           />
         </Suspense>
       </div>

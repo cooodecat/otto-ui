@@ -85,9 +85,9 @@ OTTO_GITHUB_APP_WEBHOOK_SECRET=your-webhook-secret
 
 ### 5. 설치 확인
 
-1. 브라우저에서 `http://localhost:3000/test-github` 방문
-2. "다시 확인" 버튼 클릭
-3. Installation이 표시되면 성공!
+1. 브라우저에서 `http://localhost:3000/projects` 방문
+2. "새 프로젝트 만들기" 버튼 클릭
+3. GitHub 연동이 표시되면 성공!
 
 ## 트러블슈팅
 
