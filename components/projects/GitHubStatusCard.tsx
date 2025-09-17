@@ -189,6 +189,7 @@ export default function GitHubStatusCard({
         </div>
       ) : (
         <GitHubInstallationButton
+          returnUrl={typeof window !== 'undefined' ? `${window.location.pathname}?open_modal=true` : '/projects?open_modal=true'}
           onInstallationStart={() => {
             // 설치 시작 시 필요한 로직
           }}

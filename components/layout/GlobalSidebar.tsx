@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   Plus,
@@ -125,6 +125,7 @@ const isLogsPage = (pathname: string): boolean => {
 const GlobalSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isCanvasLayout = isCanvasLayoutPath(pathname);
   const showBlockPalette = shouldShowBlockPalette(pathname);
   const isOnLogsPage = isLogsPage(pathname);
@@ -193,10 +194,42 @@ const GlobalSidebar = () => {
     };
   }, []);
 
-  // 데이터 로딩 및 초기화 (컴포넌트 마운트 시 한 번만 실행)
+  // 데이터 로딩 및 GitHub 콜백 처리
   useEffect(() => {
     fetchProjects();
-  }, []); // 의존성 배열을 빈 배열로 변경하여 무한 루프 방지
+
+    // GitHub 앱 설치 콜백 처리
+    const status = searchParams.get("status");
+    const githubInstalled = searchParams.get("github_installed");
+    const openModal = searchParams.get("open_modal");
+    const installationId = searchParams.get("installation_id");
+    const accountLogin = searchParams.get("account_login");
+
+    if (status === "success" && githubInstalled === "true") {
+      console.log(
+        `GitHub 앱 설치가 완료되었습니다. 계정: ${accountLogin}, 설치 ID: ${installationId}`
+      );
+
+      // 모달을 자동으로 열기
+      setIsCreateProjectModalOpen(true);
+
+      // URL 파라미터 정리 (새로고침 시 다시 모달이 열리지 않도록)
+      const url = new URL(window.location.href);
+      url.searchParams.delete("status");
+      url.searchParams.delete("github_installed");
+      url.searchParams.delete("open_modal");
+      url.searchParams.delete("installation_id");
+      url.searchParams.delete("account_login");
+      window.history.replaceState({}, "", url.toString());
+    } else if (openModal === "true") {
+      // 프로젝트 생성 모달 자동으로 열기 (GitHub 설치 없이)
+      setIsCreateProjectModalOpen(true);
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("open_modal");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []); // 의존성 배열을 빈 배열로 유지 (searchParams 변경 시 무한 루프 방지)
 
   // 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옴
   useEffect(() => {
@@ -597,9 +630,7 @@ const GlobalSidebar = () => {
                 }`}
                 onClick={() => handlePipelineSelect(pipeline.pipelineId)}
               >
-                <span className="text-sm font-medium">
-                  {pipeline.name}
-                </span>
+                <span className="text-sm font-medium">{pipeline.name}</span>
               </div>
             ))
           ) : (
@@ -785,7 +816,7 @@ const GlobalSidebar = () => {
                   item.title === "Settings"
                     ? handleSettingsClick
                     : item.title === "Pipeline Logs"
-                    ? () => router.push("/logs")
+                    ? () => router.push("/projects/1/logs")
                     : undefined
                 }
               >

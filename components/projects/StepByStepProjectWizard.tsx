@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useGitHubRepositories } from "@/hooks/useGitHubRepositories";
 import { useProjects } from "@/hooks/useProjects";
+import { createClient } from "@/lib/supabase/client";
+import { setApiToken } from "@/lib/api";
 import type {
   GitHubInstallation,
   GitHubRepository,
@@ -58,11 +60,26 @@ export default function StepByStepProjectWizard({
   } = useGitHubRepositories();
   const { createProject, creating, createError } = useProjects();
 
+  // 컴포넌트 마운트 시 토큰 설정
+  useEffect(() => {
+    const initAuth = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.access_token) {
+        setApiToken(session.access_token);
+      }
+    };
+
+    initAuth();
+  }, []);
+
   // 브랜치 목록 조회
   useEffect(() => {
-    const [owner, repo] = repository.full_name.split("/");
-    fetchBranches(installation.installation_id, owner, repo);
-  }, [installation.installation_id, repository.full_name]); // fetchBranches 제거
+    const [owner] = repository.full_name.split("/");
+    fetchBranches(installation.installation_id, owner, repository.name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [installation.installation_id, repository.full_name]); // fetchBranches 의도적 제외
 
   // 기본 브랜치 자동 선택
   useEffect(() => {
@@ -130,7 +147,7 @@ export default function StepByStepProjectWizard({
   const handleCreateProject = async () => {
     if (!selectedBranch) return;
 
-    const [owner, repo] = repository.full_name.split("/");
+    const [owner] = repository.full_name.split("/");
 
     const requestData = {
       name: formData.name.trim(),
@@ -142,14 +159,6 @@ export default function StepByStepProjectWizard({
       githubOwner: owner,
       selectedBranch: selectedBranch.name,
     };
-
-    console.log(
-      "[StepByStepProjectWizard] 프로젝트 생성 요청 데이터:",
-      requestData
-    );
-    console.log("[StepByStepProjectWizard] Installation 정보:", installation);
-    console.log("[StepByStepProjectWizard] Repository 정보:", repository);
-    console.log("[StepByStepProjectWizard] Selected Branch:", selectedBranch);
 
     const success = await createProject(requestData);
 
