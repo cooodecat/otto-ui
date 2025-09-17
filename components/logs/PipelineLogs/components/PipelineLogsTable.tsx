@@ -12,7 +12,9 @@ import LogDetailsDualPanel from './LogDetailsDualPanel';
  * 파이프라인 로그 목록을 테이블 형태로 표시
  * 무한 스크롤, 상세보기, 읽음 처리 기능 포함
  */
-const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
+const PipelineLogsTable: React.FC<PipelineLogsTableProps & {
+  onLogClick?: (log: any) => void;
+}> = ({
   logs,
   newLogIds,
   onLoadMore,
@@ -20,6 +22,7 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
   isLoading,
   searchQuery,
   onMarkAsRead,
+  onLogClick,
 }) => {
   const [selectedBuildId, setSelectedBuildId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -64,10 +67,14 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
   };
 
   // 행 클릭 처리
-  const handleRowClick = (logId: string) => {
-    markLogAsRead(logId);
-    setSelectedBuildId(logId);
-    setIsDetailsOpen(true);
+  const handleRowClick = (log: any) => {
+    markLogAsRead(log.id);
+    if (onLogClick) {
+      onLogClick(log);
+    } else {
+      setSelectedBuildId(log.id);
+      setIsDetailsOpen(true);
+    }
   };
 
   // 상세보기 닫기
@@ -169,7 +176,7 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
                   <tr
                     key={log.id}
                     ref={isLastItem && hasMore ? observerRef : null}
-                    onClick={() => handleRowClick(log.id)}
+                    onClick={() => handleRowClick(log)}
                     className={`group cursor-pointer transition-all duration-200 hover:bg-blue-50/50 hover:shadow-sm ${
                       isUnread ? 'bg-blue-50/30 border-l-4 border-l-blue-500' : ''
                     }`}

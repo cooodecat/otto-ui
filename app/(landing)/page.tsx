@@ -1,6 +1,6 @@
 "use client";
 
-import { Cpu, Zap, ArrowRight } from "lucide-react";
+import { Cpu, Zap, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,64 +8,159 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 import CICDFlowVisualization from "@/components/landing/CICDFlowVisualization";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
-import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
+import ProjectCreationWizard from "@/components/projects/ProjectCreationWizard";
+import { createClient } from "@/lib/supabase/client";
+import apiClient from "@/lib/api";
 
 export default function Home() {
   const router = useRouter();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { fetchProjects, getLatestProject, projects } = useProjectStore();
-  const { fetchPipelines, getLatestPipelineByProject } = usePipelineStore();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const { fetchProjects, projects } = useProjectStore();
+  const { fetchPipelines, getPipelinesByProject } = usePipelineStore();
+
+  // 페이지 로드 시에는 자동 라우팅 하지 않음 - 랜딩 페이지 유지
+  useEffect(() => {
+    setIsCheckingAuth(false);
+  }, []);
+
+  const navigateToWorkspace = async () => {
+    try {
+      console.log('[Home] Navigating to workspace...');
+      
+      // 1. 프로젝트 조회
+      await fetchProjects();
+      
+      // projects가 비동기로 업데이트되므로 store에서 직접 가져오기
+      const currentProjects = useProjectStore.getState().projects;
+      console.log('[Home] Current projects:', currentProjects);
+      
+      if (currentProjects.length === 0) {
+        console.log('[Home] No projects found, showing creation wizard');
+        // 프로젝트가 없으면 생성 마법사 표시
+        setShowCreateWizard(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. 최근 생성된 프로젝트 선택 (created_at 기준 정렬)
+      const latestProject = currentProjects.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // 최신순
+      })[0];
+      
+      console.log('[Home] Latest project:', latestProject);
+      
+      // 3. 해당 프로젝트의 파이프라인 조회
+      console.log('[Home] Fetching pipelines for project:', latestProject.projectId);
+      await fetchPipelines(latestProject.projectId);
+      
+      // Store에서 직접 가져오기 (비동기 업데이트 대기)
+      await new Promise(resolve => setTimeout(resolve, 500)); // 잠시 대기
+      const pipelines = getPipelinesByProject(latestProject.projectId);
+      console.log('[Home] Pipelines for latest project:', pipelines);
+      console.log('[Home] Number of pipelines:', pipelines.length);
+      
+      if (pipelines.length === 0) {
+        console.log('[Home] No pipelines found, navigating to pipelines page');
+        // 파이프라인이 없으면 파이프라인 페이지로
+        router.push(`/projects/${latestProject.projectId}/pipelines`);
+        return;
+      }
+
+      // 4. 최근 생성된 파이프라인 선택 (created_at 기준 정렬)
+      const latestPipeline = pipelines.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // 최신순
+      })[0];
+      
+      console.log('[Home] Latest pipeline:', latestPipeline);
+      
+      // 5. 파이프라인 에디터로 이동
+      router.push(`/projects/${latestProject.projectId}/pipelines/${latestPipeline.pipelineId}`);
+    } catch (error) {
+      console.error('[Home] Navigation error:', error);
+      setIsLoading(false);
+      // 에러 발생 시 프로젝트 목록으로
+      router.push('/projects');
+    }
+  };
 
   const handleGetStarted = async () => {
     setIsLoading(true);
     try {
-      // 프로젝트 데이터 로드
-      await fetchProjects();
-      const latestProject = getLatestProject();
-
-      if (latestProject) {
-        // 해당 프로젝트의 파이프라인 데이터 로드
-        await fetchPipelines(latestProject.projectId);
-        const latestPipeline = getLatestPipelineByProject(latestProject.projectId);
-
-        if (latestPipeline) {
-          // 파이프라인 페이지로 이동
-          router.push(`/projects/${latestProject.projectId}/pipelines/${latestPipeline.pipelineId}`);
-        } else {
-          // 파이프라인이 없으면 프로젝트 페이지로
-          router.push(`/projects/${latestProject.projectId}`);
-        }
-      } else {
-        // 프로젝트가 없으면 프로젝트 생성 모달 열기
-        setShowCreateModal(true);
+      console.log('[Home] Get started clicked');
+      
+      // 1. 로그인 확인
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // 로그인 페이지로 이동
+        router.push('/auth/signin');
+        return;
       }
+
+      // 2. 토큰 설정
+      if (session.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
+
+      // 3. GitHub App 설치 확인
+      console.log('[Home] Checking GitHub installation...');
+      const installResponse = await apiClient.getGithubInstallations();
+      const installations = Array.isArray(installResponse.data) 
+        ? installResponse.data 
+        : (installResponse.data?.installations || []);
+      
+      if (installations.length === 0) {
+        console.log('[Home] No GitHub installation found, redirecting to onboarding');
+        // GitHub App 미설치 - 온보딩으로
+        router.push('/onboarding');
+        return;
+      }
+
+      // 4. GitHub App 설치됨 - 워크스페이스로 네비게이션
+      await navigateToWorkspace();
     } catch (error) {
-      console.error("Failed to initialize:", error);
-      // 에러 발생 시에도 프로젝트 생성 모달 열기
-      setShowCreateModal(true);
+      console.error("[Home] Failed to get started:", error);
+      // 에러 발생 시 온보딩으로
+      router.push('/onboarding');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleProjectCreated = async (project: any) => {
-    // 프로젝트 생성 완료 후 파이프라인 체크 후 이동
-    try {
-      await fetchPipelines(project.projectId);
-      const latestPipeline = getLatestPipelineByProject(project.projectId);
-      
-      if (latestPipeline) {
-        // 파이프라인이 있으면 파이프라인 페이지로 이동
-        router.push(`/projects/${project.projectId}/pipelines/${latestPipeline.pipelineId}`);
-      } else {
-        // 파이프라인이 없으면 프로젝트 페이지로 이동
-        router.push(`/projects/${project.projectId}`);
+  const handleProjectCreated = async (projectData?: { 
+    projectId: string; 
+    name: string; 
+    targetUrl?: string 
+  }) => {
+    console.log('[Home] Project created:', projectData);
+    setShowCreateWizard(false);
+    
+    // targetUrl이 제공되면 해당 URL로, 아니면 동적 라우팅
+    if (projectData?.targetUrl) {
+      router.push(projectData.targetUrl);
+    } else if (projectData?.projectId) {
+      // 프로젝트 생성 완료 후 파이프라인 체크
+      try {
+        await fetchPipelines(projectData.projectId);
+        const pipelines = getPipelinesByProject(projectData.projectId);
+        
+        if (pipelines.length > 0) {
+          const latestPipeline = pipelines[0];
+          router.push(`/projects/${projectData.projectId}/pipelines/${latestPipeline.pipelineId}`);
+        } else {
+          router.push(`/projects/${projectData.projectId}/pipelines`);
+        }
+      } catch (error) {
+        console.error("Failed to navigate after project creation:", error);
+        router.push(`/projects/${projectData.projectId}/pipelines`);
       }
-    } catch (error) {
-      console.error("Failed to fetch pipelines for new project:", error);
-      // 에러 발생 시 프로젝트 페이지로 이동
-      router.push(`/projects/${project.projectId}`);
     }
   };
 
@@ -128,7 +223,7 @@ export default function Home() {
               <button
                 onClick={handleGetStarted}
                 disabled={isLoading}
-                className="relative inline-flex group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-10 py-5 rounded-2xl font-semibold text-xl transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 items-center gap-3 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative inline-flex group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-10 py-5 rounded-2xl font-semibold text-xl transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 items-center gap-3 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? (
                   <>
@@ -155,13 +250,12 @@ export default function Home() {
         </footer>
       </AnimatedSection>
 
-      {/* Create Project Modal */}
-      {showCreateModal && (
-        <CreateProjectModal
-          onClose={() => setShowCreateModal(false)}
-          onProjectCreated={handleProjectCreated}
-        />
-      )}
+      {/* Project Creation Wizard */}
+      <ProjectCreationWizard
+        isOpen={showCreateWizard}
+        onClose={() => setShowCreateWizard(false)}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>
   );
 }

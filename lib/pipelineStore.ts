@@ -119,13 +119,14 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
 
   // 액션들
   fetchPipelines: async (projectId: string) => {
+    console.log('[PipelineStore] fetchPipelines called for projectId:', projectId);
     const { loadedProjects } = get();
 
     // 이미 해당 프로젝트의 파이프라인이 로드되어 있는지 확인
     if (loadedProjects.has(projectId)) {
-      // 이미 로드된 경우 중복 호출 방지
-      set({ currentProjectId: projectId });
-      return;
+      // 이미 로드된 경우에도 다시 로드 (캐시 무시)
+      console.log('[PipelineStore] Project already loaded, but re-fetching:', projectId);
+      // return; // 캐시 무시하고 다시 로드
     }
 
     set({ isLoading: true, error: null, currentProjectId: projectId });
@@ -135,9 +136,12 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
       await setAuthToken();
       
       // 실제 API 호출
+      console.log('[PipelineStore] Fetching pipelines from API for project:', projectId);
       const response = await apiClient.getPipelines(projectId);
+      console.log('[PipelineStore] Raw API Response:', response);
       
       if (response.error) {
+        console.error('[PipelineStore] API Error:', response.error);
         throw new Error(response.error);
       }
 
@@ -147,26 +151,34 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
         ? pipelinesData
         : (pipelinesData?.pipelines || pipelinesData?.data || []);
       
-      console.log('Pipeline API Response:', response.data);
-      console.log('Extracted pipelines:', pipelines);
+      console.log('[PipelineStore] Pipeline API Response data:', response.data);
+      console.log('[PipelineStore] Extracted pipelines:', pipelines);
+      console.log('[PipelineStore] Number of pipelines:', pipelines?.length || 0);
       
       // 파이프라인 데이터 형식 변환 (백엔드 응답 형식에 맞게)
       const formattedPipelines: Pipeline[] = Array.isArray(pipelines)
-        ? pipelines.map((pipeline: any) => ({
-        pipelineId: pipeline.id || pipeline.pipeline_id,
-        name: pipeline.name || 'Untitled Pipeline',
-        projectId: pipeline.project_id || projectId,
-        description: pipeline.description,
-        status: pipeline.status || 'draft',
-        blocks: pipeline.blocks || [],
-        artifacts: pipeline.artifacts,
-        environment_variables: pipeline.environment_variables,
-        cache: pipeline.cache,
-        createdAt: pipeline.created_at,
-        updatedAt: pipeline.updated_at,
-        lastRunAt: pipeline.last_run_at
-      }))
+        ? pipelines.map((pipeline: any) => {
+          console.log('[PipelineStore] Mapping pipeline:', pipeline);
+          const mapped = {
+            pipelineId: pipeline.id || pipeline.pipeline_id,
+            name: pipeline.name || 'Untitled Pipeline',
+            projectId: pipeline.projectId || pipeline.project_id || projectId,
+            description: pipeline.description,
+            status: pipeline.status || (pipeline.isActive ? 'active' : 'draft'),
+            blocks: pipeline.data?.blocks || pipeline.blocks || pipeline.flowData?.blocks || [],
+            artifacts: pipeline.data?.artifacts || pipeline.artifacts,
+            environment_variables: pipeline.data?.environment_variables || pipeline.environment_variables,
+            cache: pipeline.data?.cache || pipeline.cache,
+            createdAt: pipeline.createdAt || pipeline.created_at,
+            updatedAt: pipeline.updatedAt || pipeline.updated_at,
+            lastRunAt: pipeline.lastRunAt || pipeline.last_run_at
+          };
+          console.log('[PipelineStore] Mapped pipeline:', mapped);
+          return mapped;
+        })
       : [];
+      
+      console.log('[PipelineStore] Formatted pipelines:', formattedPipelines);
 
       set((state) => {
         // 기존 파이프라인에서 해당 프로젝트의 것들 제거하고 새로 추가
@@ -302,6 +314,7 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
       
       // API 호출로 파이프라인 업데이트
       const response = await apiClient.updatePipeline(pipelineId, {
+        name: updates.name,
         blocks: updates.blocks,
         artifacts: updates.artifacts,
         environment_variables: updates.environment_variables,

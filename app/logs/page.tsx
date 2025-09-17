@@ -6,8 +6,17 @@ import PipelineLogsPage from '@/components/logs/PipelineLogs/PipelineLogsPage';
  * 
  * 프로젝트와 무관하게 전체 파이프라인 로그를 표시
  * 모든 프로젝트의 로그를 통합하여 관리
+ * 
+ * URL 파라미터를 통해 필터링 지원:
+ * - /logs - 모든 로그
+ * - /projects/[projectId]/logs - 프로젝트별 로그
+ * - /projects/[projectId]/pipelines/[pipelineId]/logs - 파이프라인별 로그
  */
-export default function LogsPage() {
+export default function LogsPage({
+  searchParams,
+}: {
+  searchParams?: { projectId?: string };
+}) {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="container mx-auto px-4 py-8">
@@ -19,7 +28,9 @@ export default function LogsPage() {
             </div>
           </div>
         }>
-          <PipelineLogsPage />
+          <PipelineLogsPage 
+            projectId={searchParams?.projectId}
+          />
         </Suspense>
       </div>
     </div>

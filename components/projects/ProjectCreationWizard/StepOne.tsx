@@ -1,28 +1,34 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GitBranch, Star, GitFork, Calendar, Globe, Lock, ChevronDown, Code } from 'lucide-react';
+import { GitBranch, Star, GitFork, Calendar, Globe, Lock, ChevronDown, Code, Package } from 'lucide-react';
 import { Repository, Branch } from './types';
 
 interface StepOneProps {
+  repositories?: Repository[];
   repository: Repository;
   branches: Branch[];
   selectedBranch: string;
+  onRepositoryChange?: (repoName: string) => void;
   onBranchChange: (branch: string) => void;
   isLoading: boolean;
   onLoadBranches: () => void;
 }
 
 export default function StepOne({
+  repositories = [],
   repository,
   branches,
   selectedBranch,
+  onRepositoryChange,
   onBranchChange,
   isLoading,
   onLoadBranches,
 }: StepOneProps) {
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [branchSearch, setBranchSearch] = useState('');
+  const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
+  const [repoSearch, setRepoSearch] = useState('');
 
   useEffect(() => {
     // 브랜치 목록이 비어있고 로딩중이 아닐 때만 로드
@@ -46,8 +52,85 @@ export default function StepOne({
       percentage: Math.round((bytes / totalBytes) * 100)
     }));
 
+  const filteredRepos = repositories.filter(repo =>
+    repo.name.toLowerCase().includes(repoSearch.toLowerCase())
+  );
+
   return (
     <div className="p-8 space-y-6">
+      {/* Repository Selection */}
+      {repositories.length > 1 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">저장소 선택</h4>
+          <div className="relative">
+            <button
+              onClick={() => setRepoDropdownOpen(!repoDropdownOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-gray-500" />
+                <span className="text-gray-900">{repository.owner}/{repository.name}</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${
+                repoDropdownOpen ? 'rotate-180' : ''
+              }`} />
+            </button>
+
+            {/* Repository Dropdown */}
+            {repoDropdownOpen && (
+              <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="p-2 border-b border-gray-100">
+                  <input
+                    type="text"
+                    placeholder="저장소 검색..."
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    value={repoSearch}
+                    onChange={(e) => setRepoSearch(e.target.value)}
+                  />
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredRepos.length > 0 ? (
+                    filteredRepos.map((repo) => (
+                      <button
+                        key={repo.name}
+                        onClick={() => {
+                          if (onRepositoryChange) {
+                            onRepositoryChange(repo.name);
+                          }
+                          setRepoDropdownOpen(false);
+                          setRepoSearch('');
+                        }}
+                        className={`w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${
+                          repo.name === repository.name ? 'bg-purple-50 text-purple-700' : 'text-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">{repo.owner}/{repo.name}</div>
+                            {repo.description && (
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                {repo.description.substring(0, 50)}...
+                              </div>
+                            )}
+                          </div>
+                          {repo.visibility === 'Private' && (
+                            <Lock className="w-3 h-3 text-gray-400" />
+                          )}
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-center text-gray-500">
+                      저장소를 찾을 수 없습니다
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Repository Info Card */}
       <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
@@ -14,6 +14,8 @@ import {
   ScrollText,
   Filter,
   BookOpen,
+  Pencil,
+  X,
 } from 'lucide-react';
 import { cicdCategories } from '@/components/flow/nodes/node-registry';
 import SettingsModal from '../settings/SettingsModal';
@@ -22,6 +24,9 @@ import { usePipelineStore } from '@/lib/pipelineStore';
 import { SidebarSkeleton, WorkspaceDropdownSkeleton } from './SidebarSkeleton';
 import { mapProjectId, mapPipelineId } from '@/lib/utils/idMapping';
 import CreateProjectModal from "../projects/CreateProjectModal";
+import CreatePipelineModal from "../pipelines/CreatePipelineModal";
+import toast from "react-hot-toast";
+import apiClient from "@/lib/api";
 
 
 /**
@@ -40,8 +45,6 @@ interface BottomIcon {
 interface PipelineItem {
   /** 파이프라인 표시 이름 */
   name: string;
-  /** 파이프라인 이모지 아이콘 */
-  icon: string;
   /** 파이프라인 ID */
   pipelineId: string;
   /** 현재 파이프라인이 활성/선택 상태인지 여부 */
@@ -157,10 +160,10 @@ const GlobalSidebar = () => {
   } = useProjectStore();
 
   const {
-    pipelines: _pipelines,
+    pipelines,
     isLoading: isPipelinesLoading,
     error: _pipelinesError,
-    fetchPipelines: _fetchPipelines,
+    fetchPipelines,
     setCurrentProject,
     getPipelinesByProject,
     getLatestPipelineByProject,
@@ -176,6 +179,16 @@ const GlobalSidebar = () => {
   /** CreateProject 모달 열림/닫힘 상태 */
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
     useState<boolean>(false);
+  
+  /** CreatePipeline 모달 열림/닫힘 상태 */
+  const [isCreatePipelineModalOpen, setIsCreatePipelineModalOpen] =
+    useState<boolean>(false);
+  
+  /** 편집 중인 파이프라인 ID */
+  const [editingPipelineId, setEditingPipelineId] = useState<string | null>(null);
+  
+  /** 편집 중인 파이프라인 이름 */
+  const [editingPipelineName, setEditingPipelineName] = useState<string>("");
 
   /** 워크스페이스 드롭다운 참조 */
   const workspaceDropdownRef = useRef<HTMLDivElement>(null);
@@ -199,15 +212,23 @@ const GlobalSidebar = () => {
 
   // 데이터 로딩 및 초기화 (컴포넌트 마운트 시 한 번만 실행)
   useEffect(() => {
+    console.log('[GlobalSidebar] Fetching projects on mount...');
     fetchProjects();
   }, []); // 의존성 배열을 빈 배열로 변경하여 무한 루프 방지
+  
+  // projects 변경 모니터링
+  // Projects가 업데이트될 때 실행
+  useEffect(() => {
+    // 프로젝트 목록이 업데이트되면 자동으로 UI에 반영됨
+  }, [projects]);
 
   // 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옴
   useEffect(() => {
     if (selectedProjectId) {
       setCurrentProject(selectedProjectId);
+      fetchPipelines(selectedProjectId);
     }
-  }, [selectedProjectId, setCurrentProject]);
+  }, [selectedProjectId]); // setCurrentProject와 fetchPipelines는 stable하므로 제외
 
   // 현재 URL 파라미터에서 프로젝트 ID와 파이프라인 ID 추출 및 동기화
   useEffect(() => {
@@ -215,24 +236,22 @@ const GlobalSidebar = () => {
     const match = pathname.match(pipelineDetailPattern);
 
     if (match) {
-      const rawUrlProjectId = match[1];
-      const rawUrlPipelineId = match[2];
-
-      // URL 파라미터를 Mock 데이터 ID로 변환
-      const urlProjectId = mapProjectId(rawUrlProjectId);
-      const urlPipelineId = mapPipelineId(rawUrlPipelineId);
+      const urlProjectId = match[1];
+      const urlPipelineId = match[2];
 
       // URL에서 추출한 프로젝트 ID로 상태 동기화 (중복 호출 방지)
       if (urlProjectId !== selectedProjectId) {
         setSelectedProject(urlProjectId);
-        // setCurrentProject는 아래 useEffect에서 처리하므로 여기서는 호출하지 않음
+        setCurrentProject(urlProjectId);
+        // 프로젝트가 변경되었을 때 파이프라인 다시 로드
+        fetchPipelines(urlProjectId);
       }
 
       setSelectedPipelineId(urlPipelineId);
     } else {
       setSelectedPipelineId(null);
     }
-  }, [pathname, selectedProjectId, setSelectedProject]); // setCurrentProject 제거
+  }, [pathname]);
 
   /**
    * CI/CD 노드 카테고리에서 검색을 위해 플랫 목록 생성
@@ -242,14 +261,15 @@ const GlobalSidebar = () => {
   };
 
   // 현재 선택된 프로젝트의 파이프라인들을 변환
-  const currentPipelines: PipelineItem[] = selectedProjectId
-    ? getPipelinesByProject(selectedProjectId).map((pipeline) => ({
-        name: pipeline.name || `Pipeline ${pipeline.pipelineId.slice(-6)}`,
-        icon: "🔧", // 파이프라인 기본 아이콘
-        pipelineId: pipeline.pipelineId,
-        isActive: pipeline.pipelineId === selectedPipelineId,
-      }))
-    : [];
+  const currentPipelines: PipelineItem[] = useMemo(() => {
+    const projectPipelines = selectedProjectId ? getPipelinesByProject(selectedProjectId) : [];
+    
+    return projectPipelines.map((pipeline) => ({
+      name: pipeline.name || `Pipeline ${pipeline.pipelineId?.slice(-6) || 'Unknown'}`,
+      pipelineId: pipeline.pipelineId,
+      isActive: pipeline.pipelineId === selectedPipelineId,
+    }));
+  }, [selectedProjectId, selectedPipelineId, pipelines]); // pipelines 추가하여 데이터 변경 시 리렌더링
 
   /**
    * 하단 네비게이션 아이콘들의 설정
@@ -303,7 +323,50 @@ const GlobalSidebar = () => {
    */
   const handlePipelineSelect = (pipelineId: string) => {
     if (selectedProjectId) {
-      router.push(`/projects/${selectedProjectId}/pipelines/${pipelineId}`);
+      const targetUrl = `/projects/${selectedProjectId}/pipelines/${pipelineId}`;
+      router.push(targetUrl);
+    }
+  };
+
+  /**
+   * 파이프라인 이름 편집 시작
+   */
+  const handleEditPipelineName = (pipelineId: string, currentName: string) => {
+    setEditingPipelineId(pipelineId);
+    setEditingPipelineName(currentName);
+  };
+
+  /**
+   * 파이프라인 이름 업데이트
+   */
+  const handleUpdatePipelineName = async () => {
+    if (!editingPipelineId || !editingPipelineName.trim()) {
+      setEditingPipelineId(null);
+      setEditingPipelineName("");
+      return;
+    }
+
+    try {
+      // API 호출하여 파이프라인 이름 업데이트
+      const response = await apiClient.updatePipeline(editingPipelineId, {
+        name: editingPipelineName
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // 스토어 업데이트
+      const { updatePipeline } = usePipelineStore.getState();
+      await updatePipeline(editingPipelineId, { name: editingPipelineName });
+
+      toast.success("파이프라인 이름이 변경되었습니다.");
+    } catch (error) {
+      console.error('Failed to update pipeline name:', error);
+      toast.error("파이프라인 이름 변경에 실패했습니다.");
+    } finally {
+      setEditingPipelineId(null);
+      setEditingPipelineName("");
     }
   };
 
@@ -491,9 +554,11 @@ const GlobalSidebar = () => {
                 <h1 className="text-lg font-semibold text-gray-900 truncate">
                   {getSelectedProjectInfo()?.name || "프로젝트 선택 안됨"}
                 </h1>
-                <p className="text-xs text-gray-500 truncate">
-                  {getSelectedProjectInfo()?.githubOwner || "소유자 없음"}
-                </p>
+                {getSelectedProjectInfo()?.githubOwner && (
+                  <p className="text-xs text-gray-500 truncate">
+                    {getSelectedProjectInfo()?.githubOwner}
+                  </p>
+                )}
               </div>
               <ChevronDown
                 className={`w-4 h-4 text-gray-400 transition-transform ${
@@ -508,34 +573,37 @@ const GlobalSidebar = () => {
                 <div className="py-1 max-h-64 overflow-y-auto">
                   {isProjectsLoading ? (
                     <WorkspaceDropdownSkeleton />
-                  ) : projects.length > 0 ? (
-                    projects.map((project) => (
-                      <button
-                        key={project.projectId}
-                        onClick={() => handleProjectSelect(project.projectId)}
-                        className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
-                          project.projectId === selectedProjectId ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0 text-left">
-                          <div
-                            className={`font-medium truncate ${
-                              project.projectId === selectedProjectId
-                                ? "text-blue-900"
-                                : "text-gray-900"
-                            }`}
-                          >
-                            {project.name}
+                  ) : projects && projects.length > 0 ? (
+                    projects.map((project) => {
+                      console.log('[GlobalSidebar] Rendering project:', project);
+                      return (
+                        <button
+                          key={project.projectId}
+                          onClick={() => handleProjectSelect(project.projectId)}
+                          className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
+                            project.projectId === selectedProjectId ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0 text-left">
+                            <div
+                              className={`font-medium truncate ${
+                                project.projectId === selectedProjectId
+                                  ? "text-blue-900"
+                                  : "text-gray-900"
+                              }`}
+                            >
+                              {project.name}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {project.githubOwner}/{project.githubRepoName}
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {project.githubOwner}/{project.githubRepoName}
-                          </div>
-                        </div>
-                        {project.projectId === selectedProjectId && (
-                          <Check className="w-4 h-4 text-blue-600" />
-                        )}
-                      </button>
-                    ))
+                          {project.projectId === selectedProjectId && (
+                            <Check className="w-4 h-4 text-blue-600" />
+                          )}
+                        </button>
+                      );
+                    })
                   ) : (
                     <div className="px-3 py-6 text-center text-gray-500 text-sm">
                       아직 프로젝트가 없습니다
@@ -589,7 +657,17 @@ const GlobalSidebar = () => {
               ? `${getSelectedProjectInfo()?.name} Pipelines`
               : "Pipelines"}
           </h3>
-          <button className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'>
+          <button 
+            onClick={() => {
+              if (selectedProjectId) {
+                setIsCreatePipelineModalOpen(true);
+              } else {
+                toast.error("먼저 프로젝트를 선택해주세요.");
+              }
+            }}
+            className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'
+            title="새 파이프라인 만들기"
+          >
             <Plus className='w-3 h-3' />
           </button>
         </div>
@@ -610,17 +688,74 @@ const GlobalSidebar = () => {
             currentPipelines.map((pipeline) => (
               <div
                 key={pipeline.pipelineId}
-                className={`flex items-center p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
+                className={`group flex items-center p-2.5 rounded-lg transition-all duration-200 ${
                   pipeline.isActive
                     ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
                     : "hover:bg-gray-50 text-gray-700 border border-transparent"
                 }`}
-                onClick={() => handlePipelineSelect(pipeline.pipelineId)}
               >
-                <span className="mr-3 text-lg">{pipeline.icon}</span>
-                <span className="text-sm font-medium truncate">
-                  {pipeline.name}
-                </span>
+                <div
+                  className="flex items-center flex-1 cursor-pointer"
+                  onClick={() => handlePipelineSelect(pipeline.pipelineId)}
+                >
+                  {editingPipelineId === pipeline.pipelineId ? (
+                    <input
+                      type="text"
+                      value={editingPipelineName}
+                      onChange={(e) => setEditingPipelineName(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUpdatePipelineName();
+                        } else if (e.key === 'Escape') {
+                          setEditingPipelineId(null);
+                          setEditingPipelineName("");
+                        }
+                      }}
+                      onBlur={handleUpdatePipelineName}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                    />
+                  ) : (
+                    <span className="text-sm font-medium truncate">
+                      {pipeline.name}
+                    </span>
+                  )}
+                </div>
+                
+                {/* 편집 버튼 - hover 시에만 표시 */}
+                {editingPipelineId === pipeline.pipelineId ? (
+                  <div className="flex gap-1 ml-2">
+                    <button
+                      onClick={handleUpdatePipelineName}
+                      className="p-1 text-green-600 hover:bg-green-50 rounded"
+                      title="저장"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingPipelineId(null);
+                        setEditingPipelineName("");
+                      }}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      title="취소"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditPipelineName(pipeline.pipelineId, pipeline.name);
+                    }}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                    title="이름 변경"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))
           ) : (
@@ -757,7 +892,14 @@ const GlobalSidebar = () => {
                   item.title === 'Settings' 
                     ? handleSettingsClick 
                     : item.title === 'Pipeline Logs'
-                    ? () => router.push('/logs')
+                    ? () => {
+                        // 프로젝트 단위로 로그 페이지 이동
+                        if (selectedProjectId) {
+                          router.push(`/projects/${selectedProjectId}/logs`);
+                        } else {
+                          router.push('/logs');
+                        }
+                      }
                     : undefined
                 }
               >
@@ -782,6 +924,16 @@ const GlobalSidebar = () => {
         isOpen={isCreateProjectModalOpen}
         onClose={handleCreateProjectModalClose}
       />
+      
+      {/* CreatePipeline Modal - 파이프라인 생성 */}
+      {selectedProjectId && (
+        <CreatePipelineModal
+          isOpen={isCreatePipelineModalOpen}
+          onClose={() => setIsCreatePipelineModalOpen(false)}
+          projectId={selectedProjectId}
+          projectName={getSelectedProjectInfo()?.name}
+        />
+      )}
     </div>
   );
 };

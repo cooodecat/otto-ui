@@ -5,6 +5,7 @@ import type { LogItem, FilterState } from '@/types/logs';
 
 interface UsePipelineLogsOptions {
   userId?: string;
+  projectId?: string;
   useRealData?: boolean;
   initialLimit?: number;
   autoFetch?: boolean;
@@ -29,6 +30,7 @@ interface UsePipelineLogsReturn {
 export function usePipelineLogs(options: UsePipelineLogsOptions): UsePipelineLogsReturn {
   const {
     userId,
+    projectId,
     useRealData = false,
     initialLimit = 20,
     autoFetch = true
@@ -91,7 +93,8 @@ export function usePipelineLogs(options: UsePipelineLogsOptions): UsePipelineLog
         result = await searchBuildHistories(currentUserId, searchQuery, {
           limit,
           offset,
-          status: filters.status
+          status: filters.status,
+          projectId: projectId
         });
         
         const transformedLogs = result.builds.map(build => transformBuildToLogItem(build));
@@ -109,7 +112,7 @@ export function usePipelineLogs(options: UsePipelineLogsOptions): UsePipelineLog
           limit,
           offset,
           status: filters.status,
-          projectId: filters.branch !== 'all-branches' ? filters.branch : undefined
+          projectId: projectId || (filters.branch !== 'all-branches' ? filters.branch : undefined)
         });
 
         const transformedLogs = result.builds.map(build => transformBuildToLogItem(build));

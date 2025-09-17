@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      // 프로젝트별 로그
+      {
+        source: '/projects/:projectId/logs',
+        destination: '/logs?projectId=:projectId',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

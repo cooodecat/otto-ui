@@ -21,6 +21,10 @@ import { cn } from '@/lib/utils';
 import { useUserPreferences } from '@/hooks/logs/useUserPreferences';
 import { useKeyboardShortcuts } from '@/hooks/logs/useKeyboardShortcuts';
 import { Settings } from 'lucide-react';
+import EmptyLogsState from './components/EmptyLogsState';
+import LogDetailModal from './components/LogDetailModal';
+import { useProjectStore } from '@/lib/projectStore';
+import { usePipelineStore } from '@/lib/pipelineStore';
 
 // Common button styles
 const buttonStyles = {
@@ -36,12 +40,10 @@ const buttonStyles = {
  * 실제 Supabase 데이터와 목업 데이터를 모두 지원
  */
 const PipelineLogsPage: React.FC<PipelineLogsPageProps & { 
-  useRealApi?: boolean;
   buildId?: string;
   userId?: string;
 }> = ({
   projectId: _projectId,
-  useRealApi = false,
   buildId = 'test-build-123',
   userId
 }) => {
@@ -67,7 +69,8 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
     filter: _filterLogs
   } = usePipelineLogs({
     userId,
-    useRealData: useRealApi,
+    projectId: _projectId,
+    useRealData: true,  // 항상 실제 데이터 사용
     initialLimit: 20,
     autoFetch: true
   });
@@ -107,6 +110,14 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   const [initializedFromCursor, setInitializedFromCursor] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(preferences.showAnalytics);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<LogItem | null>(null);
+  const [showLogDetail, setShowLogDetail] = useState(false);
+  
+  // 프로젝트 정보 가져오기
+  const { projects } = useProjectStore();
+  const { pipelines } = usePipelineStore();
+  
+  const currentProject = projects.find(p => p.projectId === _projectId);
 
   // SSE Real-time Log Streaming
   const {
@@ -227,7 +238,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
       }
     } catch {}
     
-    if (enabled && useRealApi) {
+    if (enabled) {
       try {
         // 백필: 최근 로그 재동기화
         await refresh();
@@ -240,7 +251,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
         console.error('Failed to start live mode:', error);
         setIsLive(false);
       }
-    } else if (!enabled && useRealApi) {
+    } else if (!enabled) {
       try {
         // SSE 연결 중지
         disconnectSSE();
@@ -256,15 +267,11 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
       } catch (error) {
         console.error('Failed to stop live mode:', error);
       }
-    } else if (!useRealApi) {
-      // 목업 모드에서의 시뮬레이션
-      console.log(enabled ? '🔴 Live mode enabled (mock)' : '⏹️ Live mode disabled (mock)');
     }
-  }, [useRealApi, startCollection, stopCollection, connectSSE, disconnectSSE, refresh, displayedLogs, makeStorageKey]);
+  }, [startCollection, stopCollection, connectSSE, disconnectSSE, refresh, displayedLogs, makeStorageKey]);
 
   // 초기 마운트 시 저장된 Live 상태로 자동 연결 / 복원
   useEffect(() => {
-    if (!useRealApi) return;
     try {
       const saved = typeof window !== 'undefined' 
         ? localStorage.getItem(makeStorageKey('live')) 
@@ -275,11 +282,10 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
       }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useRealApi, scopedUserId, scopedProjectId, buildId]);
+  }, [scopedUserId, scopedProjectId, buildId]);
 
   // 탭 가시성에 따른 연결 관리
   useEffect(() => {
-    if (!useRealApi) return;
     let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
     const onVisibility = async () => {
@@ -317,7 +323,7 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
       window.removeEventListener('beforeunload', beforeUnload);
       if (hideTimer) clearTimeout(hideTimer);
     };
-  }, [useRealApi, isLive, connectSSE, disconnectSSE, refresh, displayedLogs, makeStorageKey]);
+  }, [isLive, connectSSE, disconnectSSE, refresh, displayedLogs, makeStorageKey]);
 
   // 로그 읽음 처리
   const handleMarkAsRead = useCallback((logId: string) => {
@@ -331,6 +337,13 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
   }, [newLogIds]);
+
+  // 로그 클릭 핸들러 - 상세 뷰 열기
+  const handleLogClick = useCallback((log: LogItem) => {
+    setSelectedLog(log);
+    setShowLogDetail(true);
+    handleMarkAsRead(log.id);
+  }, [handleMarkAsRead]);
 
   // Enhanced keyboard shortcuts
   useKeyboardShortcuts({
@@ -385,16 +398,14 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
   return (
     <div className='space-y-6'>
       {/* Connection Status Component */}
-      {useRealApi && (
-        <ConnectionStatus
-          isConnected={sseConnected}
-          isConnecting={connectionState.isConnecting}
-          error={connectionState.error || (sseHasError ? 'SSE connection issue' : undefined)}
-          reconnectCount={connectionState.reconnectCount}
-          lastMessageTime={connectionState.lastMessageTime}
-          onReconnect={connectSSE}
-        />
-      )}
+      <ConnectionStatus
+        isConnected={sseConnected}
+        isConnecting={connectionState.isConnecting}
+        error={connectionState.error || (sseHasError ? 'SSE connection issue' : undefined)}
+        reconnectCount={connectionState.reconnectCount}
+        lastMessageTime={connectionState.lastMessageTime}
+        onReconnect={connectSSE}
+      />
 
       {/* Unified Header with Controls */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -490,65 +501,75 @@ const PipelineLogsPage: React.FC<PipelineLogsPageProps & {
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-gray-600">
-              {useRealApi ? 'Supabase에서 로그를 불러오는 중...' : '모의 데이터를 불러오는 중...'}
+              로그를 불러오는 중...
             </span>
           </div>
         </div>
       )}
 
-      {/* 로그 뷰 (카드, 테이블 또는 타임라인) */}
-      {viewMode === 'cards' ? (
-        <PipelineLogsCards
-          logs={displayedLogs}
-          newLogIds={newLogIds}
-          onLoadMore={loadMoreLogs}
-          hasMore={hasMore}
-          isLoading={isLoading}
-          searchQuery={searchQuery}
-          onMarkAsRead={handleMarkAsRead}
-        />
-      ) : viewMode === 'timeline' ? (
-        <PipelineLogsTimeline
-          logs={displayedLogs}
-          newLogIds={newLogIds}
-          onLoadMore={loadMoreLogs}
-          hasMore={hasMore}
-          isLoading={isLoading}
-          searchQuery={searchQuery}
-          onMarkAsRead={handleMarkAsRead}
+      {/* Empty State 또는 로그 뷰 */}
+      {!isLoading && displayedLogs.length === 0 ? (
+        <EmptyLogsState
+          projectId={_projectId}
+          projectName={currentProject?.name}
         />
       ) : (
-        <PipelineLogsTable
-          logs={displayedLogs}
-          newLogIds={newLogIds}
-          onLoadMore={loadMoreLogs}
-          hasMore={hasMore}
-          isLoading={isLoading}
-          searchQuery={searchQuery}
-          onMarkAsRead={handleMarkAsRead}
-        />
+        <>
+          {/* 로그 뷰 (카드, 테이블 또는 타임라인) */}
+          {viewMode === 'cards' ? (
+            <PipelineLogsCards
+              logs={displayedLogs}
+              newLogIds={newLogIds}
+              onLoadMore={loadMoreLogs}
+              hasMore={hasMore}
+              isLoading={isLoading}
+              searchQuery={searchQuery}
+              onMarkAsRead={handleMarkAsRead}
+              onLogClick={handleLogClick}
+            />
+          ) : viewMode === 'timeline' ? (
+            <PipelineLogsTimeline
+              logs={displayedLogs}
+              newLogIds={newLogIds}
+              onLoadMore={loadMoreLogs}
+              hasMore={hasMore}
+              isLoading={isLoading}
+              searchQuery={searchQuery}
+              onMarkAsRead={handleMarkAsRead}
+              onLogClick={handleLogClick}
+            />
+          ) : (
+            <PipelineLogsTable
+              logs={displayedLogs}
+              newLogIds={newLogIds}
+              onLoadMore={loadMoreLogs}
+              hasMore={hasMore}
+              isLoading={isLoading}
+              searchQuery={searchQuery}
+              onMarkAsRead={handleMarkAsRead}
+              onLogClick={handleLogClick}
+            />
+          )}
+        </>
       )}
 
-      {/* 개발 모드 디버그 정보 */}
-      {process.env.NODE_ENV === 'development' && useRealApi && (
-        <div className="fixed bottom-4 left-4 bg-black text-white text-xs p-3 rounded-lg font-mono max-w-xs">
-          <div className="text-green-400 mb-1">🚀 Real API Mode</div>
-          <div>Build ID: {buildId}</div>
-          <div>Collecting: {isCollecting ? '✅' : '❌'}</div>
-          <div>SSE: {sseConnected ? '🟢' : '🔴'}</div>
-          <div>Logs: {logs.length}</div>
-          <div>Total: {totalCount}</div>
-          {connectionState.lastMessageTime && (
-            <div>Last SSE: {new Date(connectionState.lastMessageTime).toLocaleTimeString()}</div>
-          )}
-        </div>
-      )}
 
       {/* Preferences Modal */}
       <PreferencesModal
         isOpen={showPreferences}
         onClose={() => setShowPreferences(false)}
         userId={user?.id}
+      />
+      
+      {/* Log Detail Modal */}
+      <LogDetailModal
+        isOpen={showLogDetail}
+        onClose={() => {
+          setShowLogDetail(false);
+          setSelectedLog(null);
+        }}
+        log={selectedLog}
+        projectName={currentProject?.name}
       />
     </div>
   );

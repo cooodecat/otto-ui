@@ -30,13 +30,16 @@ function PipelinePageContent() {
 
   // 스토어 훅 사용
   const {
+    projects,
     fetchProjects,
     setSelectedProject
   } = useProjectStore();
 
   const {
+    pipelines,
     setCurrentProject,
-    fetchPipelines
+    fetchPipelines,
+    getPipelinesByProject
   } = usePipelineStore();
 
   useEffect(() => {
@@ -44,24 +47,91 @@ function PipelinePageContent() {
 
     const initializePageData = async () => {
       const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push("/");
+      if (!user || !session) {
+        router.push("/auth/signin");
         return;
       }
 
       setUser(user);
 
-      // 스토어 데이터 초기화
-      await fetchProjects();
-      setSelectedProject(projectId);
-      setCurrentProject(projectId);
-      await fetchPipelines(projectId);
+      // 토큰 설정
+      if (session.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
+
+      try {
+        // 1. 프로젝트 데이터 로드
+        await fetchProjects();
+        
+        // 2. 프로젝트 유효성 검증
+        const currentProjects = useProjectStore.getState().projects;
+        const validProject = currentProjects.find(p => p.projectId === projectId);
+        
+        if (!validProject) {
+          console.log('[PipelinePage] Invalid project ID, redirecting to latest project');
+          // 유효하지 않은 프로젝트 ID인 경우, 최신 프로젝트로 리다이렉션
+          if (currentProjects.length > 0) {
+            const latestProject = currentProjects.sort((a, b) => {
+              const dateA = new Date(a.createdAt || 0).getTime();
+              const dateB = new Date(b.createdAt || 0).getTime();
+              return dateB - dateA;
+            })[0];
+            
+            // 해당 프로젝트의 파이프라인 조회
+            await fetchPipelines(latestProject.projectId);
+            const projectPipelines = getPipelinesByProject(latestProject.projectId);
+            
+            if (projectPipelines.length > 0) {
+              const latestPipeline = projectPipelines.sort((a, b) => {
+                const dateA = new Date(a.createdAt || 0).getTime();
+                const dateB = new Date(b.createdAt || 0).getTime();
+                return dateB - dateA;
+              })[0];
+              router.push(`/projects/${latestProject.projectId}/pipelines/${latestPipeline.pipelineId}`);
+            } else {
+              router.push(`/projects/${latestProject.projectId}/pipelines`);
+            }
+          } else {
+            router.push("/projects");
+          }
+          return;
+        }
+
+        // 3. 파이프라인 데이터 로드
+        setSelectedProject(projectId);
+        setCurrentProject(projectId);
+        await fetchPipelines(projectId);
+        
+        // 4. 파이프라인 유효성 검증
+        const projectPipelines = getPipelinesByProject(projectId);
+        const validPipeline = projectPipelines.find(p => p.pipelineId === pipelineId);
+        
+        if (!validPipeline) {
+          console.log('[PipelinePage] Invalid pipeline ID, redirecting to latest pipeline');
+          // 유효하지 않은 파이프라인 ID인 경우, 최신 파이프라인으로 리다이렉션
+          if (projectPipelines.length > 0) {
+            const latestPipeline = projectPipelines.sort((a, b) => {
+              const dateA = new Date(a.createdAt || 0).getTime();
+              const dateB = new Date(b.createdAt || 0).getTime();
+              return dateB - dateA;
+            })[0];
+            router.push(`/projects/${projectId}/pipelines/${latestPipeline.pipelineId}`);
+          } else {
+            router.push(`/projects/${projectId}/pipelines`);
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('[PipelinePage] Error initializing data:', error);
+        toast.error("데이터 로드 중 오류가 발생했습니다.");
+      }
     };
 
     initializePageData();
-  }, [router, projectId, fetchProjects, setSelectedProject, setCurrentProject, fetchPipelines]);
+  }, [router, projectId, pipelineId]);
 
   const handleInitialize = useCallback(() => {
     // TODO: 파이프라인 초기화 로직
@@ -69,7 +139,7 @@ function PipelinePageContent() {
     window.location.reload(); // 임시 해결책
   }, []);
 
-  const handleRunPipeline = useCallback(() => {
+  const handleRunPipeline = useCallback(async () => {
     console.log("🔥 Run Pipeline button clicked!");
 
     if (!flowCanvasRef.current) {

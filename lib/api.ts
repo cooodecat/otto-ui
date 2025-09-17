@@ -107,6 +107,10 @@ class ApiClient {
   async createProject(data: {
     name: string;
     description?: string;
+    github_owner?: string;
+    github_repo_name?: string;
+    selected_branch?: string;
+    github_installation_id?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<any>("/projects", {
       method: "POST",
@@ -116,9 +120,13 @@ class ApiClient {
 
   async createProjectWithGithub(data: {
     name: string;
+    description: string;
     installationId: string;
-    repositoryFullName: string;
-    branch: string;
+    githubRepoId: string;
+    githubRepoUrl: string;
+    githubRepoName: string;
+    githubOwner: string;
+    selectedBranch: string;
   }): Promise<ApiResponse<any>> {
     return this.request<any>("/projects/with-github", {
       method: "POST",
@@ -162,18 +170,54 @@ class ApiClient {
     return this.request<any>(`/pipelines/${pipelineId}`);
   }
 
+  async createPipeline(projectId: string, data: {
+    name?: string;
+    blocks?: any[];
+    artifacts?: string[];
+    environment_variables?: Record<string, string>;
+    cache?: { paths: string[] };
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>(`/pipelines`, {
+      method: "POST",
+      body: JSON.stringify({
+        projectId: projectId,
+        name: data.name,
+        flowData: {
+          nodes: data.blocks || [],
+          edges: []
+        }
+      }),
+    });
+  }
+
   async updatePipeline(
     pipelineId: string,
     data: {
+      name?: string;
       blocks?: any[];
       artifacts?: string[];
       environment_variables?: Record<string, string>;
       cache?: { paths: string[] };
     }
   ): Promise<ApiResponse<any>> {
+    const requestBody: any = {};
+    
+    // name 필드가 있으면 추가
+    if (data.name !== undefined) {
+      requestBody.name = data.name;
+    }
+    
+    // flow 데이터가 있으면 추가
+    if (data.blocks !== undefined) {
+      requestBody.flowData = {
+        nodes: data.blocks,
+        edges: []
+      };
+    }
+    
     return this.request<any>(`/pipelines/${pipelineId}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: JSON.stringify(requestBody),
     });
   }
 

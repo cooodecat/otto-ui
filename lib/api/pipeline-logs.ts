@@ -317,10 +317,11 @@ export async function searchBuildHistories(
     limit?: number;
     offset?: number;
     status?: string;
+    projectId?: string;
   } = {}
 ): Promise<{ builds: BuildHistoryRow[]; hasMore: boolean }> {
   const supabase = createClient();
-  const { limit = 20, offset = 0, status } = options;
+  const { limit = 20, offset = 0, status, projectId } = options;
 
   // 먼저 사용자의 프로젝트 ID들을 조회
   type ProjectSearch = Pick<ProjectRow, 'project_id' | 'name' | 'github_repo_name' | 'selected_branch' | 'github_owner'>;
@@ -352,6 +353,10 @@ export async function searchBuildHistories(
 
   if (status && status !== 'any-status') {
     query = query.eq('build_execution_status', status);
+  }
+
+  if (projectId) {
+    query = query.eq('project_id', projectId);
   }
 
   const { data, error, count } = await query;

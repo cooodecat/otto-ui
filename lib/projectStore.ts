@@ -112,12 +112,23 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
     try {
       // Supabase 토큰 설정
-      await setAuthToken();
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[ProjectStore] Session:', session);
+      console.log('[ProjectStore] User ID:', session?.user?.id);
+      console.log('[ProjectStore] Access Token exists:', !!session?.access_token);
+      
+      if (session?.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
       
       // 실제 API 호출
+      console.log('[ProjectStore] Fetching projects from API...');
       const response = await apiClient.getProjects();
+      console.log('[ProjectStore] Raw API Response:', response);
       
       if (response.error) {
+        console.error('[ProjectStore] API Error:', response.error);
         throw new Error(response.error);
       }
 
@@ -127,24 +138,30 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         ? projectsData 
         : (projectsData?.projects || projectsData?.data || []);
       
-      console.log('API Response:', response.data);
-      console.log('Extracted projects:', projects);
+      console.log('[ProjectStore] API Response data:', response.data);
+      console.log('[ProjectStore] Extracted projects:', projects);
+      console.log('[ProjectStore] Number of projects:', projects?.length || 0);
       
       // 프로젝트 데이터 형식 변환 (백엔드 응답 형식에 맞게)
       const formattedProjects: Project[] = Array.isArray(projects) 
-        ? projects.map((project: any) => ({
-        projectId: project.id || project.project_id,
-        name: project.name,
-        description: project.description,
-        githubOwner: project.github_owner,
-        githubRepoName: project.github_repo_name,
-        githubInstallationId: project.github_installation_id,
-        repositoryFullName: project.repository_full_name,
-        defaultBranch: project.default_branch || project.branch,
-        createdAt: project.created_at,
-        updatedAt: project.updated_at
-      }))
+        ? projects.map((project: any) => {
+          console.log('[ProjectStore] Mapping project:', project);
+          return {
+            projectId: project.id || project.project_id,
+            name: project.name,
+            description: project.description,
+            githubOwner: project.github_owner,
+            githubRepoName: project.github_repo_name,
+            githubInstallationId: project.github_installation_id,
+            repositoryFullName: project.repository_full_name,
+            defaultBranch: project.default_branch || project.selected_branch || project.branch,
+            createdAt: project.created_at,
+            updatedAt: project.updated_at
+          };
+        })
       : [];
+      
+      console.log('[ProjectStore] Formatted projects:', formattedProjects);
 
       set((state) => ({
         projects: formattedProjects,
