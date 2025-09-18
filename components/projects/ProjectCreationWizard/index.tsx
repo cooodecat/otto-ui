@@ -478,7 +478,7 @@ export default function ProjectCreationWizard({
     const state = btoa(JSON.stringify(stateData));
 
     // GitHub App 설치 URL 생성
-    const installUrl = `https://github.com/apps/codecat-otto-dev/installations/new?state=${encodeURIComponent(state)}`;
+    const installUrl = `https://github.com/apps/codecat-otto-prod/installations/new?state=${encodeURIComponent(state)}`;
 
     // 새 창에서 GitHub App 설치 페이지 열기
     const width = 1000;
