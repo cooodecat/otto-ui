@@ -455,8 +455,9 @@ const GlobalSidebar = () => {
           `/projects/${projectId}/pipelines/${latestPipeline.pipelineId}`
         );
       } else {
-        // 파이프라인이 없는 경우 프로젝트의 첫 번째 파이프라인 페이지로 이동 (기본값 사용)
-        router.push(`/projects/${projectId}/pipelines/pipe_1`);
+        // 파이프라인이 없는 경우 파이프라인 목록 페이지로 이동
+        // 사용자가 새 파이프라인을 생성하거나 기존 파이프라인을 선택할 수 있음
+        router.push(`/projects/${projectId}/pipelines`);
       }
     }, 100); // 파이프라인 로딩을 위한 짧은 지연
   };
