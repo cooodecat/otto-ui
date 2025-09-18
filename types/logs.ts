@@ -116,6 +116,7 @@ export interface LogLine {
 
 export interface LogItem {
   id: string;
+  awsBuildId?: string; // AWS CodeBuild ID for log retrieval
   status: "success" | "failed" | "running" | "pending";
   pipelineName: string;
   trigger: {
