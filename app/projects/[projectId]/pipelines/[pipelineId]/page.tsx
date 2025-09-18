@@ -284,6 +284,7 @@ function PipelinePageContent() {
       </div>
       <CICDFlowCanvas
         projectId={projectId}
+        pipelineId={pipelineId}
         onRef={(ref) => {
           flowCanvasRef.current = ref;
         }}

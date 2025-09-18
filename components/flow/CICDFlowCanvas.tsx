@@ -60,9 +60,11 @@ const initialNodes: Node[] = [];
 
 function CICDDropZone({
   projectId,
+  pipelineId,
   onRef,
 }: {
   projectId: string;
+  pipelineId: string;
   onRef?: (ref: CICDFlowCanvasRef) => void;
 }) {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
@@ -72,8 +74,8 @@ function CICDDropZone({
 
   // localStorage에서 파이프라인 데이터 불러오기
   useEffect(() => {
-    if (!initializedRef.current && projectId) {
-      const storageKey = `pipeline-${projectId}`;
+    if (!initializedRef.current && projectId && pipelineId) {
+      const storageKey = `pipeline-${projectId}-${pipelineId}`;
       const savedData = localStorage.getItem(storageKey);
 
       if (savedData) {
@@ -96,7 +98,7 @@ function CICDDropZone({
 
       initializedRef.current = true;
     }
-  }, [projectId]);
+  }, [projectId, pipelineId]);
 
   const createDefaultPipelineStart = () => {
     console.log("🏁 Creating default Pipeline Start node...");
@@ -116,13 +118,13 @@ function CICDDropZone({
 
   // localStorage 저장 함수
   const saveToLocalStorage = useCallback((currentNodes: Node[], currentEdges: Edge[]) => {
-    if (initializedRef.current && projectId && (currentNodes.length > 0 || currentEdges.length > 0)) {
-      const storageKey = `pipeline-${projectId}`;
+    if (initializedRef.current && projectId && pipelineId && (currentNodes.length > 0 || currentEdges.length > 0)) {
+      const storageKey = `pipeline-${projectId}-${pipelineId}`;
       const pipelineData = { nodes: currentNodes, edges: currentEdges };
       localStorage.setItem(storageKey, JSON.stringify(pipelineData));
       console.log(`💾 Saved to localStorage (${storageKey}):`, { nodes: currentNodes.length, edges: currentEdges.length });
     }
-  }, [projectId]);
+  }, [projectId, pipelineId]);
 
   // localStorage에 자동 저장 (상태 변경 감지)
   useEffect(() => {
@@ -148,8 +150,8 @@ function CICDDropZone({
     }
 
     // localStorage도 업데이트
-    if (projectId) {
-      const storageKey = `pipeline-${projectId}`;
+    if (projectId && pipelineId) {
+      const storageKey = `pipeline-${projectId}-${pipelineId}`;
       const resetData = {
         nodes: pipelineStartNodes.length > 0 ? pipelineStartNodes : nodes.filter(n => n.type === "pipeline_start"),
         edges: []
@@ -157,7 +159,7 @@ function CICDDropZone({
       localStorage.setItem(storageKey, JSON.stringify(resetData));
       console.log(`💾 Reset saved to localStorage (${storageKey})`);
     }
-  }, [nodes, projectId]);
+  }, [nodes, projectId, pipelineId]);
 
   // Ref 등록
   React.useEffect(() => {
@@ -357,15 +359,17 @@ export interface CICDFlowCanvasRef {
 
 export default function CICDFlowCanvas({
   projectId,
+  pipelineId,
   onRef,
 }: {
   projectId: string;
+  pipelineId: string;
   onRef?: (ref: CICDFlowCanvasRef) => void;
 }) {
   return (
     <div className="h-screen w-full bg-gray-50">
       <ReactFlowProvider>
-        <CICDDropZone projectId={projectId} onRef={onRef} />
+        <CICDDropZone projectId={projectId} pipelineId={pipelineId} onRef={onRef} />
       </ReactFlowProvider>
     </div>
   );
