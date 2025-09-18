@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProjectHeader from "@/components/projects/ProjectHeader";
 import ProjectGrid from "@/components/projects/ProjectGrid";
@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import apiClient from "@/lib/api";
 import { CheckCircle, X } from "lucide-react";
 
-export default function ProjectsPage() {
+function ProjectsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { projects, isLoading: loading, fetchProjects } = useProjectStore();
@@ -184,5 +184,17 @@ export default function ProjectsPage() {
         onProjectCreated={handleProjectCreated}
       />
     </div>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    }>
+      <ProjectsContent />
+    </Suspense>
   );
 }
