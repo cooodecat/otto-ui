@@ -686,6 +686,7 @@ export const nodeCategories = {
 export const cicdCategories = {
   start: {
     name: "Start",
+    icon: "🚀",
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.START].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.START].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.START].borderClass,
@@ -694,6 +695,7 @@ export const cicdCategories = {
   },
   prebuild: {
     name: "Prebuild",
+    icon: "📦",
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.PREBUILD].borderClass,
@@ -702,6 +704,7 @@ export const cicdCategories = {
   },
   build: {
     name: "Build",
+    icon: "🔨",
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.BUILD].borderClass,
@@ -710,6 +713,7 @@ export const cicdCategories = {
   },
   test: {
     name: "Test",
+    icon: "🧪",
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.TEST].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.TEST].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.TEST].borderClass,
@@ -718,6 +722,7 @@ export const cicdCategories = {
   },
   notification: {
     name: "Notification",
+    icon: "📢",
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.NOTIFICATION].borderClass,
@@ -726,6 +731,7 @@ export const cicdCategories = {
   },
   utility: {
     name: "Utility",
+    icon: "🔧",
     colorClass: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].colorClass,
     bgClass: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].bgClass,
     borderClass: CICD_GROUP_COLORS[CICDBlockGroup.UTILITY].borderClass,

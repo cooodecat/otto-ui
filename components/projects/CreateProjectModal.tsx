@@ -191,9 +191,13 @@ export default function CreateProjectModalFull({
   ];
 
   const filteredRepositories = repositories.filter(
-    (repo) =>
-      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.owner.toLowerCase().includes(searchQuery.toLowerCase())
+    (repo) => {
+      const ownerName = typeof repo.owner === 'string' 
+        ? repo.owner 
+        : repo.owner?.login || repo.owner?.name || '';
+      return repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ownerName.toLowerCase().includes(searchQuery.toLowerCase());
+    }
   );
 
   return createPortal(
@@ -275,7 +279,9 @@ export default function CreateProjectModalFull({
                           )}
                         </div>
                         <div className="text-sm text-gray-500 mt-1">
-                          {repo.owner}
+                          {typeof repo.owner === 'string' 
+                            ? repo.owner 
+                            : repo.owner?.login || repo.owner?.name || ''}
                         </div>
                       </div>
                       <div className="text-sm text-gray-500">

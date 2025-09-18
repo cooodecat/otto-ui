@@ -17,7 +17,7 @@ export interface Pipeline {
   /** 파이프라인 상태 */
   status?: "active" | "inactive" | "draft";
   /** 블록 데이터 */
-  blocks?: any[];
+  blocks?: Record<string, unknown>[];
   /** 아티팩트 경로 */
   artifacts?: string[];
   /** 환경 변수 */
@@ -151,9 +151,20 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
         throw new Error(response.error);
       }
 
-      // API 응답이 배열인지 확인
+      // API 응답이 배열인지 객체인지 확인
       const pipelinesData = response.data;
-      const pipelines = Array.isArray(pipelinesData) ? pipelinesData : [];
+      let pipelines = [];
+      
+      if (Array.isArray(pipelinesData)) {
+        pipelines = pipelinesData;
+      } else if (pipelinesData && typeof pipelinesData === 'object') {
+        // 객체 응답에서 pipelines 배열 추출 시도
+        if ('pipelines' in pipelinesData) {
+          pipelines = Array.isArray((pipelinesData as any).pipelines) ? (pipelinesData as any).pipelines : [];
+        } else if ('data' in pipelinesData) {
+          pipelines = Array.isArray((pipelinesData as any).data) ? (pipelinesData as any).data : [];
+        }
+      }
       
       console.log('[PipelineStore] Pipeline API Response data:', response.data);
       console.log('[PipelineStore] Extracted pipelines:', pipelines);
@@ -161,7 +172,7 @@ export const usePipelineStore = create<PipelineStore>((set, get) => ({
       
       // 파이프라인 데이터 형식 변환 (백엔드 응답 형식에 맞게)
       const formattedPipelines: Pipeline[] = Array.isArray(pipelines)
-        ? pipelines.map((pipeline: any) => {
+        ? pipelines.map((pipeline: Record<string, any>) => {
           console.log('[PipelineStore] Mapping pipeline:', pipeline);
           const mapped = {
             pipelineId: pipeline.id || pipeline.pipeline_id,

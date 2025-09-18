@@ -20,6 +20,15 @@ import type {
   UpdateProjectResponse,
   DeleteProjectResponse,
   RetryCodeBuildResponse,
+  Pipeline,
+  PipelinesResponse,
+  PipelineResponse,
+  CreatePipelineRequest,
+  UpdatePipelineRequest,
+  PipelineNode,
+  BuildRequest,
+  BuildStatus,
+  Build,
 } from "@/types/api";
 
 const API_BASE_URL =
@@ -114,7 +123,7 @@ class ApiClient {
   // 사용자 관련 API
   async getUserProfile(): Promise<ApiResponse<User>> {
     const response = await this.request<{ data?: { user: User }; user?: User }>(
-      "/api/v1/auth/profile"
+      "/auth/profile"
     );
     if (response.data) {
       // 백엔드 응답 형식에 맞게 수정
@@ -127,7 +136,7 @@ class ApiClient {
     updates: UpdateUserProfileRequest
   ): Promise<ApiResponse<User>> {
     const response = await this.request<UpdateUserProfileResponse>(
-      "/api/v1/auth/profile",
+      "/auth/profile",
       {
         method: "PUT",
         body: JSON.stringify(updates),
@@ -144,41 +153,41 @@ class ApiClient {
     ApiResponse<GitHubInstallationsResponse>
   > {
     return this.request<GitHubInstallationsResponse>(
-      "/api/v1/projects/github-installations"
+      "/projects/github-installations"
     );
   }
 
   // Legacy method name for compatibility
-  async getGithubInstallations(): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>("/api/v1/projects/github-installations");
+  async getGithubInstallations(): Promise<ApiResponse<GitHubInstallationsResponse>> {
+    return this.request<GitHubInstallationsResponse>("/projects/github-installations");
   }
 
   async getGitHubInstallUrl(
     returnUrl: string = "/projects"
   ): Promise<ApiResponse<GitHubInstallUrlResponse>> {
     return this.request<GitHubInstallUrlResponse>(
-      `/api/v1/projects/github/install-url?returnUrl=${encodeURIComponent(
+      `/projects/github/install-url?returnUrl=${encodeURIComponent(
         returnUrl
       )}`
     );
   }
 
   async getGitHubStatus(): Promise<ApiResponse<GitHubStatusResponse>> {
-    return this.request<GitHubStatusResponse>("/api/v1/projects/github/status");
+    return this.request<GitHubStatusResponse>("/projects/github/status");
   }
 
   async getGitHubRepositories(
     installationId: string
   ): Promise<ApiResponse<GitHubRepositoriesResponse>> {
     return this.request<GitHubRepositoriesResponse>(
-      `/api/v1/projects/github-installations/${installationId}/repositories`
+      `/projects/github-installations/${installationId}/repositories`
     );
   }
 
   // Legacy method name for compatibility
-  async getGithubRepositories(installationId: string): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>(
-      `/api/v1/projects/github-installations/${installationId}/repositories`
+  async getGithubRepositories(installationId: string): Promise<ApiResponse<GitHubRepositoriesResponse>> {
+    return this.request<GitHubRepositoriesResponse>(
+      `/projects/github-installations/${installationId}/repositories`
     );
   }
 
@@ -188,7 +197,7 @@ class ApiClient {
     repo: string
   ): Promise<ApiResponse<GitHubBranchesResponse>> {
     return this.request<GitHubBranchesResponse>(
-      `/api/v1/projects/github-installations/${installationId}/repositories/${owner}/${repo}/branches`
+      `/projects/github-installations/${installationId}/repositories/${owner}/${repo}/branches`
     );
   }
 
@@ -197,34 +206,34 @@ class ApiClient {
     installationId: string,
     owner: string,
     repo: string
-  ): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>(
-      `/api/v1/projects/github-installations/${installationId}/repositories/${owner}/${repo}/branches`
+  ): Promise<ApiResponse<GitHubBranchesResponse>> {
+    return this.request<GitHubBranchesResponse>(
+      `/projects/github-installations/${installationId}/repositories/${owner}/${repo}/branches`
     );
   }
 
   async getTestRepos(): Promise<ApiResponse<Record<string, unknown>>> {
     return this.request<Record<string, unknown>>(
-      "/api/v1/projects/github/test-repos"
+      "/projects/github/test-repos"
     );
   }
 
   // Projects API
   async getProjects(): Promise<ApiResponse<ProjectsResponse>> {
-    return this.request<ProjectsResponse>("/api/v1/projects");
+    return this.request<ProjectsResponse>("/projects");
   }
 
   async getProject(
     projectId: string
   ): Promise<ApiResponse<ProjectDetailResponse>> {
-    return this.request<ProjectDetailResponse>(`/api/v1/projects/${projectId}`);
+    return this.request<ProjectDetailResponse>(`/projects/${projectId}`);
   }
 
   async createProjectWithGitHub(
     request: CreateProjectWithGithubRequest
   ): Promise<ApiResponse<CreateProjectWithGithubResponse>> {
     return this.request<CreateProjectWithGithubResponse>(
-      "/api/v1/projects/with-github",
+      "/projects/with-github",
       {
         method: "POST",
         body: JSON.stringify(request),
@@ -243,7 +252,7 @@ class ApiClient {
     githubOwner: string;
     selectedBranch: string;
   }): Promise<ApiResponse<any>> {
-    return this.request<any>("/api/v1/projects/with-github", {
+    return this.request<any>("/projects/with-github", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -254,7 +263,7 @@ class ApiClient {
     updates: UpdateProjectRequest
   ): Promise<ApiResponse<UpdateProjectResponse>> {
     return this.request<UpdateProjectResponse>(
-      `/api/v1/projects/${projectId}`,
+      `/projects/${projectId}`,
       {
         method: "PATCH",
         body: JSON.stringify(updates),
@@ -266,7 +275,7 @@ class ApiClient {
     projectId: string
   ): Promise<ApiResponse<DeleteProjectResponse>> {
     return this.request<DeleteProjectResponse>(
-      `/api/v1/projects/${projectId}`,
+      `/projects/${projectId}`,
       {
         method: "DELETE",
       }
@@ -277,7 +286,7 @@ class ApiClient {
     projectId: string
   ): Promise<ApiResponse<RetryCodeBuildResponse>> {
     return this.request<RetryCodeBuildResponse>(
-      `/api/v1/projects/${projectId}/retry-codebuild`,
+      `/projects/${projectId}/retry-codebuild`,
       {
         method: "POST",
       }
@@ -286,11 +295,11 @@ class ApiClient {
 
   // 파이프라인 관련 API
   async getPipelines(projectId: string): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>(`/api/v1/pipelines/project/${projectId}`);
+    return this.request<any[]>(`/pipelines/project/${projectId}`);
   }
 
   async getPipeline(pipelineId: string): Promise<ApiResponse<any>> {
-    return this.request<any>(`/api/v1/pipelines/${pipelineId}`);
+    return this.request<any>(`/pipelines/${pipelineId}`);
   }
 
   async createPipeline(projectId: string, data: {
@@ -300,7 +309,7 @@ class ApiClient {
     environment_variables?: Record<string, string>;
     cache?: { paths: string[] };
   }): Promise<ApiResponse<any>> {
-    return this.request<any>(`/api/v1/pipelines`, {
+    return this.request<any>(`/pipelines`, {
       method: "POST",
       body: JSON.stringify({
         projectId: projectId,
@@ -338,14 +347,14 @@ class ApiClient {
       };
     }
     
-    return this.request<any>(`/api/v1/pipelines/${pipelineId}`, {
+    return this.request<any>(`/pipelines/${pipelineId}`, {
       method: "PUT",
       body: JSON.stringify(requestBody),
     });
   }
 
   async deletePipeline(pipelineId: string): Promise<ApiResponse<void>> {
-    return this.request<void>(`/api/v1/pipelines/${pipelineId}`, {
+    return this.request<void>(`/pipelines/${pipelineId}`, {
       method: "DELETE",
     });
   }
@@ -360,26 +369,26 @@ class ApiClient {
       environment_variables?: Record<string, string>;
     }
   ): Promise<ApiResponse<any>> {
-    return this.request<any>(`/api/v1/codebuild/${projectId}/start-flow`, {
+    return this.request<any>(`/codebuild/${projectId}/start-flow`, {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
   async getBuildStatus(buildId: string): Promise<ApiResponse<any>> {
-    return this.request<any>(`/api/v1/codebuild/status/${buildId}`);
+    return this.request<any>(`/codebuild/status/${buildId}`);
   }
 
   async getProjectBuilds(projectId: string): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>(`/api/v1/builds/projects/${projectId}`);
+    return this.request<any[]>(`/builds/projects/${projectId}`);
   }
 
   async getBuild(buildId: string): Promise<ApiResponse<any>> {
-    return this.request<any>(`/api/v1/builds/${buildId}`);
+    return this.request<any>(`/builds/${buildId}`);
   }
 
-  async getBuildStats(projectId: string): Promise<ApiResponse<any>> {
-    return this.request<any>(`/api/v1/builds/stats/summary?projectId=${projectId}`);
+  async getBuildStats(projectId: string): Promise<ApiResponse<BuildStatus>> {
+    return this.request<BuildStatus>(`/builds/stats/summary?projectId=${projectId}`);
   }
 }
 

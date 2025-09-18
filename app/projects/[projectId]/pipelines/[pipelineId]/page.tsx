@@ -83,8 +83,8 @@ function PipelinePageContent() {
             })[0];
             
             // 해당 프로젝트의 파이프라인 조회
-            await fetchPipelines(latestProject.projectId);
-            const projectPipelines = getPipelinesByProject(latestProject.projectId);
+            await fetchPipelines(latestProject.projectId || latestProject.project_id);
+            const projectPipelines = getPipelinesByProject(latestProject.projectId || latestProject.project_id);
             
             if (projectPipelines.length > 0) {
               const latestPipeline = projectPipelines.sort((a, b) => {

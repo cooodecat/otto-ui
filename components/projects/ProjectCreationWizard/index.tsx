@@ -761,166 +761,203 @@ export default function ProjectCreationWizard({
     setIsNavigating(true); // 네비게이션 시작
     
     try {
-      // 잠시 대기하여 백엔드에서 파이프라인 생성 완료를 기다림
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 백엔드 파이프라인 생성 대기: 최대 ~3초(1초 간격)
       
-      // 파이프라인 목록 조회 (최대 3회 시도)
+      // 백엔드가 자동 생성한 파이프라인 확인
       let pipelineData = null;
       let retryCount = 0;
-      const maxRetries = 3;
+      const maxRetries = 5; // 총 ~5초 대기 (1초 간격) - 백엔드 처리 시간 고려
+      
+      // 타입 체크 및 변환
+      const projectId = typeof state.createdProjectId === 'object' 
+        ? (state.createdProjectId as any).project_id || String(state.createdProjectId)
+        : String(state.createdProjectId);
+      
+      console.log('=== Checking for backend-created pipeline ===');
+      console.log('Project ID for pipeline check:', projectId);
+      
+      // pipelineStore 초기화
+      const pipelineStore = usePipelineStore.getState();
       
       while (retryCount < maxRetries && !pipelineData) {
-        console.log(`Fetching pipelines for project (attempt ${retryCount + 1}/${maxRetries}):`, state.createdProjectId);
-        console.log('Type of createdProjectId:', typeof state.createdProjectId, 'Value:', state.createdProjectId);
+        console.log(`\n--- Pipeline check attempt ${retryCount + 1}/${maxRetries} ---`);
         
-        // 타입 체크 및 변환
-        const projectId = typeof state.createdProjectId === 'object' 
-          ? (state.createdProjectId as any).project_id || String(state.createdProjectId)
-          : String(state.createdProjectId);
-        
-        console.log('Using projectId for API call:', projectId);
-        const pipelineResponse = await apiClient.getPipelines(projectId);
-        
-        if (pipelineResponse.data && Array.isArray(pipelineResponse.data) && pipelineResponse.data.length > 0) {
-          // 첫 번째 파이프라인을 사용
-          pipelineData = pipelineResponse.data[0];
-          console.log('Found existing pipeline:', pipelineData);
-          break; // 파이프라인을 찾았으므로 즉시 종료
+        try {
+          const pipelineResponse = await apiClient.getPipelines(projectId);
+          console.log('Raw API response:', pipelineResponse);
+          console.log('Response data type:', typeof pipelineResponse.data);
+          console.log('Response data:', JSON.stringify(pipelineResponse.data, null, 2));
+          
+          // API 응답 처리 - 다양한 형식 지원
+          let pipelines = null;
+          
+          if (pipelineResponse.data) {
+            // Case 1: data가 직접 배열인 경우
+            if (Array.isArray(pipelineResponse.data)) {
+              pipelines = pipelineResponse.data;
+              console.log('Response is direct array, count:', pipelines.length);
+            } 
+            // Case 2: data.pipelines가 배열인 경우
+            else if ((pipelineResponse.data as any).pipelines && Array.isArray((pipelineResponse.data as any).pipelines)) {
+              pipelines = (pipelineResponse.data as any).pipelines;
+              console.log('Response has pipelines property, count:', pipelines.length);
+            }
+            // Case 3: data.data가 배열인 경우
+            else if ((pipelineResponse.data as any).data && Array.isArray((pipelineResponse.data as any).data)) {
+              pipelines = (pipelineResponse.data as any).data;
+              console.log('Response has data.data property, count:', pipelines.length);
+            }
+            // Case 4: 단일 객체인 경우
+            else if (typeof pipelineResponse.data === 'object' && !Array.isArray(pipelineResponse.data)) {
+              // 단일 파이프라인 객체를 배열로 변환
+              if ((pipelineResponse.data as any).id || (pipelineResponse.data as any).pipeline_id || (pipelineResponse.data as any).pipelineId) {
+                pipelines = [pipelineResponse.data];
+                console.log('Response is single pipeline object, converting to array');
+              }
+            }
+          }
+          
+          console.log('Extracted pipelines:', pipelines);
+          
+          if (pipelines && pipelines.length > 0) {
+            // 백엔드가 생성한 파이프라인 사용
+            pipelineData = pipelines[0];
+            console.log('\n✅ Found backend-created pipeline:');
+            console.log('  - Full data:', JSON.stringify(pipelineData, null, 2));
+            console.log('  - Name:', pipelineData.name);
+            console.log('  - ID (id):', pipelineData.id);
+            console.log('  - ID (pipeline_id):', pipelineData.pipeline_id);
+            console.log('  - ID (pipelineId):', pipelineData.pipelineId);
+            
+            // Store에도 파이프라인 데이터 추가
+            await pipelineStore.fetchPipelines(projectId);
+            break;
+          }
+        } catch (error) {
+          console.error(`Error fetching pipelines (attempt ${retryCount + 1}):`, error);
+          // 에러가 발생해도 계속 시도
         }
         
         retryCount++;
         if (retryCount < maxRetries) {
-          // 재시도 전 잠시 대기
-          console.log(`No pipelines found yet, retrying in 1 second...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const waitTime = 1000; // 1초 간격
+          console.log(`No pipelines found yet. Waiting ${waitTime}ms before next check...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
       
       let targetUrl = `/projects/${state.createdProjectId}`;
       
-      // 파이프라인이 없으면 새로 생성 시도 (백엔드가 자동 생성하지 않는 경우만)
+      // 백엔드가 파이프라인을 생성하지 못한 경우 처리
       if (!pipelineData) {
-        console.log('No pipelines found after waiting. Checking if we should create one...');
-        
-        // 파이프라인이 정말 없는지 한 번 더 확인
-        const projectId = typeof state.createdProjectId === 'object' 
-          ? (state.createdProjectId as any).project_id || String(state.createdProjectId)
-          : String(state.createdProjectId);
-        
-        const finalCheck = await apiClient.getPipelines(projectId);
-        if (finalCheck.data && Array.isArray(finalCheck.data) && finalCheck.data.length > 0) {
-          pipelineData = finalCheck.data[0];
-          console.log('Found pipeline on final check:', pipelineData);
-        } else {
-          // 정말로 파이프라인이 없을 때만 생성
-          console.log('No pipelines exist. Creating default pipeline...');
-          
-          try {
-            const createPipelineResponse = await apiClient.createPipeline(projectId, {
-            name: 'Pipeline #1',
-            blocks: [
-              {
-                id: 'trigger',
-                block_type: 'branch_push_trigger',
-                group_type: 'trigger',
-                on_success: 'install-deps',
-                branches: [state.selectedBranch || 'main']
-              },
-              {
-                id: 'install-deps',
-                block_type: 'node_package_manager',
-                group_type: 'build',
-                on_success: 'build-app',
-                package_manager: 'npm',
-                package_list: []
-              },
-              {
-                id: 'build-app',
-                block_type: 'custom_build_command',
-                group_type: 'build',
-                on_success: 'test-app',
-                custom_command: ['npm run build']
-              },
-              {
-                id: 'test-app',
-                block_type: 'node_test_command',
-                group_type: 'test',
-                package_manager: 'npm',
-                test_command: ['npm test']
-              }
-            ],
-            artifacts: ['dist/**/*', 'build/**/*'],
-            environment_variables: {
-              NODE_ENV: 'production',
-              REPO_NAME: state.repository?.name || '',
-              BRANCH: state.selectedBranch || 'main'
-            },
-            cache: {
-              paths: ['node_modules/**/*']
-            }
-          });
-          
-          if (createPipelineResponse.data) {
-            pipelineData = createPipelineResponse.data;
-            console.log('Pipeline created successfully by frontend:', pipelineData);
-            toast.success('파이프라인이 생성되었습니다.');
-          } else if (createPipelineResponse.error) {
-            throw new Error(createPipelineResponse.error);
-          } else {
-            throw new Error('파이프라인 생성 응답이 비어있습니다.');
-          }
-          } catch (pipelineError) {
-            console.error('Failed to create pipeline:', pipelineError);
-            // 파이프라인 생성 실패 시에도 프로젝트 페이지로는 이동
-            toast.error('파이프라인 자동 생성에 실패했습니다. 프로젝트 페이지에서 직접 생성해주세요.');
-          }
-        }
+        console.log('Backend did not create a pipeline within timeout.');
+        console.log('User can create pipeline manually from the project page.');
+        // 파이프라인이 없어도 프로젝트 페이지로 이동
+        // 사용자가 프로젝트 페이지에서 직접 파이프라인을 생성할 수 있음
+        toast('프로젝트가 생성되었습니다. 파이프라인을 설정해주세요.', {
+          icon: 'ℹ️',
+          duration: 4000
+        });
+      } else {
+        // 백엔드가 생성한 파이프라인이 있으면 성공 메시지
+        toast.success(`프로젝트와 기본 파이프라인(${pipelineData.name || 'Pipeline #1'})이 생성되었습니다.`);
       }
       
       // URL 결정 - 파이프라인이 있으면 에디터로, 없으면 프로젝트 페이지로
-      const pipelineId = pipelineData?.pipeline_id || pipelineData?.id;
+      // 파이프라인 ID 추출 - 다양한 필드명 지원
+      const pipelineId = pipelineData?.id || 
+                        pipelineData?.pipeline_id || 
+                        pipelineData?.pipelineId ||
+                        pipelineData?.['pipeline-id'] ||
+                        pipelineData?.uuid;
+                        
+      console.log('\n=== Navigation Decision ===');
+      console.log('Extracted pipeline ID:', pipelineId);
+      console.log('Project ID for navigation:', projectId);
+      console.log('Pipeline data available:', !!pipelineData);
+      
       if (pipelineData && pipelineId) {
-        targetUrl = `/projects/${state.createdProjectId}/pipelines/${pipelineId}`;
-        console.log('Navigating to pipeline editor:', targetUrl);
+        targetUrl = `/projects/${projectId}/pipelines/${pipelineId}`;
+        console.log('✅ Will navigate to pipeline editor:', targetUrl);
       } else {
-        targetUrl = `/projects/${state.createdProjectId}/pipelines`;
-        console.log('Navigating to project pipelines page:', targetUrl);
+        targetUrl = `/projects/${projectId}/pipelines`;
+        console.log('➡️ Will navigate to project pipelines page:', targetUrl);
       }
       
       // Zustand store 업데이트 (프로젝트 및 파이프라인 선택 상태)
+      console.log('\n=== Updating Stores ===');
       const { setSelectedProject } = useProjectStore.getState();
-      const pipelineStore = usePipelineStore.getState();
       
       // 프로젝트 선택 상태 업데이트
-      setSelectedProject(state.createdProjectId);
+      setSelectedProject(projectId);
+      console.log('✅ Updated selected project to:', projectId);
       
-      // 파이프라인 선택 상태 업데이트
-      if (pipelineData) {
-        // API 응답 형식에 따라 ID 추출
-        const pipelineId = pipelineData.pipeline_id || pipelineData.id;
-        if (pipelineId && typeof pipelineStore.setSelectedPipeline === 'function') {
+      // 파이프라인 선택 상태 업데이트 - pipelineStore는 위에서 이미 초기화함
+      if (pipelineData && pipelineId) {
+        console.log('Setting selected pipeline:', pipelineId);
+        if (typeof pipelineStore.setSelectedPipeline === 'function') {
           pipelineStore.setSelectedPipeline(pipelineId);
+          console.log('✅ Selected pipeline set in store');
+        }
+        
+        // 파이프라인 데이터도 스토어에 추가 (중복 방지)
+        const existingPipelines = pipelineStore.getPipelinesByProject(projectId);
+        const alreadyExists = existingPipelines.some(p => 
+          p.pipelineId === pipelineId || 
+          p.pipeline_id === pipelineId ||
+          (p as any).id === pipelineId
+        );
+        
+        if (!alreadyExists && typeof pipelineStore.addPipeline === 'function') {
+          const formattedPipeline = {
+            pipelineId: pipelineId,
+            pipeline_id: pipelineId, // snake_case alias
+            name: pipelineData.name || 'Pipeline #1',
+            projectId: projectId,
+            project_id: projectId, // snake_case alias
+            description: pipelineData.description || '',
+            status: pipelineData.status || 'active',
+            blocks: pipelineData.blocks || pipelineData.nodes || [],
+            createdAt: pipelineData.createdAt || pipelineData.created_at,
+            created_at: pipelineData.createdAt || pipelineData.created_at, // snake_case alias
+            updatedAt: pipelineData.updatedAt || pipelineData.updated_at,
+            updated_at: pipelineData.updatedAt || pipelineData.updated_at // snake_case alias
+          };
+          pipelineStore.addPipeline(formattedPipeline);
+          console.log('✅ Added pipeline to store:', formattedPipeline);
+        } else {
+          console.log('ℹ️ Pipeline already exists in store or addPipeline not available');
         }
       }
+      
+      console.log('\n=== Final Navigation ===');
+      console.log('Target URL:', targetUrl);
+      console.log('Has onProjectCreated callback:', !!onProjectCreated);
       
       onClose(); // 모달 닫기
       
       // onProjectCreated 콜백 호출 또는 직접 라우팅
       if (onProjectCreated) {
-        console.log('Calling onProjectCreated callback with target URL:', targetUrl);
+        const callbackData = {
+          projectId: projectId,
+          project_id: projectId, // snake_case alias
+          name: state.projectConfig.name,
+          pipelineId: pipelineId, // 파이프라인 ID도 전달
+          pipeline_id: pipelineId, // snake_case alias
+          targetUrl
+        };
+        console.log('Calling onProjectCreated callback with:', JSON.stringify(callbackData, null, 2));
         setTimeout(() => {
-          onProjectCreated({
-            projectId: state.createdProjectId,
-            name: state.projectConfig.name,
-            targetUrl
-          });
+          onProjectCreated(callbackData);
         }, 100);
       } else {
-        console.log('No callback, routing directly to:', targetUrl);
+        console.log('No onProjectCreated callback, navigating directly to:', targetUrl);
         setTimeout(() => {
           router.push(targetUrl);
         }, 100);
       }
+      
+      console.log('=== Navigation Process Complete ===\n');
     } catch (error) {
       console.error('Failed to navigate to project:', error);
       setIsNavigating(false); // 에러 발생 시 플래그 리셋
@@ -932,7 +969,7 @@ export default function ProjectCreationWizard({
       if (onProjectCreated) {
         setTimeout(() => {
           onProjectCreated({
-            projectId: state.createdProjectId,
+            projectId: state.createdProjectId || '',
             name: state.projectConfig.name,
             targetUrl: fallbackUrl
           });

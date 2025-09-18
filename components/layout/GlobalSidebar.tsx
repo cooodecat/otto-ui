@@ -209,13 +209,18 @@ const GlobalSidebar = () => {
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // 워크스페이스 드롭다운 체크
       if (
+        isWorkspaceDropdownOpen &&
         workspaceDropdownRef.current &&
         !workspaceDropdownRef.current.contains(event.target as Node)
       ) {
         setIsWorkspaceDropdownOpen(false);
       }
+      
+      // 파이프라인 드롭다운 체크
       if (
+        isPipelinesDropdownOpen &&
         pipelinesDropdownRef.current &&
         !pipelinesDropdownRef.current.contains(event.target as Node)
       ) {
@@ -223,11 +228,14 @@ const GlobalSidebar = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    // 드롭다운이 열려있을 때만 이벤트 리스너 추가
+    if (isWorkspaceDropdownOpen || isPipelinesDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isWorkspaceDropdownOpen, isPipelinesDropdownOpen]);
 
   // 모달 열기 핸들러
   const handleModalOpen = useCallback(() => {
@@ -249,33 +257,52 @@ const GlobalSidebar = () => {
   // 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옴
   useEffect(() => {
     if (selectedProjectId) {
+      console.log('[GlobalSidebar] Project changed, fetching pipelines for:', selectedProjectId);
       setCurrentProject(selectedProjectId);
-      fetchPipelines(selectedProjectId);
+      // 약간의 지연을 주어 중복 호출 방지
+      const timeoutId = setTimeout(() => {
+        fetchPipelines(selectedProjectId);
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [selectedProjectId]); // setCurrentProject와 fetchPipelines는 stable하므로 제외
+  }, [selectedProjectId, setCurrentProject, fetchPipelines]);
 
   // 현재 URL 파라미터에서 프로젝트 ID와 파이프라인 ID 추출 및 동기화
   useEffect(() => {
     const pipelineDetailPattern = /^\/projects\/([^/]+)\/pipelines\/([^/]+)$/;
-    const match = pathname.match(pipelineDetailPattern);
+    const pipelineListPattern = /^\/projects\/([^/]+)\/pipelines$/;
+    const pipelineMatch = pathname.match(pipelineDetailPattern);
+    const listMatch = pathname.match(pipelineListPattern);
 
-    if (match) {
-      const urlProjectId = match[1];
-      const urlPipelineId = match[2];
+    if (pipelineMatch) {
+      const urlProjectId = pipelineMatch[1];
+      const urlPipelineId = pipelineMatch[2];
 
       // URL에서 추출한 프로젝트 ID로 상태 동기화 (중복 호출 방지)
       if (urlProjectId !== selectedProjectId) {
+        console.log('[GlobalSidebar] URL project ID changed:', urlProjectId);
         setSelectedProject(urlProjectId);
         setCurrentProject(urlProjectId);
         // 프로젝트가 변경되었을 때 파이프라인 다시 로드
-        fetchPipelines(urlProjectId);
+        // selectedProjectId useEffect에서 처리되므로 여기서는 제거
       }
 
       setSelectedPipelineId(urlPipelineId);
+    } else if (listMatch) {
+      const urlProjectId = listMatch[1];
+      
+      if (urlProjectId !== selectedProjectId) {
+        console.log('[GlobalSidebar] URL project ID changed (list page):', urlProjectId);
+        setSelectedProject(urlProjectId);
+        setCurrentProject(urlProjectId);
+      }
+      
+      setSelectedPipelineId(null);
     } else {
       setSelectedPipelineId(null);
     }
-  }, [pathname]);
+  }, [pathname, selectedProjectId, setSelectedProject, setCurrentProject]);
 
   /**
    * CI/CD 노드 카테고리에서 검색을 위해 플랫 목록 생성

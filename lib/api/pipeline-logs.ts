@@ -105,9 +105,14 @@ export async function getProjectBuildHistories(
   const hasMore = count ? offset + limit < count : false;
 
   // 빌드 데이터에 프로젝트 정보 추가
-  const buildsWithProject = (data || []).map(build => ({
+  const buildsWithProject = (data || []).map((build: BuildHistoryRow) => ({
     ...build,
-    projects: project
+    projects: project ? {
+      name: (project as { name: string }).name,
+      github_repo_name: (project as { github_repo_name: string | null }).github_repo_name,
+      selected_branch: (project as { selected_branch: string | null }).selected_branch,
+      github_owner: (project as { github_owner: string }).github_owner
+    } : undefined
   }));
 
   return {
@@ -178,8 +183,8 @@ export async function getAllUserBuildHistories(
   const hasMore = count ? offset + limit < count : false;
 
   // 빌드 데이터에 해당 프로젝트 정보 추가
-  const buildsWithProject = (data || []).map(build => {
-    const project = projects?.find(p => p.project_id === build.project_id);
+  const buildsWithProject = (data || []).map((build: BuildHistoryRow) => {
+    const project = projects?.find((p) => p.project_id === build.project_id);
     return {
       ...build,
       projects: project ? {
@@ -369,8 +374,8 @@ export async function searchBuildHistories(
   const hasMore = count ? offset + limit < count : false;
 
   // 빌드 데이터에 해당 프로젝트 정보 추가
-  const buildsWithProject = (data || []).map(build => {
-    const project = projects?.find(p => p.project_id === build.project_id);
+  const buildsWithProject = (data || []).map((build: BuildHistoryRow) => {
+    const project = projects?.find((p) => p.project_id === build.project_id);
     return {
       ...build,
       projects: project ? {

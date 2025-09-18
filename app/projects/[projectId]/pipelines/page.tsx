@@ -19,10 +19,10 @@ interface Pipeline {
 interface Project {
   project_id: string;
   name: string;
-  description?: string;
-  github_owner?: string;
-  github_repo_name?: string;
-  selected_branch?: string;
+  description?: string | null;
+  github_owner?: string | null;
+  github_repo_name?: string | null;
+  selected_branch?: string | null;
 }
 
 export default function ProjectPipelinesPage() {
@@ -70,16 +70,23 @@ export default function ProjectPipelinesPage() {
     try {
       setLoading(true);
       const response = await apiClient.getPipelines(projectId);
-      const pipelinesData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data?.pipelines || []);
+      
+      // response.data의 타입 체크 및 변환
+      let pipelinesData: Pipeline[] = [];
+      
+      if (Array.isArray(response.data)) {
+        pipelinesData = response.data as Pipeline[];
+      } else if (response.data && typeof response.data === 'object' && 'pipelines' in response.data) {
+        const dataWithPipelines = response.data as { pipelines?: Pipeline[] };
+        pipelinesData = dataWithPipelines.pipelines || [];
+      }
       
       // pipeline_id가 있는지 확인하고 필터링
-      const validPipelines = pipelinesData.filter((p: any) => 
-        p && (p.pipeline_id || p.pipelineId || p.id)
-      ).map((p: any) => ({
+      const validPipelines = pipelinesData.filter((p: Pipeline) => 
+        p && (p.pipeline_id)
+      ).map((p: Pipeline) => ({
         ...p,
-        pipeline_id: p.pipeline_id || p.pipelineId || p.id
+        pipeline_id: p.pipeline_id
       }));
       
       setPipelines(validPipelines);

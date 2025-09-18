@@ -76,7 +76,7 @@ export default function ProjectSettingsPage() {
         repositoryFullName: project?.github_repo_name || '',
         defaultBranch: project?.selected_branch || '',
         githubInstallationId: project?.installation_id || '',
-        environment_variables: {} || {},
+        environment_variables: {},
         cache_settings: { enabled: false, paths: [] }
       };
 
