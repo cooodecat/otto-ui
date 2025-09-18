@@ -117,6 +117,7 @@ export interface GitHubBranchesResponse {
 
 // Projects API 타입들
 export interface Project {
+  // Snake case (from API)
   project_id: string;
   name: string;
   description: string | null;
@@ -134,6 +135,23 @@ export interface Project {
   codebuild_project_arn: string | null;
   cloudwatch_log_group: string | null;
   codebuild_error_message: string | null;
+  
+  // Camel case (for UI compatibility)
+  projectId?: string;
+  githubOwner?: string | null;
+  githubRepoId?: string | null;
+  githubRepoName?: string | null;
+  githubRepoUrl?: string | null;
+  selectedBranch?: string | null;
+  installationId?: string | null;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  codebuildStatus?: string | null;
+  codebuildProjectName?: string | null;
+  codebuildProjectArn?: string | null;
+  cloudwatchLogGroup?: string | null;
+  codebuildErrorMessage?: string | null;
 }
 
 export interface ProjectsResponse {

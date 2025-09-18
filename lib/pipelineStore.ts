@@ -30,6 +30,13 @@ export interface Pipeline {
   updatedAt?: string;
   /** 마지막 실행일 */
   lastRunAt?: string;
+  
+  // Snake case aliases for API compatibility
+  pipeline_id?: string;
+  project_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  last_run_at?: string;
 }
 
 /**

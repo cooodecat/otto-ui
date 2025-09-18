@@ -43,41 +43,41 @@ export default function Home() {
 
       // 2. 최근 생성된 프로젝트 선택 (created_at 기준 정렬)
       const latestProject = currentProjects.sort((a, b) => {
-        const dateA = new Date(a.createdAt || 0).getTime();
-        const dateB = new Date(b.createdAt || 0).getTime();
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
         return dateB - dateA; // 최신순
       })[0];
       
       console.log('[Home] Latest project:', latestProject);
       
       // 3. 해당 프로젝트의 파이프라인 조회
-      console.log('[Home] Fetching pipelines for project:', latestProject.projectId);
-      await fetchPipelines(latestProject.projectId);
+      console.log('[Home] Fetching pipelines for project:', latestProject.project_id);
+      await fetchPipelines(latestProject.project_id);
       
       // Store에서 직접 가져오기 (비동기 업데이트 대기)
       await new Promise(resolve => setTimeout(resolve, 500)); // 잠시 대기
-      const pipelines = getPipelinesByProject(latestProject.projectId);
+      const pipelines = getPipelinesByProject(latestProject.project_id);
       console.log('[Home] Pipelines for latest project:', pipelines);
       console.log('[Home] Number of pipelines:', pipelines.length);
       
       if (pipelines.length === 0) {
         console.log('[Home] No pipelines found, navigating to pipelines page');
         // 파이프라인이 없으면 파이프라인 페이지로
-        router.push(`/projects/${latestProject.projectId}/pipelines`);
+        router.push(`/projects/${latestProject.project_id}/pipelines`);
         return;
       }
 
       // 4. 최근 생성된 파이프라인 선택 (created_at 기준 정렬)
       const latestPipeline = pipelines.sort((a, b) => {
-        const dateA = new Date(a.createdAt || 0).getTime();
-        const dateB = new Date(b.createdAt || 0).getTime();
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
         return dateB - dateA; // 최신순
       })[0];
       
       console.log('[Home] Latest pipeline:', latestPipeline);
       
       // 5. 파이프라인 에디터로 이동
-      router.push(`/projects/${latestProject.projectId}/pipelines/${latestPipeline.pipelineId}`);
+      router.push(`/projects/${latestProject.project_id}/pipelines/${latestPipeline.pipeline_id}`);
     } catch (error) {
       console.error('[Home] Navigation error:', error);
       setIsLoading(false);
@@ -130,7 +130,7 @@ export default function Home() {
   };
 
   const handleProjectCreated = async (projectData?: { 
-    projectId: string; 
+    project_id: string; 
     name: string; 
     targetUrl?: string 
   }) => {
@@ -140,21 +140,21 @@ export default function Home() {
     // targetUrl이 제공되면 해당 URL로, 아니면 동적 라우팅
     if (projectData?.targetUrl) {
       router.push(projectData.targetUrl);
-    } else if (projectData?.projectId) {
+    } else if (projectData?.project_id) {
       // 프로젝트 생성 완료 후 파이프라인 체크
       try {
-        await fetchPipelines(projectData.projectId);
-        const pipelines = getPipelinesByProject(projectData.projectId);
+        await fetchPipelines(projectData.project_id);
+        const pipelines = getPipelinesByProject(projectData.project_id);
         
         if (pipelines.length > 0) {
           const latestPipeline = pipelines[0];
-          router.push(`/projects/${projectData.projectId}/pipelines/${latestPipeline.pipelineId}`);
+          router.push(`/projects/${projectData.project_id}/pipelines/${latestPipeline.pipeline_id}`);
         } else {
-          router.push(`/projects/${projectData.projectId}/pipelines`);
+          router.push(`/projects/${projectData.project_id}/pipelines`);
         }
       } catch (error) {
         console.error("Failed to navigate after project creation:", error);
-        router.push(`/projects/${projectData.projectId}/pipelines`);
+        router.push(`/projects/${projectData.project_id}/pipelines`);
       }
     }
   };

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import apiClient from '@/lib/api';
 import { createClient } from '@/lib/supabase/client';
 import { Project, CreateProjectWithGithubRequest } from '@/types/api';
+import { mapProjectToCamelCase, mapProjectsToCamelCase } from '@/lib/utils/projectMapper';
 
 /**
  * 프로젝트 스토어 상태 인터페이스
@@ -112,8 +113,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       console.log('[ProjectStore] Extracted projects:', projects);
       console.log('[ProjectStore] Number of projects:', projects?.length || 0);
       
-      // 프로젝트 데이터를 그대로 사용 (API Project 타입과 일치)
-      const formattedProjects: Project[] = Array.isArray(projects) ? projects : [];
+      // 프로젝트 데이터를 camelCase와 함께 매핑
+      const formattedProjects: Project[] = Array.isArray(projects) 
+        ? mapProjectsToCamelCase(projects)
+        : [];
       
       console.log('[ProjectStore] Formatted projects:', formattedProjects);
 
@@ -122,7 +125,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         isLoading: false,
         // 기존 선택된 프로젝트가 있으면 유지, 없으면 첫 번째 선택
         selectedProjectId: state.selectedProjectId ||
-          (formattedProjects.length > 0 ? formattedProjects[0].project_id : null)
+          (formattedProjects.length > 0 ? (formattedProjects[0].projectId || formattedProjects[0].project_id) : null)
       }));
     } catch (error) {
       console.error('Failed to fetch projects:', error);
@@ -159,8 +162,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   addProject: (project: Project) => {
+    const mappedProject = mapProjectToCamelCase(project);
     set((state) => ({
-      projects: [...state.projects, project],
+      projects: [...state.projects, mappedProject],
     }));
   },
 
