@@ -133,26 +133,35 @@ function CICDDropZone({
             console.log("📝 Server returned individual pipeline");
             
             if (serverData.flowData.nodes && serverData.flowData.edges) {
-              console.log(`📁 Loading pipeline from server:`, { 
-                nodes: serverData.flowData.nodes.length, 
-                edges: serverData.flowData.edges.length 
-              });
-              
-              setNodes(serverData.flowData.nodes);
-              setEdges(serverData.flowData.edges);
-              
-              // 서버에서 불러온 데이터를 로컬스토리지에도 저장
-              localStorage.setItem(storageKey, JSON.stringify({
-                nodes: serverData.flowData.nodes,
-                edges: serverData.flowData.edges
-              }));
-              console.log(`💾 Server data saved to localStorage (${storageKey})`);
-              return;
+              // 노드가 있는지 확인
+              if (serverData.flowData.nodes.length > 0) {
+                console.log(`📁 Loading pipeline from server:`, { 
+                  nodes: serverData.flowData.nodes.length, 
+                  edges: serverData.flowData.edges.length 
+                });
+                console.log("🔗 Setting nodes and edges...");
+                
+                setNodes(serverData.flowData.nodes);
+                setEdges(serverData.flowData.edges);
+                
+                // 서버에서 불러온 데이터를 로컬스토리지에도 저장
+                localStorage.setItem(storageKey, JSON.stringify({
+                  nodes: serverData.flowData.nodes,
+                  edges: serverData.flowData.edges
+                }));
+                console.log(`💾 Server data saved to localStorage (${storageKey})`);
+                return;
+              } else {
+                // 빈 노드 배열인 경우 기본 시작 노드 생성
+                console.log("🏁 Server returned empty nodes array, creating default Pipeline Start node");
+                createDefaultPipelineStart();
+                return;
+              }
             }
           }
           
-          // 데이터를 찾지 못했으면 기본 노드 생성
-          console.log("🏁 No valid server data found, creating default node");
+          // 서버에도 데이터가 없으면 기본 시작 노드 생성
+          console.log("🏁 No server data found, creating default Pipeline Start node");
           createDefaultPipelineStart();
         } catch (error) {
           console.error("❌ Failed to load pipeline from server:", error);
