@@ -96,8 +96,8 @@ export default function Home() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // 로그인 페이지로 이동
-        router.push('/auth/signin');
+        // 회원가입 페이지로 이동
+        router.push('/signup');
         return;
       }
 
