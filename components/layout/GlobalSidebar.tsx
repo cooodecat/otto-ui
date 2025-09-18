@@ -603,7 +603,7 @@ const GlobalSidebar = () => {
                       return (
                         <button
                           key={project.projectId}
-                          onClick={() => handleProjectSelect(project.projectId)}
+                          onClick={() => handleProjectSelect(project.projectId || project.project_id)}
                           className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
                             project.projectId === selectedProjectId ? 'bg-blue-50' : ''
                           }`}

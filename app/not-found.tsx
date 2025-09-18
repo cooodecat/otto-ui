@@ -29,8 +29,9 @@ export default function NotFound() {
         })[0];
         
         // 파이프라인 가져오기
-        await fetchPipelines(latestProject.projectId);
-        const pipelines = getPipelinesByProject(latestProject.projectId);
+        const projectId = latestProject.projectId || latestProject.project_id!;
+        await fetchPipelines(projectId);
+        const pipelines = getPipelinesByProject(projectId);
         
         if (pipelines.length > 0) {
           const latestPipeline = pipelines.sort((a, b) => {
@@ -40,9 +41,9 @@ export default function NotFound() {
           })[0];
           
           // 파이프라인 에디터로 이동
-          router.push(`/projects/${latestProject.projectId}/pipelines/${latestPipeline.pipelineId}`);
+          router.push(`/projects/${projectId}/pipelines/${latestPipeline.pipelineId}`);
         } else {
-          router.push(`/projects/${latestProject.projectId}/pipelines`);
+          router.push(`/projects/${projectId}/pipelines`);
         }
       } else {
         router.push("/");

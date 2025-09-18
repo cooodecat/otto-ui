@@ -130,7 +130,8 @@ export default function Home() {
   };
 
   const handleProjectCreated = async (projectData?: { 
-    project_id: string; 
+    projectId: string;
+    project_id?: string; 
     name: string; 
     targetUrl?: string 
   }) => {
@@ -140,21 +141,22 @@ export default function Home() {
     // targetUrl이 제공되면 해당 URL로, 아니면 동적 라우팅
     if (projectData?.targetUrl) {
       router.push(projectData.targetUrl);
-    } else if (projectData?.project_id) {
+    } else if (projectData?.projectId || projectData?.project_id) {
+      const projectId = projectData.projectId || projectData.project_id!;
       // 프로젝트 생성 완료 후 파이프라인 체크
       try {
-        await fetchPipelines(projectData.project_id);
-        const pipelines = getPipelinesByProject(projectData.project_id);
+        await fetchPipelines(projectId);
+        const pipelines = getPipelinesByProject(projectId);
         
         if (pipelines.length > 0) {
           const latestPipeline = pipelines[0];
-          router.push(`/projects/${projectData.project_id}/pipelines/${latestPipeline.pipeline_id}`);
+          router.push(`/projects/${projectId}/pipelines/${latestPipeline.pipeline_id}`);
         } else {
-          router.push(`/projects/${projectData.project_id}/pipelines`);
+          router.push(`/projects/${projectId}/pipelines`);
         }
       } catch (error) {
         console.error("Failed to navigate after project creation:", error);
-        router.push(`/projects/${projectData.project_id}/pipelines`);
+        router.push(`/projects/${projectId}/pipelines`);
       }
     }
   };
