@@ -117,9 +117,10 @@ export interface GitHubBranchesResponse {
 
 // Projects API 타입들
 export interface Project {
+  // Snake case (from API)
   project_id: string;
   name: string;
-  description: string | null;
+  description?: string | null;
   github_owner: string | null;
   github_repo_id: string | null;
   github_repo_name: string | null;
@@ -134,6 +135,23 @@ export interface Project {
   codebuild_project_arn: string | null;
   cloudwatch_log_group: string | null;
   codebuild_error_message: string | null;
+  
+  // Camel case (for UI compatibility)
+  projectId?: string;
+  githubOwner?: string | null;
+  githubRepoId?: string | null;
+  githubRepoName?: string | null;
+  githubRepoUrl?: string | null;
+  selectedBranch?: string | null;
+  installationId?: string | null;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  codebuildStatus?: string | null;
+  codebuildProjectName?: string | null;
+  codebuildProjectArn?: string | null;
+  cloudwatchLogGroup?: string | null;
+  codebuildErrorMessage?: string | null;
 }
 
 export interface ProjectsResponse {
@@ -176,4 +194,103 @@ export interface DeleteProjectResponse {
 
 export interface RetryCodeBuildResponse {
   message: string;
+}
+
+// Pipeline types
+export interface PipelineNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+}
+
+export interface PipelineEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+}
+
+export interface Pipeline {
+  id: string;
+  pipeline_id?: string;
+  pipelineId?: string;
+  project_id: string;
+  projectId?: string;
+  name: string;
+  description?: string;
+  status?: string;
+  blocks?: PipelineNode[];
+  nodes?: PipelineNode[];
+  edges?: PipelineEdge[];
+  flowData?: {
+    nodes: PipelineNode[];
+    edges: PipelineEdge[];
+  };
+  artifacts?: string[];
+  environment_variables?: Record<string, string>;
+  cache?: { paths: string[] };
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+  last_run_at?: string;
+  lastRunAt?: string;
+}
+
+export interface PipelinesResponse {
+  pipelines: Pipeline[];
+}
+
+export interface PipelineResponse {
+  pipeline: Pipeline;
+}
+
+export interface CreatePipelineRequest {
+  projectId: string;
+  name?: string;
+  blocks?: PipelineNode[];
+  artifacts?: string[];
+  environment_variables?: Record<string, string>;
+  cache?: { paths: string[] };
+}
+
+export interface UpdatePipelineRequest {
+  name?: string;
+  blocks?: PipelineNode[];
+  artifacts?: string[];
+  environment_variables?: Record<string, string>;
+  cache?: { paths: string[] };
+}
+
+// Build types
+export interface BuildRequest {
+  version: string;
+  runtime: string;
+  blocks: PipelineNode[];
+  environment_variables?: Record<string, string>;
+}
+
+export interface BuildStatus {
+  id: string;
+  buildId: string;
+  status: string;
+  projectId: string;
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  logs?: string[];
+}
+
+export interface Build {
+  id: string;
+  projectId: string;
+  buildId: string;
+  status: string;
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  logs?: string[];
+  error?: string;
 }

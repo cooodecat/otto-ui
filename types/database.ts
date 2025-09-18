@@ -209,22 +209,25 @@ export interface Database {
         };
       };
 
-      // Supabase 프로젝트와 연결된 pipeline 정의 (JSON 기반)
-      pipeline: {
+      // Supabase 프로젝트와 연결된 pipelines 정의 (JSON 기반)
+      pipelines: {
         Row: {
           pipeline_id: string;
+          project_id: string;
           created_at: string;
           data: Json | null;
           env: Json | null;
         };
         Insert: {
           pipeline_id?: string;
+          project_id: string;
           created_at?: string;
           data?: Json | null;
           env?: Json | null;
         };
         Update: {
           pipeline_id?: string;
+          project_id?: string;
           data?: Json | null;
           env?: Json | null;
         };

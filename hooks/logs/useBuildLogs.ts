@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { logsApi, LogsApiError } from "@/lib/api/logs-api";
-import type {
-  NormalizedLog,
-  RawLogEvent,
-  SSEPayload,
-  BuildExecStatus,
-} from "@/types/logs";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { logsApi, LogsApiError } from '@/lib/api/logs-api';
+import type { NormalizedLog, RawLogEvent, SSEPayload, BuildExecStatus } from '@/types/logs';
 
 interface UseBuildLogsOptions {
   autoScroll?: boolean;
@@ -29,36 +24,26 @@ interface UseBuildLogsResult {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const toNormalized = (
-  events: RawLogEvent[],
-  normalized?: NormalizedLog[]
-): NormalizedLog[] => {
+const toNormalized = (events: RawLogEvent[], normalized?: NormalizedLog[]): NormalizedLog[] => {
   if (normalized && normalized.length === events.length) {
     return normalized;
   }
   return events.map((e) => ({
     ts: e.timestamp,
     message: e.message,
-    level: "UNKNOWN",
+    level: 'UNKNOWN',
   }));
 };
 
-export function useBuildLogs(
-  buildId: string,
-  options: UseBuildLogsOptions = {}
-): UseBuildLogsResult {
-  const {
-    autoScroll: initialAutoScroll = true,
-    idleCheckSeconds = 20,
-    maxBackoffMs = 60000,
-  } = options;
+export function useBuildLogs(buildId: string, options: UseBuildLogsOptions = {}): UseBuildLogsResult {
+  const { autoScroll: initialAutoScroll = true, idleCheckSeconds = 20, maxBackoffMs = 60000 } = options;
 
   const [logs, setLogs] = useState<NormalizedLog[]>([]);
   const [isLive, setIsLive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [buildStatus, setBuildStatus] = useState<BuildExecStatus>("UNKNOWN");
+  const [buildStatus, setBuildStatus] = useState<BuildExecStatus>('UNKNOWN');
   const [autoScroll, setAutoScroll] = useState<boolean>(initialAutoScroll);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,41 +73,37 @@ export function useBuildLogs(
     }
   }, [autoScroll]);
 
-  const mergePayload = useCallback(
-    (payload: { events: RawLogEvent[]; normalized?: NormalizedLog[] }) => {
-      const normalized = toNormalized(payload.events || [], payload.normalized);
-      if (!normalized.length) return;
+  const mergePayload = useCallback((payload: { events: RawLogEvent[]; normalized?: NormalizedLog[] }) => {
+    const normalized = toNormalized(payload.events || [], payload.normalized);
+    if (!normalized.length) return;
 
-      setLogs((prev) => {
-        const merged = [...prev];
-        for (const n of normalized) {
-          const key = `${n.ts}|${n.message}`;
-          if (dedupRef.current.has(key)) continue;
-          dedupRef.current.add(key);
-          merged.push(n);
-          lastTsRef.current = Math.max(lastTsRef.current || 0, n.ts);
-          if (n.buildStatus && n.buildStatus !== "IN_PROGRESS") {
-            setBuildStatus(n.buildStatus);
-          }
+    setLogs((prev) => {
+      const merged = [...prev];
+      for (const n of normalized) {
+        const key = `${n.ts}|${n.message}`;
+        if (dedupRef.current.has(key)) continue;
+        dedupRef.current.add(key);
+        merged.push(n);
+        lastTsRef.current = Math.max(lastTsRef.current || 0, n.ts);
+        if (n.buildStatus && n.buildStatus !== 'IN_PROGRESS') {
+          setBuildStatus(n.buildStatus);
         }
-        // keep ascending order by ts
-        merged.sort((a, b) => a.ts - b.ts);
-        return merged;
-      });
-      resetIdleTimer();
-      // defer scroll to next frame
-      requestAnimationFrame(scrollToBottom);
-    },
-    [resetIdleTimer, scrollToBottom]
-  );
+      }
+      // keep ascending order by ts
+      merged.sort((a, b) => a.ts - b.ts);
+      return merged;
+    });
+    resetIdleTimer();
+    // defer scroll to next frame
+    requestAnimationFrame(scrollToBottom);
+  }, [resetIdleTimer, scrollToBottom]);
 
   const refetchCache = useCallback(async () => {
     try {
       const cache = await logsApi.getBuildCachedLogs(buildId);
       mergePayload(cache);
     } catch (e) {
-      const msg =
-        e instanceof LogsApiError ? e.message : "Failed to load cached logs";
+      const msg = e instanceof LogsApiError ? e.message : 'Failed to load cached logs';
       setError(msg);
     }
   }, [buildId, mergePayload]);
@@ -131,9 +112,7 @@ export function useBuildLogs(
     try {
       const recent = await logsApi.getBuildRecentLogs(buildId, 200);
       const cutoff = lastTsRef.current || 0;
-      const filtered: RawLogEvent[] = (recent.events || []).filter(
-        (e) => e.timestamp > cutoff
-      );
+      const filtered: RawLogEvent[] = (recent.events || []).filter(e => e.timestamp > cutoff);
       mergePayload({ events: filtered, normalized: recent.normalized });
     } catch {
       // ignore backfill error
@@ -193,8 +172,7 @@ export function useBuildLogs(
       if (logs.length === 0) await refetchCache();
       connect();
     } catch (e) {
-      const msg =
-        e instanceof LogsApiError ? e.message : "Failed to start collection";
+      const msg = e instanceof LogsApiError ? e.message : 'Failed to start collection';
       setError(msg);
       setIsLive(false);
     }
@@ -223,7 +201,7 @@ export function useBuildLogs(
     lastTsRef.current = null;
     dedupRef.current = new Set();
     setLogs([]);
-    setBuildStatus("UNKNOWN");
+    setBuildStatus('UNKNOWN');
     refetchCache();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId]);
@@ -252,3 +230,4 @@ export function useBuildLogs(
     containerRef,
   };
 }
+

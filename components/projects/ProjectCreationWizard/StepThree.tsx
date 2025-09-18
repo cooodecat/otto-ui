@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   GitBranch,
   FileText,
@@ -34,6 +34,25 @@ export default function StepThree({
   onCreateProject,
   onNavigateToProject,
 }: StepThreeProps) {
+  const [countdown, setCountdown] = useState(3);
+
+  useEffect(() => {
+    if (createdProjectId) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            onNavigateToProject();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [createdProjectId, onNavigateToProject]);
+
   return (
     <div className="p-8 space-y-6">
       {/* Success Message */}
@@ -48,11 +67,15 @@ export default function StepThree({
               <p className="text-sm text-green-700 mt-1">
                 이제 파이프라인을 만들고 워크플로우를 구성할 수 있습니다.
               </p>
+              <p className="text-xs text-green-600 mt-2">
+                {countdown}초 후 자동으로 프로젝트 페이지로 이동합니다...
+              </p>
             </div>
           </div>
           <button
             onClick={onNavigateToProject}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            disabled={false}
+            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer"
           >
             프로젝트로 이동
             <ArrowRight className="w-4 h-4" />
@@ -173,7 +196,7 @@ export default function StepThree({
                 ${
                   isCreating
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-purple-600 hover:bg-purple-700 hover:shadow-lg transform hover:scale-105"
+                    : "bg-purple-600 hover:bg-purple-700 hover:shadow-lg transform hover:scale-105 cursor-pointer"
                 }
               `}
             >

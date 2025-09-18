@@ -1,4 +1,5 @@
 export interface Repository {
+  id?: string;
   name: string;
   owner: string;
   description: string;
@@ -27,6 +28,7 @@ export interface ProjectConfig {
 
 export interface WizardState {
   currentStep: 1 | 2 | 3;
+  repositories: Repository[];
   repository: Repository | null;
   selectedBranch: string;
   branches: Branch[];
@@ -45,7 +47,12 @@ export interface WizardState {
 export interface ProjectCreationWizardProps {
   isOpen: boolean;
   onClose: () => void;
-  repository: {
+  onProjectCreated?: (project: {
+    projectId: string;
+    name: string;
+    targetUrl?: string;
+  }) => void;
+  repository?: {
     name: string;
     owner: string;
     visibility: "Public" | "Private";

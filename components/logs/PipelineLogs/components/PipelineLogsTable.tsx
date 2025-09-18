@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Check, Circle, GitBranch, User, Clock, Hash } from "lucide-react";
-import { PipelineLogsTableProps } from "@/types/logs";
-import { truncateMessage } from "@/lib/logs";
-import LogDetailsDualPanel from "./LogDetailsDualPanel";
+import React, { useState, useEffect, useRef } from 'react';
+import { Check, Circle, GitBranch, User, Clock, Hash } from 'lucide-react';
+import { LogItem, PipelineLogsTableProps } from '@/types/logs';
+import { truncateMessage } from '@/lib/logs';
+import LogDetailsDualPanel from './LogDetailsDualPanel';
 
 /**
  * Pipeline Logs Table Component
@@ -20,6 +20,7 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
   isLoading,
   searchQuery,
   onMarkAsRead,
+  onLogClick,
 }) => {
   const [selectedBuildId, setSelectedBuildId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -64,10 +65,14 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
   };
 
   // 행 클릭 처리
-  const handleRowClick = (logId: string) => {
-    markLogAsRead(logId);
-    setSelectedBuildId(logId);
-    setIsDetailsOpen(true);
+  const handleRowClick = (log: LogItem) => {
+    markLogAsRead(log.id);
+    if (onLogClick) {
+      onLogClick(log);
+    } else {
+      setSelectedBuildId(log.id);
+      setIsDetailsOpen(true);
+    }
   };
 
   // 상세보기 닫기
@@ -179,7 +184,7 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
                   <tr
                     key={log.id}
                     ref={isLastItem && hasMore ? observerRef : null}
-                    onClick={() => handleRowClick(log.id)}
+                    onClick={() => handleRowClick(log)}
                     className={`group cursor-pointer transition-all duration-200 hover:bg-blue-50/50 hover:shadow-sm ${
                       isUnread
                         ? "bg-blue-50/30 border-l-4 border-l-blue-500"
@@ -291,22 +296,14 @@ const PipelineLogsTable: React.FC<PipelineLogsTableProps> = ({
           buildId={selectedBuildId}
           isOpen={isDetailsOpen}
           onClose={handleCloseDetails}
-          buildMetadata={
-            logs.find((l) => l.id === selectedBuildId)
-              ? {
-                  pipeline: logs.find((l) => l.id === selectedBuildId)!
-                    .pipelineName,
-                  branch: logs.find((l) => l.id === selectedBuildId)!.branch,
-                  commit: logs.find((l) => l.id === selectedBuildId)!.commit
-                    .sha,
-                  author: logs.find((l) => l.id === selectedBuildId)!.commit
-                    .author,
-                  duration: logs.find((l) => l.id === selectedBuildId)!
-                    .duration,
-                  status: logs.find((l) => l.id === selectedBuildId)!.status,
-                }
-              : undefined
-          }
+          buildMetadata={logs.find(l => l.id === selectedBuildId) ? {
+            pipeline: logs.find(l => l.id === selectedBuildId)!.pipelineName,
+            branch: logs.find(l => l.id === selectedBuildId)!.branch,
+            commit: logs.find(l => l.id === selectedBuildId)!.commit.sha,
+            author: logs.find(l => l.id === selectedBuildId)!.commit.author,
+            duration: logs.find(l => l.id === selectedBuildId)!.duration,
+            status: logs.find(l => l.id === selectedBuildId)!.status
+          } : undefined}
         />
       )}
     </>

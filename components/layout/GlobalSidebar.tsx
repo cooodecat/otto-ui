@@ -1,25 +1,34 @@
 "use client";
 
-import React, { useState, useEffect, useRef, Suspense, useCallback } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
   Plus,
   Settings,
   ChevronDown,
-  Copy,
+  Eye,
+  EyeOff,
+  Home,
   Check,
   ScrollText,
   Filter,
-} from "lucide-react";
-import { cicdCategories } from "@/components/flow/nodes/node-registry";
-import SettingsModal from "../settings/SettingsModal";
-import { useProjectStore } from "@/lib/projectStore";
-import { usePipelineStore } from "@/lib/pipelineStore";
-import { renderIcon } from "@/lib/utils/icons";
-import { SidebarSkeleton, WorkspaceDropdownSkeleton } from "./SidebarSkeleton";
-import { mapProjectId, mapPipelineId } from "@/lib/utils/idMapping";
+  BookOpen,
+  Pencil,
+  X,
+  HelpCircle,
+} from 'lucide-react';
+import { cicdCategories, nodeRegistry } from '@/components/flow/nodes/node-registry';
+import SettingsModal from '../settings/SettingsModal';
+import { useProjectStore } from '@/lib/projectStore';
+import { usePipelineStore } from '@/lib/pipelineStore';
+import { SidebarSkeleton, WorkspaceDropdownSkeleton } from './SidebarSkeleton';
+import { mapProjectId, mapPipelineId } from '@/lib/utils/idMapping';
 import CreateProjectModal from "../projects/CreateProjectModal";
+import CreatePipelineModal from "../pipelines/CreatePipelineModal";
+import toast from "react-hot-toast";
+import apiClient from "@/lib/api";
+
 
 /**
  * 하단 네비게이션 아이콘의 인터페이스
@@ -67,88 +76,40 @@ const isCanvasLayoutPath = (pathname: string): boolean => {
 
 /**
  * 블록 팔레트를 표시해야 하는 경로인지 확인하는 함수
- *
+ * 
  * 파이프라인 에디터 관련 페이지에서만 블록 팔레트를 표시합니다.
  * 로그 페이지나 대시보드 페이지에서는 블록 팔레트를 숨깁니다.
- *
+ * 
  * @param pathname - 현재 경로 문자열
  * @returns 블록 팔레트를 표시해야 하는지 여부
  */
 const shouldShowBlockPalette = (pathname: string): boolean => {
   // 파이프라인 에디터 페이지
-  if (pathname === "/pipelines" || pathname === "/flow-editor") return true;
-
+  if (pathname === '/pipelines' || pathname === '/flow-editor') return true;
+  
   // 파이프라인 상세 페이지
   const pipelineDetailPattern = /^\/projects\/[^/]+\/pipelines\/[^/]+$/;
   if (pipelineDetailPattern.test(pathname)) return true;
-
+  
   // 로그 페이지나 기타 페이지에서는 표시하지 않음
   return false;
 };
 
 /**
  * 로그 페이지인지 확인하는 함수
- *
+ * 
  * @param pathname - 현재 경로 문자열
  * @returns 로그 페이지인지 여부
  */
 const isLogsPage = (pathname: string): boolean => {
   // 독립적인 /logs 페이지
-  if (pathname === "/logs" || pathname.startsWith("/logs/")) return true;
-
+  if (pathname === '/logs' || pathname.startsWith('/logs/')) return true;
+  
   // 프로젝트별 로그 페이지 (나중에 추가될 수 있음)
-  if (pathname.includes("/logs")) return true;
-
+  if (pathname.includes('/logs')) return true;
+  
   return false;
 };
-
-/**
- * GitHub 설치 콜백을 처리하는 별도의 컴포넌트
- * useSearchParams를 격리하여 Suspense boundary 내에서 처리
- */
-function GitHubInstallationHandler({
-  onModalOpen,
-}: {
-  onModalOpen: () => void;
-}) {
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    // GitHub 앱 설치 콜백 처리
-    const status = searchParams.get("status");
-    const githubInstalled = searchParams.get("github_installed");
-    const openModal = searchParams.get("open_modal");
-    const installationId = searchParams.get("installation_id");
-    const accountLogin = searchParams.get("account_login");
-
-    if (status === "success" && githubInstalled === "true") {
-      console.log(
-        `GitHub 앱 설치가 완료되었습니다. 계정: ${accountLogin}, 설치 ID: ${installationId}`
-      );
-
-      // 모달을 자동으로 열기
-      onModalOpen();
-
-      // URL 파라미터 정리 (새로고침 시 다시 모달이 열리지 않도록)
-      const url = new URL(window.location.href);
-      url.searchParams.delete("status");
-      url.searchParams.delete("github_installed");
-      url.searchParams.delete("open_modal");
-      url.searchParams.delete("installation_id");
-      url.searchParams.delete("account_login");
-      window.history.replaceState({}, "", url.toString());
-    } else if (openModal === "true") {
-      // 프로젝트 생성 모달 자동으로 열기 (GitHub 설치 없이)
-      onModalOpen();
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("open_modal");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, [searchParams, onModalOpen]);
-
-  return null;
-}
 
 /**
  * GlobalSidebar 컴포넌트
@@ -173,6 +134,11 @@ const GlobalSidebar = () => {
   const isCanvasLayout = isCanvasLayoutPath(pathname);
   const showBlockPalette = shouldShowBlockPalette(pathname);
   const isOnLogsPage = isLogsPage(pathname);
+  
+  /** 로그 페이지 필터 상태 */
+  const [activeFilterId, setActiveFilterId] = useState<string>('all');
+  /** 글로벌 워크스페이스 검색용 쿼리 */
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   /** 팔레트에서 블록 필터링을 위한 검색 쿼리 */
   const [searchBlocks, setSearchBlocks] = useState<string>("");
@@ -198,10 +164,10 @@ const GlobalSidebar = () => {
   } = useProjectStore();
 
   const {
-    pipelines: _pipelines,
+    pipelines,
     isLoading: isPipelinesLoading,
     error: _pipelinesError,
-    fetchPipelines: _fetchPipelines,
+    fetchPipelines,
     setCurrentProject,
     getPipelinesByProject,
     getLatestPipelineByProject,
@@ -217,26 +183,59 @@ const GlobalSidebar = () => {
   /** CreateProject 모달 열림/닫힘 상태 */
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
     useState<boolean>(false);
+  
+  /** CreatePipeline 모달 열림/닫힘 상태 */
+  const [isCreatePipelineModalOpen, setIsCreatePipelineModalOpen] =
+    useState<boolean>(false);
+  
+  /** 편집 중인 파이프라인 ID */
+  const [editingPipelineId, setEditingPipelineId] = useState<string | null>(null);
+  
+  /** 편집 중인 파이프라인 이름 */
+  const [editingPipelineName, setEditingPipelineName] = useState<string>("");
+
+  /** 카드 표시/숨김 상태 */
+  const [showPipelinesPalette, setShowPipelinesPalette] = useState<boolean>(true);
+  
+  /** 파이프라인 드롭다운 열림/닫힘 상태 */
+  const [isPipelinesDropdownOpen, setIsPipelinesDropdownOpen] = useState<boolean>(false);
 
   /** 워크스페이스 드롭다운 참조 */
   const workspaceDropdownRef = useRef<HTMLDivElement>(null);
+  
+  /** 파이프라인 드롭다운 참조 */
+  const pipelinesDropdownRef = useRef<HTMLDivElement>(null);
 
-  // 워크스페이스 드롭다운 외부 클릭 시 닫기
+  // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // 워크스페이스 드롭다운 체크
       if (
+        isWorkspaceDropdownOpen &&
         workspaceDropdownRef.current &&
         !workspaceDropdownRef.current.contains(event.target as Node)
       ) {
         setIsWorkspaceDropdownOpen(false);
       }
+      
+      // 파이프라인 드롭다운 체크
+      if (
+        isPipelinesDropdownOpen &&
+        pipelinesDropdownRef.current &&
+        !pipelinesDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsPipelinesDropdownOpen(false);
+      }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    // 드롭다운이 열려있을 때만 이벤트 리스너 추가
+    if (isWorkspaceDropdownOpen || isPipelinesDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isWorkspaceDropdownOpen, isPipelinesDropdownOpen]);
 
   // 모달 열기 핸들러
   const handleModalOpen = useCallback(() => {
@@ -245,40 +244,65 @@ const GlobalSidebar = () => {
 
   // 데이터 로딩
   useEffect(() => {
+    console.log('[GlobalSidebar] Fetching projects on mount...');
     fetchProjects();
-  }, [fetchProjects]);
+  }, []); // 의존성 배열을 빈 배열로 변경하여 무한 루프 방지
+  
+  // projects 변경 모니터링
+  // Projects가 업데이트될 때 실행
+  useEffect(() => {
+    // 프로젝트 목록이 업데이트되면 자동으로 UI에 반영됨
+  }, [projects]);
 
   // 선택된 프로젝트가 변경되면 해당 프로젝트의 파이프라인들을 가져옴
   useEffect(() => {
     if (selectedProjectId) {
+      console.log('[GlobalSidebar] Project changed, fetching pipelines for:', selectedProjectId);
       setCurrentProject(selectedProjectId);
+      // 약간의 지연을 주어 중복 호출 방지
+      const timeoutId = setTimeout(() => {
+        fetchPipelines(selectedProjectId);
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [selectedProjectId, setCurrentProject]);
+  }, [selectedProjectId, setCurrentProject, fetchPipelines]);
 
   // 현재 URL 파라미터에서 프로젝트 ID와 파이프라인 ID 추출 및 동기화
   useEffect(() => {
     const pipelineDetailPattern = /^\/projects\/([^/]+)\/pipelines\/([^/]+)$/;
-    const match = pathname.match(pipelineDetailPattern);
+    const pipelineListPattern = /^\/projects\/([^/]+)\/pipelines$/;
+    const pipelineMatch = pathname.match(pipelineDetailPattern);
+    const listMatch = pathname.match(pipelineListPattern);
 
-    if (match) {
-      const rawUrlProjectId = match[1];
-      const rawUrlPipelineId = match[2];
-
-      // URL 파라미터를 Mock 데이터 ID로 변환
-      const urlProjectId = mapProjectId(rawUrlProjectId);
-      const urlPipelineId = mapPipelineId(rawUrlPipelineId);
+    if (pipelineMatch) {
+      const urlProjectId = pipelineMatch[1];
+      const urlPipelineId = pipelineMatch[2];
 
       // URL에서 추출한 프로젝트 ID로 상태 동기화 (중복 호출 방지)
       if (urlProjectId !== selectedProjectId) {
+        console.log('[GlobalSidebar] URL project ID changed:', urlProjectId);
         setSelectedProject(urlProjectId);
-        // setCurrentProject는 아래 useEffect에서 처리하므로 여기서는 호출하지 않음
+        setCurrentProject(urlProjectId);
+        // 프로젝트가 변경되었을 때 파이프라인 다시 로드
+        // selectedProjectId useEffect에서 처리되므로 여기서는 제거
       }
 
       setSelectedPipelineId(urlPipelineId);
+    } else if (listMatch) {
+      const urlProjectId = listMatch[1];
+      
+      if (urlProjectId !== selectedProjectId) {
+        console.log('[GlobalSidebar] URL project ID changed (list page):', urlProjectId);
+        setSelectedProject(urlProjectId);
+        setCurrentProject(urlProjectId);
+      }
+      
+      setSelectedPipelineId(null);
     } else {
       setSelectedPipelineId(null);
     }
-  }, [pathname, selectedProjectId, setSelectedProject]); // setCurrentProject 제거
+  }, [pathname, selectedProjectId, setSelectedProject, setCurrentProject]);
 
   /**
    * CI/CD 노드 카테고리에서 검색을 위해 플랫 목록 생성
@@ -288,21 +312,26 @@ const GlobalSidebar = () => {
   };
 
   // 현재 선택된 프로젝트의 파이프라인들을 변환
-  const currentPipelines: PipelineItem[] = selectedProjectId
-    ? getPipelinesByProject(selectedProjectId).map((pipeline) => ({
-        name: pipeline.name || `Pipeline ${pipeline.pipelineId.slice(-6)}`,
-        pipelineId: pipeline.pipelineId,
-        isActive: pipeline.pipelineId === selectedPipelineId,
-      }))
-    : [];
+  const currentPipelines: PipelineItem[] = useMemo(() => {
+    const projectPipelines = selectedProjectId ? getPipelinesByProject(selectedProjectId) : [];
+    
+    return projectPipelines.map((pipeline) => ({
+      name: pipeline.name || `Pipeline ${pipeline.pipelineId?.slice(-6) || 'Unknown'}`,
+      pipelineId: pipeline.pipelineId,
+      isActive: pipeline.pipelineId === selectedPipelineId,
+    }));
+  }, [selectedProjectId, selectedPipelineId, pipelines]); // pipelines 추가하여 데이터 변경 시 리렌더링
 
   /**
    * 하단 네비게이션 아이콘들의 설정
    * 실제로 구현된 기능들에만 접근할 수 있게 해줍니다
    */
   const bottomIcons: BottomIcon[] = [
-    { icon: Settings, title: "Settings" },
-    { icon: ScrollText, title: "Pipeline Logs" },
+    { icon: Settings, title: 'Settings' },
+    { icon: HelpCircle, title: 'Help' },
+    { icon: ScrollText, title: 'Pipeline Logs' },
+    { icon: BookOpen, title: 'Resources' },
+    { icon: Home, title: 'Home' },
   ];
 
   /**
@@ -345,7 +374,50 @@ const GlobalSidebar = () => {
    */
   const handlePipelineSelect = (pipelineId: string) => {
     if (selectedProjectId) {
-      router.push(`/projects/${selectedProjectId}/pipelines/${pipelineId}`);
+      const targetUrl = `/projects/${selectedProjectId}/pipelines/${pipelineId}`;
+      router.push(targetUrl);
+    }
+  };
+
+  /**
+   * 파이프라인 이름 편집 시작
+   */
+  const handleEditPipelineName = (pipelineId: string, currentName: string) => {
+    setEditingPipelineId(pipelineId);
+    setEditingPipelineName(currentName);
+  };
+
+  /**
+   * 파이프라인 이름 업데이트
+   */
+  const handleUpdatePipelineName = async () => {
+    if (!editingPipelineId || !editingPipelineName.trim()) {
+      setEditingPipelineId(null);
+      setEditingPipelineName("");
+      return;
+    }
+
+    try {
+      // API 호출하여 파이프라인 이름 업데이트
+      const response = await apiClient.updatePipeline(editingPipelineId, {
+        name: editingPipelineName
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // 스토어 업데이트
+      const { updatePipeline } = usePipelineStore.getState();
+      await updatePipeline(editingPipelineId, { name: editingPipelineName });
+
+      toast.success("파이프라인 이름이 변경되었습니다.");
+    } catch (error) {
+      console.error('Failed to update pipeline name:', error);
+      toast.error("파이프라인 이름 변경에 실패했습니다.");
+    } finally {
+      setEditingPipelineId(null);
+      setEditingPipelineName("");
     }
   };
 
@@ -520,11 +592,6 @@ const GlobalSidebar = () => {
 
   return (
     <div className={containerClassName}>
-      {/* GitHub 설치 콜백 처리 */}
-      <Suspense fallback={null}>
-        <GitHubInstallationHandler onModalOpen={handleModalOpen} />
-      </Suspense>
-
       {/* Workspace Header Card */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between">
@@ -532,15 +599,17 @@ const GlobalSidebar = () => {
             {/* 워크스페이스 드롭다운 버튼 */}
             <button
               onClick={handleWorkspaceDropdownToggle}
-              className="flex items-center space-x-2 w-full text-left hover:bg-gray-50 hover:cursor-pointer rounded-lg p-2 -m-2 transition-colors"
+              className='flex items-center space-x-2 w-full text-left hover:bg-gray-50 hover:cursor-pointer rounded-lg p-2 -m-2 transition-colors'
             >
               <div className="flex-1 min-w-0">
                 <h1 className="text-lg font-semibold text-gray-900 truncate">
                   {getSelectedProjectInfo()?.name || "프로젝트 선택 안됨"}
                 </h1>
-                <p className="text-xs text-gray-500 truncate">
-                  {getSelectedProjectInfo()?.githubOwner || "소유자 없음"}
-                </p>
+                {getSelectedProjectInfo()?.githubOwner && (
+                  <p className="text-xs text-gray-500 truncate">
+                    {getSelectedProjectInfo()?.githubOwner}
+                  </p>
+                )}
               </div>
               <ChevronDown
                 className={`w-4 h-4 text-gray-400 transition-transform ${
@@ -555,36 +624,37 @@ const GlobalSidebar = () => {
                 <div className="py-1 max-h-64 overflow-y-auto">
                   {isProjectsLoading ? (
                     <WorkspaceDropdownSkeleton />
-                  ) : projects.length > 0 ? (
-                    projects.map((project) => (
-                      <button
-                        key={project.projectId}
-                        onClick={() => handleProjectSelect(project.projectId)}
-                        className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
-                          project.projectId === selectedProjectId
-                            ? "bg-purple-50"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0 text-left">
-                          <div
-                            className={`font-medium truncate ${
-                              project.projectId === selectedProjectId
-                                ? "text-purple-900"
-                                : "text-gray-900"
-                            }`}
-                          >
-                            {project.name}
+                  ) : projects && projects.length > 0 ? (
+                    projects.map((project) => {
+                      console.log('[GlobalSidebar] Rendering project:', project);
+                      return (
+                        <button
+                          key={project.projectId}
+                          onClick={() => handleProjectSelect(project.projectId || project.project_id)}
+                          className={`w-full flex items-center space-x-3 px-3 py-2.5 text-sm hover:bg-gray-50 hover:cursor-pointer transition-colors ${
+                            project.projectId === selectedProjectId ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0 text-left">
+                            <div
+                              className={`font-medium truncate ${
+                                project.projectId === selectedProjectId
+                                  ? "text-blue-900"
+                                  : "text-gray-900"
+                              }`}
+                            >
+                              {project.name}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {project.githubOwner}/{project.githubRepoName}
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {project.githubOwner}/{project.githubRepoName}
-                          </div>
-                        </div>
-                        {project.projectId === selectedProjectId && (
-                          <Check className="w-4 h-4 text-purple-600" />
-                        )}
-                      </button>
-                    ))
+                          {project.projectId === selectedProjectId && (
+                            <Check className="w-4 h-4 text-blue-600" />
+                          )}
+                        </button>
+                      );
+                    })
                   ) : (
                     <div className="px-3 py-6 text-center text-gray-500 text-sm">
                       아직 프로젝트가 없습니다
@@ -592,10 +662,10 @@ const GlobalSidebar = () => {
                   )}
 
                   {/* 새 프로젝트 만들기 */}
-                  <div className="border-t border-gray-100 mt-1 pt-1">
+                  <div className='border-t border-gray-100 mt-1 pt-1'>
                     <button
                       onClick={handleCreateProjectClick}
-                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:cursor-pointer transition-colors"
+                      className='w-full flex items-center space-x-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:cursor-pointer transition-colors'
                     >
                       <Plus className="w-4 h-4" />
                       <span>새 프로젝트 만들기</span>
@@ -606,214 +676,254 @@ const GlobalSidebar = () => {
             )}
           </div>
 
-          {/* 복사 버튼 */}
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg ml-2 transition-colors">
-            <Copy className="w-4 h-4" />
+          {/* 카드 숨기기/표시 버튼 */}
+          <button 
+            onClick={() => setShowPipelinesPalette(!showPipelinesPalette)}
+            className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg ml-2 transition-colors'
+            title={showPipelinesPalette ? "카드 숨기기" : "카드 보이기"}
+          >
+            {showPipelinesPalette ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
           </button>
         </div>
       </div>
 
-      {/* Pipelines Section Card */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-800">
-            {getSelectedProjectInfo()?.name
-              ? `${getSelectedProjectInfo()?.name} Pipelines`
-              : "Pipelines"}
-          </h3>
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors">
-            <Plus className="w-3 h-3" />
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {isPipelinesLoading ? (
-            // 파이프라인 로딩 스켈레톤
-            Array.from({ length: 2 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center p-2.5 rounded-lg border border-gray-100 animate-pulse"
+      {/* Pipelines Section Card - 숨김 가능 */}
+      {showPipelinesPalette && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-800">Pipelines</h3>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => {
+                  if (selectedProjectId) {
+                    setIsCreatePipelineModalOpen(true);
+                  } else {
+                    toast.error("먼저 프로젝트를 선택해주세요.");
+                  }
+                }}
+                className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'
+                title="새 파이프라인 만들기"
               >
-                <div className="w-5 h-5 bg-gray-200 rounded mr-3"></div>
-                <div className="h-4 bg-gray-200 rounded flex-1"></div>
-              </div>
-            ))
-          ) : currentPipelines.length > 0 ? (
-            currentPipelines.map((pipeline) => (
-              <div
-                key={pipeline.pipelineId}
-                className={`flex items-center p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
-                  pipeline.isActive
-                    ? "bg-purple-50 text-purple-700 border border-purple-200 shadow-sm"
-                    : "hover:bg-gray-50 text-gray-700 border border-transparent"
-                }`}
-                onClick={() => handlePipelineSelect(pipeline.pipelineId)}
-              >
-                <span className="text-sm font-medium">{pipeline.name}</span>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-4 text-gray-500 text-sm">
-              {selectedProjectId
-                ? "파이프라인이 없습니다"
-                : "프로젝트를 선택하세요"}
+                <Plus className='w-3 h-3' />
+              </button>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Blocks Palette Section Card - 파이프라인 에디터 페이지에서만 표시 */}
-      {showBlockPalette && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex-1 flex flex-col min-h-0">
-          <div className="mb-4">
+          {/* 파이프라인 드롭다운 */}
+          <div className="relative" ref={pipelinesDropdownRef}>
+            <button
+              onClick={() => setIsPipelinesDropdownOpen(!isPipelinesDropdownOpen)}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-gray-700 truncate">
+                {selectedPipelineId && currentPipelines.find(p => p.isActive)?.name || "파이프라인 선택"}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 transition-transform ${
+                  isPipelinesDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* 드롭다운 메뉴 */}
+            {isPipelinesDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
+                <div className="py-1">
+                  {isPipelinesLoading ? (
+                    // 파이프라인 로딩 스켈레톤
+                    Array.from({ length: 2 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center px-3 py-2.5 animate-pulse"
+                      >
+                        <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                      </div>
+                    ))
+                  ) : currentPipelines.length > 0 ? (
+                    currentPipelines.map((pipeline) => (
+                      <div
+                        key={pipeline.pipelineId}
+                        className={`group flex items-center justify-between px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                          pipeline.isActive ? "bg-blue-50" : ""
+                        }`}
+                      >
+                        {editingPipelineId === pipeline.pipelineId ? (
+                          <input
+                            type="text"
+                            value={editingPipelineName}
+                            onChange={(e) => setEditingPipelineName(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleUpdatePipelineName();
+                              } else if (e.key === 'Escape') {
+                                setEditingPipelineId(null);
+                                setEditingPipelineName("");
+                              }
+                            }}
+                            onBlur={handleUpdatePipelineName}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            autoFocus
+                          />
+                        ) : (
+                          <button
+                            onClick={() => {
+                              handlePipelineSelect(pipeline.pipelineId);
+                              setIsPipelinesDropdownOpen(false);
+                            }}
+                            className={`flex-1 text-left truncate ${
+                              pipeline.isActive ? "text-blue-700 font-medium" : "text-gray-700"
+                            }`}
+                          >
+                            {pipeline.name}
+                          </button>
+                        )}
+                        <div className="flex items-center gap-1 ml-2">
+                          {editingPipelineId !== pipeline.pipelineId && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditPipelineName(pipeline.pipelineId, pipeline.name);
+                              }}
+                              className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="이름 변경"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {pipeline.isActive && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2.5 text-sm text-gray-500">
+                      파이프라인이 없습니다
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Block Palette Card - 파이프라인 에디터에서만 표시 & 숨김 가능 */}
+      {showBlockPalette && showPipelinesPalette && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex-1 overflow-hidden">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-800">Block Palette</h3>
+            <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              <Filter className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* 블록 검색 */}
+          <div className="mb-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
               <input
                 type="text"
-                placeholder="블록 검색..."
-                className="w-full pl-10 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                placeholder="Search blocks..."
+                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={searchBlocks}
                 onChange={(e) => setSearchBlocks(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-            {/* 검색어가 있으면 결과 리스트만 표시 */}
+          {/* 블록 리스트 */}
+          <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
             {searchBlocks ? (
+              // 검색 결과
               <div className="space-y-2">
                 {getFilteredNodes().map((node) => (
                   <div
                     key={node.type}
-                    className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 group border border-gray-100 hover:border-gray-200 hover:shadow-sm"
                     draggable
                     onDragStart={(e) => handleBlockDragStart(e, node.type)}
+                    className="flex items-center p-2 bg-gray-50 rounded-lg cursor-grab hover:bg-gray-100 transition-colors"
                   >
-                    <div
-                      className={`w-8 h-8 ${node.colorClass} rounded-lg flex items-center justify-center mr-3 group-hover:scale-105 transition-transform shadow-sm`}
-                    >
-                      <span className="text-white">
-                        {renderIcon(node.icon, "w-4 h-4")}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">
-                        {node.label}
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {node.description}
-                      </div>
-                    </div>
+                    <span className="text-lg mr-2">{node.icon}</span>
+                    <span className="text-sm text-gray-700">{node.label}</span>
                   </div>
                 ))}
+                {getFilteredNodes().length === 0 && (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    No blocks found
+                  </div>
+                )}
               </div>
             ) : (
-              // 검색어가 없으면 카테고리별 표시 (CICD와 동일 스타일)
-              <>
-                {Object.entries(cicdCategories)
-                  .filter(([key]) => key !== "start") // start 카테고리 제외 (이미 캔버스에 초기 노드로 있음)
-                  .map(([key, category]) => (
-                    <div key={key} className="space-y-2">
-                      <div
-                        className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}
-                      >
-                        <h3
-                          className={`text-sm font-medium ${category.textClass}`}
-                        >
-                          {category.name}
-                        </h3>
-                        <span
-                          className={`text-xs ${category.textClass} opacity-70`}
-                        >
-                          ({category.nodes.length})
-                        </span>
-                      </div>
-
-                      <div className="space-y-1 ml-2">
-                        {category.nodes.map((node) => (
-                          <div
-                            key={node.type}
-                            className="flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow"
-                            draggable
-                            onDragStart={(e) =>
-                              handleBlockDragStart(e, node.type)
-                            }
-                          >
-                            <div
-                              className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}
-                            >
-                              <span className="text-white">
-                                {renderIcon(node.icon, "w-4 h-4")}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0 ml-3">
-                              <div className="text-sm font-medium text-gray-900 truncate">
-                                {node.label}
-                              </div>
-                              <div className="text-xs text-gray-500 truncate">
-                                {node.description}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+              // 카테고리별 표시
+              Object.entries(cicdCategories)
+                .filter(([key]) => key !== 'start')
+                .map(([key, category]) => (
+                  <div key={key} className="space-y-2">
+                    <div className={`flex items-center gap-2 p-2 rounded ${category.bgClass} ${category.borderClass} border`}>
+                      <span className="text-base">{category.icon}</span>
+                      <h3 className={`text-sm font-medium ${category.textClass}`}>{category.name}</h3>
+                      <span className={`text-xs ${category.textClass} opacity-70`}>({category.nodes.length})</span>
                     </div>
-                  ))}
-              </>
+
+                    <div className="space-y-1 ml-2">
+                      {category.nodes.map((node) => (
+                        <div
+                          key={node.type}
+                          className="flex items-center p-3 bg-white border border-gray-200 rounded cursor-grab hover:shadow-sm transition-shadow"
+                          draggable
+                          onDragStart={(e) => handleBlockDragStart(e, node.type)}
+                        >
+                          <div className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}>
+                            <span className="text-white text-sm">{node.icon}</span>
+                          </div>
+                          <div className="flex-1 min-w-0 ml-3">
+                            <div className="text-sm font-medium text-gray-900 truncate">{node.label}</div>
+                            <div className="text-xs text-gray-500 truncate">{node.description}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
             )}
           </div>
         </div>
       )}
 
+
+
       {/* Filter - 로그 페이지 전용 */}
       {isOnLogsPage && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-4 h-4 text-gray-600" />
-            <h3 className="text-sm font-semibold text-gray-800">Filter</h3>
+        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
+          <div className='mb-4'>
+            <h3 className='text-sm font-semibold text-gray-800'>Filter</h3>
           </div>
 
           {/* Filter Buttons */}
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {[
-              {
-                id: "all",
-                label: "전체 로그",
-                desc: "모든 파이프라인 로그",
-                isActive: true,
-              },
-              {
-                id: "failed",
-                label: "실패한 빌드",
-                desc: "Status: failed",
-                isActive: false,
-              },
-              {
-                id: "running",
-                label: "실행 중",
-                desc: "Status: running",
-                isActive: false,
-              },
-              {
-                id: "24h",
-                label: "최근 24시간",
-                desc: "지난 24시간 내 로그",
-                isActive: false,
-              },
+              { id: 'all', label: '전체 로그', desc: '모든 파이프라인 로그' },
+              { id: 'failed', label: '실패한 빌드', desc: 'Status: failed' },
+              { id: 'running', label: '실행 중', desc: 'Status: running' },
+              { id: '24h', label: '최근 24시간', desc: '지난 24시간 내 로그' },
             ].map((filter) => (
-              <button
+              <button 
                 key={filter.id}
+                onClick={() => {
+                  setActiveFilterId(filter.id);
+                  // 필터 적용 로직 - 나중에 로그 페이지와 연동
+                  console.log('[GlobalSidebar] Filter selected:', filter.id);
+                  // TODO: 로그 페이지로 필터 정보 전달
+                }}
                 className={`w-full flex items-center p-3 rounded-lg transition-all text-left cursor-pointer ${
-                  filter.isActive
-                    ? "bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100"
-                    : "hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-200"
+                  activeFilterId === filter.id 
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100' 
+                    : 'hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-200'
                 }`}
               >
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{filter.label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    {filter.desc}
-                  </div>
+                <div className='flex-1'>
+                  <div className='text-sm font-medium'>{filter.label}</div>
+                  <div className='text-xs text-gray-500 mt-0.5'>{filter.desc}</div>
                 </div>
               </button>
             ))}
@@ -829,13 +939,20 @@ const GlobalSidebar = () => {
             {bottomIcons.map((item, index) => (
               <button
                 key={index}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors"
+                className='p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:cursor-pointer rounded-lg transition-colors'
                 title={item.title}
                 onClick={
-                  item.title === "Settings"
-                    ? handleSettingsClick
-                    : item.title === "Pipeline Logs"
-                    ? () => router.push("/projects/1/logs")
+                  item.title === 'Settings' 
+                    ? handleSettingsClick 
+                    : item.title === 'Pipeline Logs'
+                    ? () => {
+                        // 프로젝트 단위로 로그 페이지 이동
+                        if (selectedProjectId) {
+                          router.push(`/projects/${selectedProjectId}/logs`);
+                        } else {
+                          router.push('/logs');
+                        }
+                      }
                     : undefined
                 }
               >
@@ -860,6 +977,16 @@ const GlobalSidebar = () => {
         isOpen={isCreateProjectModalOpen}
         onClose={handleCreateProjectModalClose}
       />
+      
+      {/* CreatePipeline Modal - 파이프라인 생성 */}
+      {selectedProjectId && (
+        <CreatePipelineModal
+          isOpen={isCreatePipelineModalOpen}
+          onClose={() => setIsCreatePipelineModalOpen(false)}
+          projectId={selectedProjectId}
+          projectName={getSelectedProjectInfo()?.name}
+        />
+      )}
     </div>
   );
 };

@@ -29,7 +29,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <ToastContextProvider>{children}</ToastContextProvider>
+          <ToastContextProvider>
+            {children}
+          </ToastContextProvider>
         </AuthProvider>
       </body>
     </html>

@@ -1,57 +1,165 @@
 "use client";
 
 import { Cpu, Zap, ArrowRight } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import CICDFlowVisualization from "@/components/landing/CICDFlowVisualization";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
-import { reverseMapId } from "@/lib/utils/idMapping";
+import ProjectCreationWizard from "@/components/projects/ProjectCreationWizard";
+import { createClient } from "@/lib/supabase/client";
+import apiClient from "@/lib/api";
 
 export default function Home() {
-  const [latestRoute, setLatestRoute] = useState("/projects/3/pipelines/2"); // 기본값: 가장 최신 예상 경로
-  const { fetchProjects, getLatestProject } = useProjectStore();
-  const { fetchPipelines, getLatestPipelineByProject } = usePipelineStore();
+  const router = useRouter();
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { fetchProjects } = useProjectStore();
+  const { fetchPipelines, getPipelinesByProject } = usePipelineStore();
 
+  // 페이지 로드 시에는 자동 라우팅 하지 않음 - 랜딩 페이지 유지
   useEffect(() => {
-    const initializeLatestRoute = async () => {
+  }, []);
+
+  const navigateToWorkspace = async () => {
+    try {
+      console.log('[Home] Navigating to workspace...');
+      
+      // 1. 프로젝트 조회
+      await fetchProjects();
+      
+      // projects가 비동기로 업데이트되므로 store에서 직접 가져오기
+      const currentProjects = useProjectStore.getState().projects;
+      console.log('[Home] Current projects:', currentProjects);
+      
+      if (currentProjects.length === 0) {
+        console.log('[Home] No projects found, showing creation wizard');
+        // 프로젝트가 없으면 생성 마법사 표시
+        setShowCreateWizard(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. 최근 생성된 프로젝트 선택 (created_at 기준 정렬)
+      const latestProject = currentProjects.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA; // 최신순
+      })[0];
+      
+      console.log('[Home] Latest project:', latestProject);
+      
+      // 3. 해당 프로젝트의 파이프라인 조회
+      console.log('[Home] Fetching pipelines for project:', latestProject.project_id);
+      await fetchPipelines(latestProject.project_id);
+      
+      // Store에서 직접 가져오기 (비동기 업데이트 대기)
+      await new Promise(resolve => setTimeout(resolve, 500)); // 잠시 대기
+      const pipelines = getPipelinesByProject(latestProject.project_id);
+      console.log('[Home] Pipelines for latest project:', pipelines);
+      console.log('[Home] Number of pipelines:', pipelines.length);
+      
+      if (pipelines.length === 0) {
+        console.log('[Home] No pipelines found, navigating to pipelines page');
+        // 파이프라인이 없으면 파이프라인 페이지로
+        router.push(`/projects/${latestProject.project_id}/pipelines`);
+        return;
+      }
+
+      // 4. 최근 생성된 파이프라인 선택 (created_at 기준 정렬)
+      const latestPipeline = pipelines.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA; // 최신순
+      })[0];
+      
+      console.log('[Home] Latest pipeline:', latestPipeline);
+      
+      // 5. 파이프라인 에디터로 이동
+      router.push(`/projects/${latestProject.project_id}/pipelines/${latestPipeline.pipeline_id}`);
+    } catch (error) {
+      console.error('[Home] Navigation error:', error);
+      setIsLoading(false);
+      // 에러 발생 시 프로젝트 목록으로
+      router.push('/projects');
+    }
+  };
+
+  const handleGetStarted = async () => {
+    setIsLoading(true);
+    try {
+      console.log('[Home] Get started clicked');
+      
+      // 1. 로그인 확인
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // 로그인 페이지로 이동
+        router.push('/auth/signin');
+        return;
+      }
+
+      // 2. 토큰 설정
+      if (session.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
+
+      // 3. GitHub App 설치 확인
+      console.log('[Home] Checking GitHub installation...');
+      const installResponse = await apiClient.getGitHubInstallations();
+      const installations = installResponse.data?.installations || [];
+      
+      if (installations.length === 0) {
+        console.log('[Home] No GitHub installation found, redirecting to onboarding');
+        // GitHub App 미설치 - 온보딩으로
+        router.push('/onboarding');
+        return;
+      }
+
+      // 4. GitHub App 설치됨 - 워크스페이스로 네비게이션
+      await navigateToWorkspace();
+    } catch (error) {
+      console.error("[Home] Failed to get started:", error);
+      // 에러 발생 시 온보딩으로
+      router.push('/onboarding');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleProjectCreated = async (projectData?: { 
+    projectId: string;
+    project_id?: string; 
+    name: string; 
+    targetUrl?: string 
+  }) => {
+    console.log('[Home] Project created:', projectData);
+    setShowCreateWizard(false);
+    
+    // targetUrl이 제공되면 해당 URL로, 아니면 동적 라우팅
+    if (projectData?.targetUrl) {
+      router.push(projectData.targetUrl);
+    } else if (projectData?.projectId || projectData?.project_id) {
+      const projectId = projectData.projectId || projectData.project_id!;
+      // 프로젝트 생성 완료 후 파이프라인 체크
       try {
-        // 프로젝트 데이터 로드
-        await fetchProjects();
-        const latestProject = getLatestProject();
-
-        if (latestProject) {
-          // 해당 프로젝트의 파이프라인 데이터 로드
-          await fetchPipelines(latestProject.projectId);
-          const latestPipeline = getLatestPipelineByProject(
-            latestProject.projectId
-          );
-
-          if (latestPipeline) {
-            // NOTE: 데이터베이스에서도 동일한 로직으로 최신 프로젝트/파이프라인 결정 예정
-            // Mock ID를 숫자 ID로 변환하여 URL 생성 (proj_3 -> 3, pipe_4 -> 4)
-            const projectNumericId = reverseMapId(latestProject.projectId);
-            const pipelineNumericId = reverseMapId(latestPipeline.pipelineId);
-
-            setLatestRoute(
-              `/projects/${projectNumericId}/pipelines/${pipelineNumericId}`
-            );
-          }
+        await fetchPipelines(projectId);
+        const pipelines = getPipelinesByProject(projectId);
+        
+        if (pipelines.length > 0) {
+          const latestPipeline = pipelines[0];
+          router.push(`/projects/${projectId}/pipelines/${latestPipeline.pipeline_id}`);
+        } else {
+          router.push(`/projects/${projectId}/pipelines`);
         }
       } catch (error) {
-        console.error("Failed to load latest route:", error);
-        // 에러 발생 시 기본값 유지
+        console.error("Failed to navigate after project creation:", error);
+        router.push(`/projects/${projectId}/pipelines`);
       }
-    };
-
-    initializeLatestRoute();
-  }, [
-    fetchProjects,
-    getLatestProject,
-    fetchPipelines,
-    getLatestPipelineByProject,
-  ]);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -109,14 +217,24 @@ export default function Home() {
           <AnimatedSection delay={200}>
             <div className="relative inline-block group">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse" />
-              <Link
-                href={latestRoute}
-                className="relative inline-flex group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-10 py-5 rounded-2xl font-semibold text-xl transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 items-center gap-3 transform hover:scale-105"
+              <button
+                onClick={handleGetStarted}
+                disabled={isLoading}
+                className="relative inline-flex group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-10 py-5 rounded-2xl font-semibold text-xl transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 items-center gap-3 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                <Zap className="w-6 h-6" />
-                지금 시작하기
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </Link>
+                {isLoading ? (
+                  <>
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    로딩 중...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-6 h-6" />
+                    지금 시작하기
+                    <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
             </div>
           </AnimatedSection>
         </div>
@@ -128,6 +246,13 @@ export default function Home() {
           <p>&copy; 2025 Otto. All rights reserved.</p>
         </footer>
       </AnimatedSection>
+
+      {/* Project Creation Wizard */}
+      <ProjectCreationWizard
+        isOpen={showCreateWizard}
+        onClose={() => setShowCreateWizard(false)}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>
   );
 }

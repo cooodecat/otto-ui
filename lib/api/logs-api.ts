@@ -5,13 +5,7 @@
  * Server-Sent Events(SSE)를 통한 실시간 로그 스트리밍 지원
  */
 
-import {
-  LogItem,
-  RawLogEvent,
-  NormalizedLog,
-  SSEPayload,
-  BuildExecStatus,
-} from "@/types/logs";
+import { LogItem, RawLogEvent, NormalizedLog, SSEPayload, BuildExecStatus } from "@/types/logs";
 
 // API 기본 설정
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -231,13 +225,8 @@ export class LogsApiClient {
   /**
    * Build Logs: recent logs for gap backfill
    */
-  async getBuildRecentLogs(
-    buildId: string,
-    limit: number = 200
-  ): Promise<BuildLogsCache> {
-    return this.request<BuildLogsCache>(
-      `/logs/builds/${buildId}/recent?limit=${limit}`
-    );
+  async getBuildRecentLogs(buildId: string, limit: number = 200): Promise<BuildLogsCache> {
+    return this.request<BuildLogsCache>(`/logs/builds/${buildId}/recent?limit=${limit}`);
   }
 
   /**

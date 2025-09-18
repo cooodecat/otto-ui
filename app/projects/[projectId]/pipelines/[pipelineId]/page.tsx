@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { RotateCcw, Play } from "lucide-react";
+import { RotateCcw, Play, Loader2 } from "lucide-react";
 import { ReactFlowProvider } from "@xyflow/react";
 import CICDFlowCanvas, {
   CICDFlowCanvasRef,
@@ -11,7 +11,8 @@ import CICDFlowCanvas, {
 import { BaseCICDNodeData } from "@/types/cicd-node.types";
 import { useProjectStore } from "@/lib/projectStore";
 import { usePipelineStore } from "@/lib/pipelineStore";
-import { mapProjectId, mapPipelineId } from "@/lib/utils/idMapping";
+import apiClient from "@/lib/api";
+import toast from "react-hot-toast";
 
 /**
  * 파이프라인 상세 페이지 컴포넌트
@@ -23,51 +24,116 @@ function PipelinePageContent() {
   const flowCanvasRef = useRef<CICDFlowCanvasRef | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [user, setUser] = useState<{ id: string } | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
-  // URL 파라미터에서 ID 추출 및 Mock 데이터 ID로 변환
-  const rawProjectId = params.projectId as string;
-  const rawPipelineId = params.pipelineId as string;
-
-  const projectId = mapProjectId(rawProjectId);
-  const _pipelineId = mapPipelineId(rawPipelineId);
+  // URL 파라미터에서 ID 추출 (실제 DB ID 그대로 사용)
+  const projectId = params.projectId as string;
+  const pipelineId = params.pipelineId as string;
 
   // 스토어 훅 사용
-  const { fetchProjects, setSelectedProject } = useProjectStore();
+  const {
+    projects,
+    fetchProjects,
+    setSelectedProject
+  } = useProjectStore();
 
-  const { setCurrentProject, fetchPipelines } = usePipelineStore();
+  const {
+    pipelines,
+    setCurrentProject,
+    fetchPipelines,
+    getPipelinesByProject
+  } = usePipelineStore();
 
   useEffect(() => {
     setIsClient(true);
 
     const initializePageData = async () => {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push("/");
+      if (!user || !session) {
+        router.push("/auth/signin");
         return;
       }
 
       setUser(user);
 
-      // 스토어 데이터 초기화
-      await fetchProjects();
-      setSelectedProject(projectId);
-      setCurrentProject(projectId);
-      await fetchPipelines(projectId);
+      // 토큰 설정
+      if (session.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
+
+      try {
+        // 1. 프로젝트 데이터 로드
+        await fetchProjects();
+        
+        // 2. 프로젝트 유효성 검증
+        const currentProjects = useProjectStore.getState().projects;
+        const validProject = currentProjects.find(p => p.projectId === projectId);
+        
+        if (!validProject) {
+          console.log('[PipelinePage] Invalid project ID, redirecting to latest project');
+          // 유효하지 않은 프로젝트 ID인 경우, 최신 프로젝트로 리다이렉션
+          if (currentProjects.length > 0) {
+            const latestProject = currentProjects.sort((a, b) => {
+              const dateA = new Date(a.createdAt || 0).getTime();
+              const dateB = new Date(b.createdAt || 0).getTime();
+              return dateB - dateA;
+            })[0];
+            
+            // 해당 프로젝트의 파이프라인 조회
+            await fetchPipelines(latestProject.projectId || latestProject.project_id);
+            const projectPipelines = getPipelinesByProject(latestProject.projectId || latestProject.project_id);
+            
+            if (projectPipelines.length > 0) {
+              const latestPipeline = projectPipelines.sort((a, b) => {
+                const dateA = new Date(a.createdAt || 0).getTime();
+                const dateB = new Date(b.createdAt || 0).getTime();
+                return dateB - dateA;
+              })[0];
+              router.push(`/projects/${latestProject.projectId}/pipelines/${latestPipeline.pipelineId}`);
+            } else {
+              router.push(`/projects/${latestProject.projectId}/pipelines`);
+            }
+          } else {
+            router.push("/projects");
+          }
+          return;
+        }
+
+        // 3. 파이프라인 데이터 로드
+        setSelectedProject(projectId);
+        setCurrentProject(projectId);
+        await fetchPipelines(projectId);
+        
+        // 4. 파이프라인 유효성 검증
+        const projectPipelines = getPipelinesByProject(projectId);
+        const validPipeline = projectPipelines.find(p => p.pipelineId === pipelineId);
+        
+        if (!validPipeline) {
+          console.log('[PipelinePage] Invalid pipeline ID, redirecting to latest pipeline');
+          // 유효하지 않은 파이프라인 ID인 경우, 최신 파이프라인으로 리다이렉션
+          if (projectPipelines.length > 0) {
+            const latestPipeline = projectPipelines.sort((a, b) => {
+              const dateA = new Date(a.createdAt || 0).getTime();
+              const dateB = new Date(b.createdAt || 0).getTime();
+              return dateB - dateA;
+            })[0];
+            router.push(`/projects/${projectId}/pipelines/${latestPipeline.pipelineId}`);
+          } else {
+            router.push(`/projects/${projectId}/pipelines`);
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('[PipelinePage] Error initializing data:', error);
+        toast.error("데이터 로드 중 오류가 발생했습니다.");
+      }
     };
 
     initializePageData();
-  }, [
-    router,
-    projectId,
-    fetchProjects,
-    setSelectedProject,
-    setCurrentProject,
-    fetchPipelines,
-  ]);
+  }, [router, projectId, pipelineId]);
 
   const handleInitialize = useCallback(() => {
     if (!flowCanvasRef.current) {
@@ -80,7 +146,7 @@ function PipelinePageContent() {
     console.log("🔄 Pipeline reset - keeping only Pipeline Start node");
   }, []);
 
-  const handleRunPipeline = useCallback(() => {
+  const handleRunPipeline = useCallback(async () => {
     console.log("🔥 Run Pipeline button clicked!");
 
     if (!flowCanvasRef.current) {
@@ -140,9 +206,43 @@ function PipelinePageContent() {
     console.log("🚀 Pipeline Blocks (cicd-node.types.ts format):");
     console.log(JSON.stringify(pipelineBlocks, null, 2));
 
-    // TODO: 실제 API 호출
-    alert("Pipeline triggered!");
-  }, []);
+    // 실제 API 호출로 빌드 시작
+    try {
+      setIsRunning(true);
+      
+      // Supabase 토큰 설정
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        apiClient.setSupabaseToken(session.access_token);
+      }
+
+      // 빌드 시작 API 호출
+      const response = await apiClient.startBuild(projectId, {
+        version: "0.2",
+        runtime: "node:18",
+        blocks: pipelineBlocks,
+        environment_variables: {}
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      const build = response.data;
+      const buildId = build.build_id || build.id;
+      
+      toast.success(`Build #${build.build_number || buildId.slice(0, 8)} started successfully!`);
+      
+      // 빌드 로그 페이지로 이동
+      router.push(`/projects/${projectId}/logs/${buildId}`);
+    } catch (error) {
+      console.error('Failed to start build:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to start build');
+    } finally {
+      setIsRunning(false);
+    }
+  }, [projectId, router]);
 
   if (!isClient || !user) {
     return (
@@ -165,10 +265,21 @@ function PipelinePageContent() {
         </button>
         <button
           onClick={handleRunPipeline}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 shadow-sm font-medium text-sm"
+          disabled={isRunning}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 shadow-sm font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           title="파이프라인 실행"
         >
-          <Play className="w-4 h-6" />
+          {isRunning ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Starting...</span>
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4" />
+              <span>Run Build</span>
+            </>
+          )}
         </button>
       </div>
       <CICDFlowCanvas
