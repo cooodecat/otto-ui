@@ -75,9 +75,15 @@ export default function Home() {
       })[0];
       
       console.log('[Home] Latest pipeline:', latestPipeline);
-      
+
       // 5. 파이프라인 에디터로 이동
-      router.push(`/projects/${latestProject.project_id}/pipelines/${latestPipeline.pipeline_id}`);
+      // undefined 체크 추가 - 파이프라인 ID가 없으면 파이프라인 목록으로 이동
+      if (latestPipeline?.pipeline_id) {
+        router.push(`/projects/${latestProject.project_id}/pipelines/${latestPipeline.pipeline_id}`);
+      } else {
+        // 파이프라인 ID가 없으면 파이프라인 목록 페이지로 이동
+        router.push(`/projects/${latestProject.project_id}/pipelines`);
+      }
     } catch (error) {
       console.error('[Home] Navigation error:', error);
       setIsLoading(false);
