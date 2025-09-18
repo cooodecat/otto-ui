@@ -1,18 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight, AlertCircle, ExternalLink, Github, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useProjectStore } from '@/lib/projectStore';
-import { usePipelineStore } from '@/lib/pipelineStore';
-import apiClient from '@/lib/api';
-import toast from 'react-hot-toast';
-import { createClient } from '@/lib/supabase/client';
-import StepIndicator from './StepIndicator';
-import StepOne from './StepOne';
-import StepTwo from './StepTwo';
-import StepThree from './StepThree';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  ExternalLink,
+  Github,
+  Loader2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useProjectStore } from "@/lib/projectStore";
+import { usePipelineStore } from "@/lib/pipelineStore";
+import apiClient from "@/lib/api";
+import toast from "react-hot-toast";
+import { createClient } from "@/lib/supabase/client";
+import StepIndicator from "./StepIndicator";
+import StepOne from "./StepOne";
+import StepTwo from "./StepTwo";
+import StepThree from "./StepThree";
 import {
   WizardState,
   ProjectCreationWizardProps,
@@ -74,7 +82,7 @@ export default function ProjectCreationWizard({
   isOpen,
   onClose,
   repository: repoInfo,
-  onProjectCreated
+  onProjectCreated,
 }: ProjectCreationWizardProps) {
   const router = useRouter();
   const { createProjectWithGithub, fetchProjects } = useProjectStore();
@@ -118,24 +126,26 @@ export default function ProjectCreationWizard({
 
     try {
       // 기본 유효성 검사
-      const isValid = name.length >= 3 && name.length <= 50 && /^[a-z0-9-]+$/.test(name);
-      
+      const isValid =
+        name.length >= 3 && name.length <= 50 && /^[a-z0-9-]+$/.test(name);
+
       if (!isValid) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           validation: {
             isNameValid: false,
-            nameError: '프로젝트 이름은 3-50자의 소문자, 숫자, 하이픈만 사용 가능합니다.',
-            isChecking: false
-          }
+            nameError:
+              "프로젝트 이름은 3-50자의 소문자, 숫자, 하이픈만 사용 가능합니다.",
+            isChecking: false,
+          },
         }));
         return;
       }
 
       // TODO: API를 통한 중복 검사 (필요시 추가)
       // const response = await apiClient.checkProjectName(name);
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         validation: {
           isNameValid: true,
@@ -144,13 +154,13 @@ export default function ProjectCreationWizard({
         },
       }));
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         validation: {
           isNameValid: false,
-          nameError: '프로젝트 이름 검증 중 오류가 발생했습니다.',
-          isChecking: false
-        }
+          nameError: "프로젝트 이름 검증 중 오류가 발생했습니다.",
+          isChecking: false,
+        },
       }));
     }
   }, []);
@@ -160,7 +170,7 @@ export default function ProjectCreationWizard({
     if (isOpen) {
       loadGitHubRepositories();
     }
-    
+
     // Cleanup interval on unmount
     return () => {
       if (checkIntervalRef.current) {
@@ -171,138 +181,153 @@ export default function ProjectCreationWizard({
 
   // GitHub 저장소 목록 조회
   const loadGitHubRepositories = useCallback(async () => {
-    console.log('=== Starting loadGitHubRepositories ===');
-    setState(prev => ({ ...prev, isLoading: true }));
-    
+    console.log("=== Starting loadGitHubRepositories ===");
+    setState((prev) => ({ ...prev, isLoading: true }));
+
     try {
       // Supabase 토큰 설정
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.access_token) {
         apiClient.setSupabaseToken(session.access_token);
       }
 
       // GitHub installations 조회
-      console.log('Fetching GitHub installations...');
+      console.log("Fetching GitHub installations...");
       const installResponse = await apiClient.getGitHubInstallations();
-      console.log('GitHub installations response:', installResponse);
-      
+      console.log("GitHub installations response:", installResponse);
+
       const installations = installResponse.data?.installations || [];
-      
-      console.log(`Found ${installations.length} installations:`, installations);
-      
+
+      console.log(
+        `Found ${installations.length} installations:`,
+        installations
+      );
+
       if (installations.length === 0) {
-        console.log('No GitHub installations found - showing error message');
+        console.log("No GitHub installations found - showing error message");
         // GitHub 설치가 없는 경우 기본값 설정
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           repository: null,
           repositories: [],
           branches: [],
-          selectedBranch: 'main',
+          selectedBranch: "main",
           projectConfig: {
-            name: '',
-            description: ''
+            name: "",
+            description: "",
           },
           validation: {
             isNameValid: false,
             nameError: null,
-            isChecking: false
+            isChecking: false,
           },
-          isLoading: false
+          isLoading: false,
         }));
-        setError('GitHub App이 설치되지 않았습니다.');
+        setError("GitHub App이 설치되지 않았습니다.");
         setHasGithubApp(false);
         return;
       }
 
       // 첫 번째 installation 사용
       const installation = installations[0];
-      const installationId = installation.github_installation_id || installation.installation_id;
-      
+      const installationId =
+        installation.github_installation_id || installation.installation_id;
+
       setHasGithubApp(true);
-      console.log('Using installation ID:', installationId);
-      console.log('Fetching repositories for installation...');
-      
+      console.log("Using installation ID:", installationId);
+      console.log("Fetching repositories for installation...");
+
       // GitHub 저장소 목록 조회
-      const reposResponse = await apiClient.getGithubRepositories(installationId);
-      console.log('\n=== GitHub Repositories API Response ===');
-      console.log('Full response:', JSON.stringify(reposResponse, null, 2));
-      
+      const reposResponse = await apiClient.getGithubRepositories(
+        installationId
+      );
+      console.log("\n=== GitHub Repositories API Response ===");
+      console.log("Full response:", JSON.stringify(reposResponse, null, 2));
+
       // 에러 체크
       if (reposResponse.error) {
-        console.error('Failed to fetch repositories:', reposResponse.error);
+        console.error("Failed to fetch repositories:", reposResponse.error);
         throw new Error(`저장소 조회 실패: ${reposResponse.error}`);
       }
-      
+
       // API 응답 구조에 따라 repositories 배열 추출
       // 백엔드가 GitHubRepositoriesResponse 타입 반환: { repositories: [...], totalRepositories: number }
       const reposList = reposResponse.data?.repositories || [];
-      
-      console.log('\nExtracted repos list:');
-      console.log('  - Total repositories:', reposResponse.data?.totalRepositories || 0);
-      console.log('  - Repository count:', reposList.length);
-      
+
+      console.log("\nExtracted repos list:");
+      console.log(
+        "  - Total repositories:",
+        reposResponse.data?.totalRepositories || 0
+      );
+      console.log("  - Repository count:", reposList.length);
+
       if (reposList && reposList.length > 0) {
         console.log(`Found ${reposList.length} repositories`);
-        console.log('First repo data:', reposList[0]);
-        
+        console.log("First repo data:", reposList[0]);
+
         // 모든 저장소를 Repository 타입으로 변환
         const repositories: Repository[] = reposList.map((repo: any) => {
           // owner 정보 추출 - GitHub API는 owner 객체를 제공
-          let repoOwner = 'unknown';
-          
+          let repoOwner = "unknown";
+
           // GitHub API 표준: owner 객체의 login 필드
           if (repo.owner?.login) {
             repoOwner = repo.owner.login;
           }
           // 대체 방법: full_name에서 추출
-          else if (repo.full_name && repo.full_name.includes('/')) {
-            repoOwner = repo.full_name.split('/')[0];
+          else if (repo.full_name && repo.full_name.includes("/")) {
+            repoOwner = repo.full_name.split("/")[0];
           }
           // owner가 문자열로 직접 제공되는 경우
-          else if (typeof repo.owner === 'string') {
+          else if (typeof repo.owner === "string") {
             repoOwner = repo.owner;
           }
           // 그 외의 경우 installation의 account_login 사용
           else if (installation.account_login) {
             repoOwner = installation.account_login;
           }
-          
+
           console.log(`\nRepository: ${repo.name}`);
           console.log(`  - id: ${repo.id}`);
           console.log(`  - full_name: ${repo.full_name}`);
           console.log(`  - owner.login: ${repo.owner?.login}`);
           console.log(`  - owner object:`, repo.owner);
           console.log(`  - extracted owner: ${repoOwner}`);
-          
+
           return {
-            id: repo.id?.toString() || '',
+            id: repo.id?.toString() || "",
             name: repo.name,
             owner: repoOwner,
-            description: repo.description || '',
-            defaultBranch: repo.default_branch || 'main',
+            description: repo.description || "",
+            defaultBranch: repo.default_branch || "main",
             languages: {},
-            updatedAt: new Date(repo.updated_at || repo.pushed_at).toLocaleDateString('ko-KR'),
+            updatedAt: new Date(
+              repo.updated_at || repo.pushed_at
+            ).toLocaleDateString("ko-KR"),
             stars: repo.stargazers_count || 0,
             forks: repo.forks_count || 0,
-            visibility: repo.private ? 'Private' : 'Public'
+            visibility: repo.private ? "Private" : "Public",
           };
         });
-        
-        console.log('Converted repositories:', repositories);
-        
+
+        console.log("Converted repositories:", repositories);
+
         // 첫 번째 저장소를 기본으로 선택
         const firstRepo = repositories[0];
-        const initialProjectName = firstRepo.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-        
-        console.log('\n=== Selected Repository ===');
-        console.log('Repository:', firstRepo.name);
-        console.log('Owner:', firstRepo.owner);
-        console.log('ID:', firstRepo.id);
-        console.log('Initial project name:', initialProjectName);
-        
-        setState(prev => ({
+        const initialProjectName = firstRepo.name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "-");
+
+        console.log("\n=== Selected Repository ===");
+        console.log("Repository:", firstRepo.name);
+        console.log("Owner:", firstRepo.owner);
+        console.log("ID:", firstRepo.id);
+        console.log("Initial project name:", initialProjectName);
+
+        setState((prev) => ({
           ...prev,
           repositories,
           repository: firstRepo,
@@ -310,148 +335,200 @@ export default function ProjectCreationWizard({
           selectedBranch: firstRepo.defaultBranch,
           projectConfig: {
             name: initialProjectName,
-            description: firstRepo.description || ''
+            description: firstRepo.description || "",
           },
           validation: {
             isNameValid: true,
             nameError: null,
-            isChecking: false
+            isChecking: false,
           },
-          isLoading: false
+          isLoading: false,
         }));
-        
+
         // 프로젝트 이름 유효성 검사
         validateProjectName(initialProjectName);
-        
+
         // 브랜치 목록도 자동으로 로드
-        console.log(`\nLoading branches for ${firstRepo.owner}/${firstRepo.name}...`);
+        console.log(
+          `\nLoading branches for ${firstRepo.owner}/${firstRepo.name}...`
+        );
         loadBranchesForRepo(installationId, firstRepo.owner, firstRepo.name);
       } else {
-        console.log('No repositories found or invalid response');
-        console.log('Response data:', reposResponse);
-        
+        console.log("No repositories found or invalid response");
+        console.log("Response data:", reposResponse);
+
         // 저장소가 없는 경우 에러 메시지 표시
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           repository: null,
           repositories: [],
           branches: [],
-          selectedBranch: 'main',
+          selectedBranch: "main",
           projectConfig: {
-            name: '',
-            description: ''
+            name: "",
+            description: "",
           },
           validation: {
             isNameValid: false,
             nameError: null,
-            isChecking: false
+            isChecking: false,
           },
-          isLoading: false
+          isLoading: false,
         }));
-        
-        setError(`GitHub 저장소를 찾을 수 없습니다. GitHub App 설정에서 ${installation.account_login || 'organization'}의 저장소 접근 권한을 확인해주세요.`);
+
+        setError(
+          `GitHub 저장소를 찾을 수 없습니다. GitHub App 설정에서 ${
+            installation.account_login || "organization"
+          }의 저장소 접근 권한을 확인해주세요.`
+        );
       }
     } catch (error) {
-      console.error('Failed to load GitHub repositories:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        error
+      console.error("Failed to load GitHub repositories:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        error,
       });
-      
+
       // 에러 발생시에도 기본값으로 설정하여 UI가 작동하도록 함
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         repository: {
           ...mockRepository,
-          name: 'my-project',
-          owner: 'user',
-          visibility: 'Public'
+          name: "my-project",
+          owner: "user",
+          visibility: "Public",
         },
         branches: [],
-        selectedBranch: 'main',
+        selectedBranch: "main",
         projectConfig: {
-          name: 'my-project',
-          description: ''
+          name: "my-project",
+          description: "",
         },
         validation: {
           isNameValid: true,
           nameError: null,
-          isChecking: false
+          isChecking: false,
         },
-        isLoading: false
+        isLoading: false,
       }));
-      
-      setError('GitHub 저장소를 불러오는데 실패했습니다. 수동으로 정보를 입력해주세요.');
+
+      setError(
+        "GitHub 저장소를 불러오는데 실패했습니다. 수동으로 정보를 입력해주세요."
+      );
     }
   }, [validateProjectName]);
 
   // 특정 저장소의 브랜치 목록 로드
-  const loadBranchesForRepo = async (installationId: string, owner: string, repo: string) => {
+  const loadBranchesForRepo = async (
+    installationId: string,
+    owner: string,
+    repo: string
+  ) => {
     try {
-      console.log('loadBranchesForRepo called with:', { installationId, owner, repo });
-      
+      console.log("loadBranchesForRepo called with:", {
+        installationId,
+        owner,
+        repo,
+      });
+
       // owner가 비어있으면 기본 브랜치만 설정
-      if (!owner || owner === 'unknown') {
-        console.log('Owner is empty or unknown, using default branches');
-        setState(prev => ({
+      if (!owner || owner === "unknown") {
+        console.log("Owner is empty or unknown, using default branches");
+        setState((prev) => ({
           ...prev,
-          branches: [{
-            name: 'main',
-            commit: {
-              sha: '',
-              message: 'Default branch',
-              date: new Date().toLocaleDateString('ko-KR'),
-              author: 'Unknown'
-            }
-          }]
+          branches: [
+            {
+              name: "main",
+              commit: {
+                sha: "",
+                message: "Default branch",
+                date: new Date().toLocaleDateString("ko-KR"),
+                author: "Unknown",
+              },
+            },
+          ],
         }));
         return;
       }
-      
-      const response = await apiClient.getGithubBranches(installationId, owner, repo);
-      console.log('Branches API response:', response);
-      
-      if (response.data && Array.isArray(response.data)) {
-        const branches: Branch[] = response.data.map((branch: any) => ({
-          name: branch.name,
-          commit: {
-            sha: branch.commit?.sha || '',
-            message: branch.commit?.commit?.message || '',
-            date: branch.commit?.commit?.author?.date ? 
-              new Date(branch.commit.commit.author.date).toLocaleDateString('ko-KR') : 
-              new Date().toLocaleDateString('ko-KR'),
-            author: branch.commit?.commit?.author?.name || 'Unknown'
-          }
-        }));
-        
-        console.log('Converted branches:', branches);
-        
-        setState(prev => ({
-          ...prev,
-          branches
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to load branches:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
+
+      const response = await apiClient.getGithubBranches(
         installationId,
         owner,
         repo
+      );
+      console.log("Branches API response:", response);
+
+      // 백엔드 응답 구조: { data: { branches: [], totalBranches: number } }
+      if (
+        response.data &&
+        response.data.branches &&
+        Array.isArray(response.data.branches)
+      ) {
+        const branches: Branch[] = response.data.branches.map(
+          (branch: any) => ({
+            name: branch.name,
+            commit: {
+              sha: branch.commit?.sha || "",
+              message: branch.commit?.commit?.message || "",
+              date: branch.commit?.commit?.author?.date
+                ? new Date(branch.commit.commit.author.date).toLocaleDateString(
+                    "ko-KR"
+                  )
+                : new Date().toLocaleDateString("ko-KR"),
+              author: branch.commit?.commit?.author?.name || "Unknown",
+            },
+          })
+        );
+
+        console.log("Converted branches:", branches);
+        console.log("Total branches:", response.data.totalBranches);
+
+        setState((prev) => ({
+          ...prev,
+          branches,
+        }));
+      } else {
+        console.error("Invalid response structure for branches:", response);
+        throw new Error(
+          "Invalid response structure: expected { data: { branches: [], totalBranches: number } }"
+        );
+      }
+    } catch (error) {
+      console.error("Failed to load branches:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        installationId,
+        owner,
+        repo,
       });
-      
+
+      // 응답 구조 오류인 경우 특별 처리
+      if (
+        error instanceof Error &&
+        error.message.includes("Invalid response structure")
+      ) {
+        console.error(
+          "API 응답 구조가 예상과 다릅니다. 백엔드 API를 확인해주세요."
+        );
+        toast.error(
+          "브랜치 정보를 가져오는데 실패했습니다. API 응답 구조를 확인해주세요."
+        );
+      }
+
       // 에러 발생시 기본 브랜치 설정
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        branches: [{
-          name: 'main',
-          commit: {
-            sha: '',
-            message: 'Default branch',
-            date: new Date().toLocaleDateString('ko-KR'),
-            author: 'Unknown'
-          }
-        }]
+        branches: [
+          {
+            name: "main",
+            commit: {
+              sha: "",
+              message: "Default branch",
+              date: new Date().toLocaleDateString("ko-KR"),
+              author: "Unknown",
+            },
+          },
+        ],
       }));
     }
   };
@@ -459,11 +536,13 @@ export default function ProjectCreationWizard({
   // GitHub App 설치 함수
   const handleInstallGitHub = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      toast.error('로그인이 필요합니다');
-      router.push('/auth/signin');
+      toast.error("로그인이 필요합니다");
+      router.push("/auth/signin");
       return;
     }
 
@@ -472,23 +551,25 @@ export default function ProjectCreationWizard({
     // state 파라미터 생성
     const stateData = {
       userId: user.id,
-      returnUrl: '/projects',
+      returnUrl: "/projects",
       timestamp: Date.now(),
     };
     const state = btoa(JSON.stringify(stateData));
 
     // GitHub App 설치 URL 생성
-    const installUrl = `https://github.com/apps/codecat-otto-prod/installations/new?state=${encodeURIComponent(state)}`;
+    const installUrl = `https://github.com/apps/codecat-otto-prod/installations/new?state=${encodeURIComponent(
+      state
+    )}`;
 
     // 새 창에서 GitHub App 설치 페이지 열기
     const width = 1000;
     const height = 700;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
-    
+
     installWindowRef.current = window.open(
       installUrl,
-      'github-install',
+      "github-install",
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
 
@@ -505,13 +586,15 @@ export default function ProjectCreationWizard({
     checkIntervalRef.current = setInterval(async () => {
       try {
         const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session?.access_token) {
           apiClient.setSupabaseToken(session.access_token);
         }
 
         const response = await apiClient.getGitHubInstallations();
-        
+
         const installations = response.data?.installations || [];
 
         if (installations.length > 0) {
@@ -519,25 +602,25 @@ export default function ProjectCreationWizard({
           setHasGithubApp(true);
           setIsInstallingGitHub(false);
           setError(null);
-          
+
           // 팝업 창 닫기
           if (installWindowRef.current && !installWindowRef.current.closed) {
             installWindowRef.current.close();
           }
-          
+
           // interval 정리
           if (checkIntervalRef.current) {
             clearInterval(checkIntervalRef.current);
             checkIntervalRef.current = null;
           }
-          
-          toast.success('GitHub App이 성공적으로 설치되었습니다!');
-          
+
+          toast.success("GitHub App이 성공적으로 설치되었습니다!");
+
           // 저장소 다시 로드
           loadGitHubRepositories();
         }
       } catch (error) {
-        console.error('Installation check error:', error);
+        console.error("Installation check error:", error);
       }
     }, 3000);
 
@@ -547,9 +630,9 @@ export default function ProjectCreationWizard({
         clearInterval(checkIntervalRef.current);
         checkIntervalRef.current = null;
         setIsInstallingGitHub(false);
-        
+
         if (installWindowRef.current && !installWindowRef.current.closed) {
-          toast.error('GitHub App 설치 확인 시간이 초과되었습니다.');
+          toast.error("GitHub App 설치 확인 시간이 초과되었습니다.");
         }
       }
     }, 120000);
@@ -559,95 +642,113 @@ export default function ProjectCreationWizard({
   const handleManualCheck = async () => {
     await loadGitHubRepositories();
     if (hasGithubApp) {
-      toast.success('GitHub App 설치가 확인되었습니다.');
+      toast.success("GitHub App 설치가 확인되었습니다.");
     } else {
-      toast.error('GitHub App이 아직 설치되지 않았습니다.');
+      toast.error("GitHub App이 아직 설치되지 않았습니다.");
     }
   };
 
   // 저장소 변경 처리
-  const handleRepositoryChange = useCallback(async (repoName: string) => {
-    const selectedRepo = state.repositories.find(r => r.name === repoName);
-    if (!selectedRepo) return;
+  const handleRepositoryChange = useCallback(
+    async (repoName: string) => {
+      const selectedRepo = state.repositories.find((r) => r.name === repoName);
+      if (!selectedRepo) return;
 
-    const projectName = selectedRepo.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    
-    setState(prev => ({
-      ...prev,
-      repository: selectedRepo,
-      branches: [],
-      selectedBranch: selectedRepo.defaultBranch,
-      projectConfig: {
-        name: projectName,
-        description: selectedRepo.description || ''
-      },
-      validation: {
-        isNameValid: true,
-        nameError: null,
-        isChecking: false
+      const projectName = selectedRepo.name
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-");
+
+      setState((prev) => ({
+        ...prev,
+        repository: selectedRepo,
+        branches: [],
+        selectedBranch: selectedRepo.defaultBranch,
+        projectConfig: {
+          name: projectName,
+          description: selectedRepo.description || "",
+        },
+        validation: {
+          isNameValid: true,
+          nameError: null,
+          isChecking: false,
+        },
+      }));
+
+      // 프로젝트 이름 유효성 검사
+      validateProjectName(projectName);
+
+      // 새 저장소의 브랜치 목록 로드
+      try {
+        const installResponse = await apiClient.getGitHubInstallations();
+        const installations = Array.isArray(installResponse.data)
+          ? installResponse.data
+          : installResponse.data?.installations || [];
+
+        if (installations.length > 0) {
+          const installationId =
+            installations[0].github_installation_id ||
+            installations[0].installation_id;
+          await loadBranchesForRepo(
+            installationId,
+            selectedRepo.owner,
+            selectedRepo.name
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load branches for new repository:", error);
       }
-    }));
-
-    // 프로젝트 이름 유효성 검사
-    validateProjectName(projectName);
-
-    // 새 저장소의 브랜치 목록 로드
-    try {
-      const installResponse = await apiClient.getGitHubInstallations();
-      const installations = Array.isArray(installResponse.data) 
-        ? installResponse.data 
-        : (installResponse.data?.installations || []);
-      
-      if (installations.length > 0) {
-        const installationId = installations[0].github_installation_id || installations[0].installation_id;
-        await loadBranchesForRepo(installationId, selectedRepo.owner, selectedRepo.name);
-      }
-    } catch (error) {
-      console.error('Failed to load branches for new repository:', error);
-    }
-  }, [state.repositories, validateProjectName]);
+    },
+    [state.repositories, validateProjectName]
+  );
 
   // 브랜치 목록 로드 (수동으로 브랜치를 다시 로드할 때 사용)
   const loadBranches = useCallback(async () => {
     if (!state.repository) return;
-    
+
     // 이미 브랜치가 있으면 다시 로드하지 않음
     if (state.branches.length > 0) return;
-    
-    setState(prev => ({ ...prev, isLoading: true }));
-    
+
+    setState((prev) => ({ ...prev, isLoading: true }));
+
     try {
       // Supabase 토큰 설정
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.access_token) {
         apiClient.setSupabaseToken(session.access_token);
       }
 
       // GitHub installations 조회
       const installResponse = await apiClient.getGitHubInstallations();
-      const installations = Array.isArray(installResponse.data) 
-        ? installResponse.data 
-        : (installResponse.data?.installations || []);
-      
+      const installations = Array.isArray(installResponse.data)
+        ? installResponse.data
+        : installResponse.data?.installations || [];
+
       if (installations.length === 0) {
-        console.log('No GitHub installations found');
-        setState(prev => ({ ...prev, isLoading: false }));
+        console.log("No GitHub installations found");
+        setState((prev) => ({ ...prev, isLoading: false }));
         return;
       }
 
       const installation = installations[0];
-      const installationId = installation.github_installation_id || installation.installation_id;
-      
+      const installationId =
+        installation.github_installation_id || installation.installation_id;
+
       // 브랜치 목록 로드
-      await loadBranchesForRepo(installationId, state.repository.owner, state.repository.name);
-      
-      setState(prev => ({ ...prev, isLoading: false }));
+      await loadBranchesForRepo(
+        installationId,
+        state.repository.owner,
+        state.repository.name
+      );
+
+      setState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {
-      console.error('Failed to load branches:', error);
-      setState(prev => ({
+      console.error("Failed to load branches:", error);
+      setState((prev) => ({
         ...prev,
-        isLoading: false
+        isLoading: false,
       }));
     }
   }, [state.repository, state.branches.length]);
@@ -660,46 +761,50 @@ export default function ProjectCreationWizard({
     try {
       // Supabase 토큰 설정
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.access_token) {
         apiClient.setSupabaseToken(session.access_token);
       }
 
       // GitHub installations 조회
       const installResponse = await apiClient.getGitHubInstallations();
-      const installations = Array.isArray(installResponse.data) 
-        ? installResponse.data 
-        : (installResponse.data?.installations || []);
-      
-      const installationId = installations[0]?.github_installation_id || installations[0]?.installation_id;
+      const installations = Array.isArray(installResponse.data)
+        ? installResponse.data
+        : installResponse.data?.installations || [];
+
+      const installationId =
+        installations[0]?.github_installation_id ||
+        installations[0]?.installation_id;
 
       // 백엔드 API 형식에 맞게 데이터 구성
       const projectData = {
         name: state.projectConfig.name,
-        description: state.projectConfig.description || '',
-        installationId: installationId || '',
-        githubRepoId: state.repository?.id || '',
+        description: state.projectConfig.description || "",
+        installationId: installationId || "",
+        githubRepoId: state.repository?.id || "",
         githubRepoUrl: `https://github.com/${state.repository?.owner}/${state.repository?.name}`,
-        githubRepoName: state.repository?.name || '',
-        githubOwner: state.repository?.owner || '',
-        selectedBranch: state.selectedBranch
+        githubRepoName: state.repository?.name || "",
+        githubOwner: state.repository?.owner || "",
+        selectedBranch: state.selectedBranch,
       };
 
-      console.log('\n=== Creating Project ===');
-      console.log('Project Data:', JSON.stringify(projectData, null, 2));
-      console.log('Repository owner:', state.repository?.owner);
-      console.log('Repository name:', state.repository?.name);
+      console.log("\n=== Creating Project ===");
+      console.log("Project Data:", JSON.stringify(projectData, null, 2));
+      console.log("Repository owner:", state.repository?.owner);
+      console.log("Repository name:", state.repository?.name);
 
       // GitHub 연동 프로젝트 생성 API 호출
       const response = await apiClient.createProjectWithGithub(projectData);
 
-      console.log('API Response:', response);
-      console.log('Response data:', response.data);
-      console.log('Response error:', response.error);
+      console.log("API Response:", response);
+      console.log("Response data:", response.data);
+      console.log("Response error:", response.error);
 
       // 응답 검증
       if (!response || (!response.data && !response.error)) {
-        throw new Error('Invalid API response');
+        throw new Error("Invalid API response");
       }
 
       if (response.error) {
@@ -707,11 +812,11 @@ export default function ProjectCreationWizard({
       }
 
       const newProject = response.data?.project || response.data;
-      console.log('New project:', newProject);
+      console.log("New project:", newProject);
 
       if (!newProject || !newProject.project_id) {
-        console.error('Invalid project data:', newProject);
-        throw new Error('프로젝트 생성에 실패했습니다.');
+        console.error("Invalid project data:", newProject);
+        throw new Error("프로젝트 생성에 실패했습니다.");
       }
 
       // Zustand store에 프로젝트 추가
@@ -722,17 +827,20 @@ export default function ProjectCreationWizard({
         isCreating: false,
         createdProjectId: newProject.project_id,
         createdProjectNumericId: newProject.project_id,
-        currentStep: 3 // Step 3으로 이동 (완료 화면)
+        currentStep: 3, // Step 3으로 이동 (완료 화면)
       }));
 
-      toast.success('프로젝트가 성공적으로 생성되었습니다!');
+      toast.success("프로젝트가 성공적으로 생성되었습니다!");
 
       // StepThree에서 자동 이동 처리
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '프로젝트 생성 중 오류가 발생했습니다.';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "프로젝트 생성 중 오류가 발생했습니다.";
       setError(errorMessage);
       toast.error(errorMessage);
-      setState(prev => ({ ...prev, isCreating: false }));
+      setState((prev) => ({ ...prev, isCreating: false }));
     }
   };
 
@@ -741,201 +849,246 @@ export default function ProjectCreationWizard({
 
   // 프로젝트로 이동 (파이프라인 조회 후 에디터로 이동)
   const handleNavigateToProject = async () => {
-    console.log('=== handleNavigateToProject started ===');
-    console.log('state.createdProjectId:', state.createdProjectId);
-    console.log('state.projectConfig.name:', state.projectConfig.name);
-    console.log('isNavigating:', isNavigating);
-    
+    console.log("=== handleNavigateToProject started ===");
+    console.log("state.createdProjectId:", state.createdProjectId);
+    console.log("state.projectConfig.name:", state.projectConfig.name);
+    console.log("isNavigating:", isNavigating);
+
     // 중복 실행 방지
     if (isNavigating) {
-      console.log('Already navigating, skipping...');
+      console.log("Already navigating, skipping...");
       return;
     }
-    
+
     if (!state.createdProjectId) {
-      console.error('No createdProjectId available');
-      toast.error('프로젝트 ID를 찾을 수 없습니다.');
+      console.error("No createdProjectId available");
+      toast.error("프로젝트 ID를 찾을 수 없습니다.");
       return;
     }
 
     setIsNavigating(true); // 네비게이션 시작
-    
+
     try {
       // 백엔드 파이프라인 생성 대기: 최대 ~3초(1초 간격)
-      
+
       // 백엔드가 자동 생성한 파이프라인 확인
       let pipelineData = null;
       let retryCount = 0;
       const maxRetries = 5; // 총 ~5초 대기 (1초 간격) - 백엔드 처리 시간 고려
-      
+
       // 타입 체크 및 변환
-      const projectId = typeof state.createdProjectId === 'object' 
-        ? (state.createdProjectId as any).project_id || String(state.createdProjectId)
-        : String(state.createdProjectId);
-      
-      console.log('=== Checking for backend-created pipeline ===');
-      console.log('Project ID for pipeline check:', projectId);
-      
+      const projectId =
+        typeof state.createdProjectId === "object"
+          ? (state.createdProjectId as any).project_id ||
+            String(state.createdProjectId)
+          : String(state.createdProjectId);
+
+      console.log("=== Checking for backend-created pipeline ===");
+      console.log("Project ID for pipeline check:", projectId);
+
       // pipelineStore 초기화
       const pipelineStore = usePipelineStore.getState();
-      
+
       while (retryCount < maxRetries && !pipelineData) {
-        console.log(`\n--- Pipeline check attempt ${retryCount + 1}/${maxRetries} ---`);
-        
+        console.log(
+          `\n--- Pipeline check attempt ${retryCount + 1}/${maxRetries} ---`
+        );
+
         try {
           const pipelineResponse = await apiClient.getPipelines(projectId);
-          console.log('Raw API response:', pipelineResponse);
-          console.log('Response data type:', typeof pipelineResponse.data);
-          console.log('Response data:', JSON.stringify(pipelineResponse.data, null, 2));
-          
+          console.log("Raw API response:", pipelineResponse);
+          console.log("Response data type:", typeof pipelineResponse.data);
+          console.log(
+            "Response data:",
+            JSON.stringify(pipelineResponse.data, null, 2)
+          );
+
           // API 응답 처리 - 다양한 형식 지원
           let pipelines = null;
-          
+
           if (pipelineResponse.data) {
             // Case 1: data가 직접 배열인 경우
             if (Array.isArray(pipelineResponse.data)) {
               pipelines = pipelineResponse.data;
-              console.log('Response is direct array, count:', pipelines.length);
-            } 
+              console.log("Response is direct array, count:", pipelines.length);
+            }
             // Case 2: data.pipelines가 배열인 경우
-            else if ((pipelineResponse.data as any).pipelines && Array.isArray((pipelineResponse.data as any).pipelines)) {
+            else if (
+              (pipelineResponse.data as any).pipelines &&
+              Array.isArray((pipelineResponse.data as any).pipelines)
+            ) {
               pipelines = (pipelineResponse.data as any).pipelines;
-              console.log('Response has pipelines property, count:', pipelines.length);
+              console.log(
+                "Response has pipelines property, count:",
+                pipelines.length
+              );
             }
             // Case 3: data.data가 배열인 경우
-            else if ((pipelineResponse.data as any).data && Array.isArray((pipelineResponse.data as any).data)) {
+            else if (
+              (pipelineResponse.data as any).data &&
+              Array.isArray((pipelineResponse.data as any).data)
+            ) {
               pipelines = (pipelineResponse.data as any).data;
-              console.log('Response has data.data property, count:', pipelines.length);
+              console.log(
+                "Response has data.data property, count:",
+                pipelines.length
+              );
             }
             // Case 4: 단일 객체인 경우
-            else if (typeof pipelineResponse.data === 'object' && !Array.isArray(pipelineResponse.data)) {
+            else if (
+              typeof pipelineResponse.data === "object" &&
+              !Array.isArray(pipelineResponse.data)
+            ) {
               // 단일 파이프라인 객체를 배열로 변환
-              if ((pipelineResponse.data as any).id || (pipelineResponse.data as any).pipeline_id || (pipelineResponse.data as any).pipelineId) {
+              if (
+                (pipelineResponse.data as any).id ||
+                (pipelineResponse.data as any).pipeline_id ||
+                (pipelineResponse.data as any).pipelineId
+              ) {
                 pipelines = [pipelineResponse.data];
-                console.log('Response is single pipeline object, converting to array');
+                console.log(
+                  "Response is single pipeline object, converting to array"
+                );
               }
             }
           }
-          
-          console.log('Extracted pipelines:', pipelines);
-          
+
+          console.log("Extracted pipelines:", pipelines);
+
           if (pipelines && pipelines.length > 0) {
             // 백엔드가 생성한 파이프라인 사용
             pipelineData = pipelines[0];
-            console.log('\n✅ Found backend-created pipeline:');
-            console.log('  - Full data:', JSON.stringify(pipelineData, null, 2));
-            console.log('  - Name:', pipelineData.name);
-            console.log('  - ID (id):', pipelineData.id);
-            console.log('  - ID (pipeline_id):', pipelineData.pipeline_id);
-            console.log('  - ID (pipelineId):', pipelineData.pipelineId);
-            
+            console.log("\n✅ Found backend-created pipeline:");
+            console.log(
+              "  - Full data:",
+              JSON.stringify(pipelineData, null, 2)
+            );
+            console.log("  - Name:", pipelineData.name);
+            console.log("  - ID (id):", pipelineData.id);
+            console.log("  - ID (pipeline_id):", pipelineData.pipeline_id);
+            console.log("  - ID (pipelineId):", pipelineData.pipelineId);
+
             // Store에도 파이프라인 데이터 추가
             await pipelineStore.fetchPipelines(projectId);
             break;
           }
         } catch (error) {
-          console.error(`Error fetching pipelines (attempt ${retryCount + 1}):`, error);
+          console.error(
+            `Error fetching pipelines (attempt ${retryCount + 1}):`,
+            error
+          );
           // 에러가 발생해도 계속 시도
         }
-        
+
         retryCount++;
         if (retryCount < maxRetries) {
           const waitTime = 1000; // 1초 간격
-          console.log(`No pipelines found yet. Waiting ${waitTime}ms before next check...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+          console.log(
+            `No pipelines found yet. Waiting ${waitTime}ms before next check...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
         }
       }
-      
+
       let targetUrl = `/projects/${state.createdProjectId}`;
-      
+
       // 백엔드가 파이프라인을 생성하지 못한 경우 처리
       if (!pipelineData) {
-        console.log('Backend did not create a pipeline within timeout.');
-        console.log('User can create pipeline manually from the project page.');
+        console.log("Backend did not create a pipeline within timeout.");
+        console.log("User can create pipeline manually from the project page.");
         // 파이프라인이 없어도 프로젝트 페이지로 이동
         // 사용자가 프로젝트 페이지에서 직접 파이프라인을 생성할 수 있음
-        toast('프로젝트가 생성되었습니다. 파이프라인을 설정해주세요.', {
-          icon: 'ℹ️',
-          duration: 4000
+        toast("프로젝트가 생성되었습니다. 파이프라인을 설정해주세요.", {
+          icon: "ℹ️",
+          duration: 4000,
         });
       } else {
         // 백엔드가 생성한 파이프라인이 있으면 성공 메시지
-        toast.success(`프로젝트와 기본 파이프라인(${pipelineData.name || 'Pipeline #1'})이 생성되었습니다.`);
+        toast.success(
+          `프로젝트와 기본 파이프라인(${
+            pipelineData.name || "Pipeline #1"
+          })이 생성되었습니다.`
+        );
       }
-      
+
       // URL 결정 - 파이프라인이 있으면 에디터로, 없으면 프로젝트 페이지로
       // 파이프라인 ID 추출 - 다양한 필드명 지원
-      const pipelineId = pipelineData?.id || 
-                        pipelineData?.pipeline_id || 
-                        pipelineData?.pipelineId ||
-                        pipelineData?.['pipeline-id'] ||
-                        pipelineData?.uuid;
-                        
-      console.log('\n=== Navigation Decision ===');
-      console.log('Extracted pipeline ID:', pipelineId);
-      console.log('Project ID for navigation:', projectId);
-      console.log('Pipeline data available:', !!pipelineData);
-      
+      const pipelineId =
+        pipelineData?.id ||
+        pipelineData?.pipeline_id ||
+        pipelineData?.pipelineId ||
+        pipelineData?.["pipeline-id"] ||
+        pipelineData?.uuid;
+
+      console.log("\n=== Navigation Decision ===");
+      console.log("Extracted pipeline ID:", pipelineId);
+      console.log("Project ID for navigation:", projectId);
+      console.log("Pipeline data available:", !!pipelineData);
+
       if (pipelineData && pipelineId) {
         targetUrl = `/projects/${projectId}/pipelines/${pipelineId}`;
-        console.log('✅ Will navigate to pipeline editor:', targetUrl);
+        console.log("✅ Will navigate to pipeline editor:", targetUrl);
       } else {
         targetUrl = `/projects/${projectId}/pipelines`;
-        console.log('➡️ Will navigate to project pipelines page:', targetUrl);
+        console.log("➡️ Will navigate to project pipelines page:", targetUrl);
       }
-      
+
       // Zustand store 업데이트 (프로젝트 및 파이프라인 선택 상태)
-      console.log('\n=== Updating Stores ===');
+      console.log("\n=== Updating Stores ===");
       const { setSelectedProject } = useProjectStore.getState();
-      
+
       // 프로젝트 선택 상태 업데이트
       setSelectedProject(projectId);
-      console.log('✅ Updated selected project to:', projectId);
-      
+      console.log("✅ Updated selected project to:", projectId);
+
       // 파이프라인 선택 상태 업데이트 - pipelineStore는 위에서 이미 초기화함
       if (pipelineData && pipelineId) {
-        console.log('Setting selected pipeline:', pipelineId);
-        if (typeof pipelineStore.setSelectedPipeline === 'function') {
+        console.log("Setting selected pipeline:", pipelineId);
+        if (typeof pipelineStore.setSelectedPipeline === "function") {
           pipelineStore.setSelectedPipeline(pipelineId);
-          console.log('✅ Selected pipeline set in store');
+          console.log("✅ Selected pipeline set in store");
         }
-        
+
         // 파이프라인 데이터도 스토어에 추가 (중복 방지)
-        const existingPipelines = pipelineStore.getPipelinesByProject(projectId);
-        const alreadyExists = existingPipelines.some(p => 
-          p.pipelineId === pipelineId || 
-          p.pipeline_id === pipelineId ||
-          (p as any).id === pipelineId
+        const existingPipelines =
+          pipelineStore.getPipelinesByProject(projectId);
+        const alreadyExists = existingPipelines.some(
+          (p) =>
+            p.pipelineId === pipelineId ||
+            p.pipeline_id === pipelineId ||
+            (p as any).id === pipelineId
         );
-        
-        if (!alreadyExists && typeof pipelineStore.addPipeline === 'function') {
+
+        if (!alreadyExists && typeof pipelineStore.addPipeline === "function") {
           const formattedPipeline = {
             pipelineId: pipelineId,
             pipeline_id: pipelineId, // snake_case alias
-            name: pipelineData.name || 'Pipeline #1',
+            name: pipelineData.name || "Pipeline #1",
             projectId: projectId,
             project_id: projectId, // snake_case alias
-            description: pipelineData.description || '',
-            status: pipelineData.status || 'active',
+            description: pipelineData.description || "",
+            status: pipelineData.status || "active",
             blocks: pipelineData.blocks || pipelineData.nodes || [],
             createdAt: pipelineData.createdAt || pipelineData.created_at,
             created_at: pipelineData.createdAt || pipelineData.created_at, // snake_case alias
             updatedAt: pipelineData.updatedAt || pipelineData.updated_at,
-            updated_at: pipelineData.updatedAt || pipelineData.updated_at // snake_case alias
+            updated_at: pipelineData.updatedAt || pipelineData.updated_at, // snake_case alias
           };
           pipelineStore.addPipeline(formattedPipeline);
-          console.log('✅ Added pipeline to store:', formattedPipeline);
+          console.log("✅ Added pipeline to store:", formattedPipeline);
         } else {
-          console.log('ℹ️ Pipeline already exists in store or addPipeline not available');
+          console.log(
+            "ℹ️ Pipeline already exists in store or addPipeline not available"
+          );
         }
       }
-      
-      console.log('\n=== Final Navigation ===');
-      console.log('Target URL:', targetUrl);
-      console.log('Has onProjectCreated callback:', !!onProjectCreated);
-      
+
+      console.log("\n=== Final Navigation ===");
+      console.log("Target URL:", targetUrl);
+      console.log("Has onProjectCreated callback:", !!onProjectCreated);
+
       onClose(); // 모달 닫기
-      
+
       // onProjectCreated 콜백 호출 또는 직접 라우팅
       if (onProjectCreated) {
         const callbackData = {
@@ -944,34 +1097,40 @@ export default function ProjectCreationWizard({
           name: state.projectConfig.name,
           pipelineId: pipelineId, // 파이프라인 ID도 전달
           pipeline_id: pipelineId, // snake_case alias
-          targetUrl
+          targetUrl,
         };
-        console.log('Calling onProjectCreated callback with:', JSON.stringify(callbackData, null, 2));
+        console.log(
+          "Calling onProjectCreated callback with:",
+          JSON.stringify(callbackData, null, 2)
+        );
         setTimeout(() => {
           onProjectCreated(callbackData);
         }, 100);
       } else {
-        console.log('No onProjectCreated callback, navigating directly to:', targetUrl);
+        console.log(
+          "No onProjectCreated callback, navigating directly to:",
+          targetUrl
+        );
         setTimeout(() => {
           router.push(targetUrl);
         }, 100);
       }
-      
-      console.log('=== Navigation Process Complete ===\n');
+
+      console.log("=== Navigation Process Complete ===\n");
     } catch (error) {
-      console.error('Failed to navigate to project:', error);
+      console.error("Failed to navigate to project:", error);
       setIsNavigating(false); // 에러 발생 시 플래그 리셋
-      
+
       // 에러 발생 시 기본 URL로 이동
       const fallbackUrl = `/projects/${state.createdProjectId}/pipelines`;
-      
+
       onClose();
       if (onProjectCreated) {
         setTimeout(() => {
           onProjectCreated({
-            projectId: state.createdProjectId || '',
+            projectId: state.createdProjectId || "",
             name: state.projectConfig.name,
-            targetUrl: fallbackUrl
+            targetUrl: fallbackUrl,
           });
         }, 100);
       } else {
@@ -1139,7 +1298,7 @@ export default function ProjectCreationWizard({
                 </div>
               </div>
             )}
-            
+
             {/* 저장소를 찾을 수 없을 때 */}
             {hasGithubApp && state.repositories.length === 0 && (
               <div className="mx-8 mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -1177,8 +1336,8 @@ export default function ProjectCreationWizard({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          {state.currentStep === 1 && (
-            state.isLoading ? (
+          {state.currentStep === 1 &&
+            (state.isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
                 <p className="text-gray-600">GitHub 저장소를 불러오는 중...</p>
@@ -1190,23 +1349,26 @@ export default function ProjectCreationWizard({
                 branches={state.branches}
                 selectedBranch={state.selectedBranch}
                 onRepositoryChange={handleRepositoryChange}
-                onBranchChange={(branch) => setState(prev => ({ ...prev, selectedBranch: branch }))}
+                onBranchChange={(branch) =>
+                  setState((prev) => ({ ...prev, selectedBranch: branch }))
+                }
                 isLoading={state.isLoading}
                 onLoadBranches={loadBranches}
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-12">
                 <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
-                <p className="text-gray-600">저장소 정보를 불러올 수 없습니다.</p>
-                <button 
+                <p className="text-gray-600">
+                  저장소 정보를 불러올 수 없습니다.
+                </p>
+                <button
                   onClick={() => loadGitHubRepositories()}
                   className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
                 >
                   다시 시도
                 </button>
               </div>
-            )
-          )}
+            ))}
 
           {state.currentStep === 2 && (
             <StepTwo
