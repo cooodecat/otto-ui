@@ -114,7 +114,7 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({
         {/* Log Viewer */}
         <div className="flex-1 overflow-hidden p-6">
           <UnifiedLogViewer
-            buildId={log.id}
+            buildId={log.awsBuildId || log.id} // awsBuildId가 있으면 사용, 없으면 id 사용
             autoRefresh={log.status === 'running'}
             refreshInterval={3000}
             className="h-full"
