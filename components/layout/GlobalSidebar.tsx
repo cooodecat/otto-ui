@@ -875,7 +875,7 @@ const GlobalSidebar = () => {
                           onDragStart={(e) => handleBlockDragStart(e, node.type)}
                         >
                           <div className={`w-8 h-8 ${node.colorClass} rounded flex items-center justify-center flex-shrink-0`}>
-                            <span className="text-white text-sm">{node.icon}</span>
+                            <span className="text-sm">{node.icon}</span>
                           </div>
                           <div className="flex-1 min-w-0 ml-3">
                             <div className="text-sm font-medium text-gray-900 truncate">{node.label}</div>

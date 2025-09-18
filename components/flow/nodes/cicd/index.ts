@@ -14,6 +14,7 @@ export { default as DeployVercelNode } from "./DeployVercelNode";
 export { default as NotificationSlackNode } from "./NotificationSlackNode";
 export { default as NotificationEmailNode } from "./NotificationEmailNode";
 export { default as ConditionBranchNode } from "./ConditionBranchNode";
+export { default as CustomCommandNode } from "./CustomCommandNode";
 export { default as GenericCICDNode } from "./GenericCICDNode";
 
 // CI/CD 노드 타입 exports

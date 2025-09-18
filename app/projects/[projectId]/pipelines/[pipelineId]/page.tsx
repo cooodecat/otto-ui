@@ -235,7 +235,7 @@ function PipelinePageContent() {
         label: nodeData.label,
         blockType: nodeData.blockType,
         groupType: nodeData.groupType as any,
-        blockId: nodeData.blockId || node.id,
+        blockId: crypto.randomUUID(),
         // success/failed 연결 설정 - 타겟 노드의 blockId 사용
         onSuccess: getTargetBlockId(successEdge?.target),
         onFailed: getTargetBlockId(failedEdge?.target),

@@ -401,35 +401,35 @@ export const BLOCK_TYPE_TO_GROUP: Record<CICDBlockType, CICDBlockGroup> = {
 
 // 블록 타입별 기본 라벨과 아이콘
 export const CICD_BLOCK_CONFIGS = {
-  [CICDBlockType.PIPELINE_START]: { label: "Pipeline Start", icon: "Play" },
+  [CICDBlockType.PIPELINE_START]: { label: "Pipeline Start", icon: "▶️" },
 
-  [CICDBlockType.OS_PACKAGE]: { label: "OS Packages", icon: "Package" },
-  [CICDBlockType.NODE_VERSION]: { label: "Node Version", icon: "Circle" },
-  [CICDBlockType.ENVIRONMENT_SETUP]: { label: "Environment", icon: "Globe" },
+  [CICDBlockType.OS_PACKAGE]: { label: "OS Packages", icon: "📦" },
+  [CICDBlockType.NODE_VERSION]: { label: "Node Version", icon: "🟢" },
+  [CICDBlockType.ENVIRONMENT_SETUP]: { label: "Environment", icon: "🌍" },
 
   [CICDBlockType.INSTALL_MODULE_NODE]: {
     label: "Install Packages",
-    icon: "Download",
+    icon: "⬇️",
   },
-  [CICDBlockType.BUILD_WEBPACK]: { label: "Webpack Build", icon: "Package" },
-  [CICDBlockType.BUILD_VITE]: { label: "Vite Build", icon: "Zap" },
-  [CICDBlockType.BUILD_CUSTOM]: { label: "Custom Build", icon: "Hammer" },
+  [CICDBlockType.BUILD_WEBPACK]: { label: "Webpack Build", icon: "📦" },
+  [CICDBlockType.BUILD_VITE]: { label: "Vite Build", icon: "⚡" },
+  [CICDBlockType.BUILD_CUSTOM]: { label: "Custom Build", icon: "🔨" },
 
-  [CICDBlockType.TEST_JEST]: { label: "Jest Tests", icon: "TestTube" },
-  [CICDBlockType.TEST_MOCHA]: { label: "Mocha Tests", icon: "Coffee" },
-  [CICDBlockType.TEST_VITEST]: { label: "Vitest", icon: "Zap" },
-  [CICDBlockType.TEST_PLAYWRIGHT]: { label: "Playwright", icon: "Theater" },
-  [CICDBlockType.TEST_CUSTOM]: { label: "Custom Tests", icon: "Flask" },
+  [CICDBlockType.TEST_JEST]: { label: "Jest Tests", icon: "🧪" },
+  [CICDBlockType.TEST_MOCHA]: { label: "Mocha Tests", icon: "☕" },
+  [CICDBlockType.TEST_VITEST]: { label: "Vitest", icon: "⚡" },
+  [CICDBlockType.TEST_PLAYWRIGHT]: { label: "Playwright", icon: "🎭" },
+  [CICDBlockType.TEST_CUSTOM]: { label: "Custom Tests", icon: "🧪" },
 
   // [CICDBlockType.DEPLOY_DOCKER]: { label: 'Docker Deploy', icon: '🐳' },
   // [CICDBlockType.DEPLOY_VERCEL]: { label: 'Vercel Deploy', icon: '▲' },
   // [CICDBlockType.DEPLOY_AWS]: { label: 'AWS Deploy', icon: '☁️' },
   // [CICDBlockType.DEPLOY_CUSTOM]: { label: 'Custom Deploy', icon: '🚀' },
 
-  [CICDBlockType.NOTIFICATION_SLACK]: { label: "Slack Notify", icon: "MessageSquare" },
-  [CICDBlockType.NOTIFICATION_EMAIL]: { label: "Email Notify", icon: "Mail" },
+  [CICDBlockType.NOTIFICATION_SLACK]: { label: "Slack Notify", icon: "💬" },
+  [CICDBlockType.NOTIFICATION_EMAIL]: { label: "Email Notify", icon: "✉️" },
 
-  [CICDBlockType.CONDITION_BRANCH]: { label: "Condition", icon: "GitBranch" },
-  [CICDBlockType.PARALLEL_EXECUTION]: { label: "Parallel", icon: "Zap" },
-  [CICDBlockType.CUSTOM_COMMAND]: { label: "Custom Command", icon: "Terminal" },
+  [CICDBlockType.CONDITION_BRANCH]: { label: "Condition", icon: "🔀" },
+  [CICDBlockType.PARALLEL_EXECUTION]: { label: "Parallel", icon: "⚡" },
+  [CICDBlockType.CUSTOM_COMMAND]: { label: "Custom Command", icon: "💻" },
 } as const;
