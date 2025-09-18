@@ -282,16 +282,6 @@ class ApiClient {
     );
   }
 
-  async retryCodeBuild(
-    projectId: string
-  ): Promise<ApiResponse<RetryCodeBuildResponse>> {
-    return this.request<RetryCodeBuildResponse>(
-      `/projects/${projectId}/retry-codebuild`,
-      {
-        method: "POST",
-      }
-    );
-  }
 
   // 파이프라인 관련 API
   async getPipelines(projectId: string): Promise<ApiResponse<any[]>> {
@@ -360,20 +350,6 @@ class ApiClient {
   }
 
   // 빌드 관련 API
-  async startBuild(
-    projectId: string,
-    data: {
-      version: string;
-      runtime: string;
-      blocks: any[];
-      environment_variables?: Record<string, string>;
-    }
-  ): Promise<ApiResponse<any>> {
-    return this.request<any>(`/codebuild/${projectId}/start-flow`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  }
 
   async getBuildStatus(buildId: string): Promise<ApiResponse<any>> {
     return this.request<any>(`/codebuild/status/${buildId}`);
@@ -389,6 +365,21 @@ class ApiClient {
 
   async getBuildStats(projectId: string): Promise<ApiResponse<BuildStatus>> {
     return this.request<BuildStatus>(`/builds/stats/summary?projectId=${projectId}`);
+  }
+
+  // 코드빌드 재시도 API
+  async retryCodeBuild(projectId: string): Promise<ApiResponse<RetryCodeBuildResponse>> {
+    return this.request<RetryCodeBuildResponse>(`/codebuild/${projectId}/retry`, {
+      method: "POST",
+    });
+  }
+
+  // 빌드 시작 API
+  async startBuild(projectId: string, buildRequest: BuildRequest): Promise<ApiResponse<Build>> {
+    return this.request<Build>(`/codebuild/${projectId}/start-flow`, {
+      method: "POST",
+      body: JSON.stringify(buildRequest),
+    });
   }
 }
 
@@ -423,6 +414,8 @@ export const useApi = () => {
       apiClient.updateProject(projectId, updates),
     deleteProject: (projectId: string) => apiClient.deleteProject(projectId),
     retryCodeBuild: (projectId: string) => apiClient.retryCodeBuild(projectId),
+    startBuild: (projectId: string, buildRequest: BuildRequest) =>
+      apiClient.startBuild(projectId, buildRequest),
   };
 };
 

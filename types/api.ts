@@ -264,12 +264,28 @@ export interface UpdatePipelineRequest {
   cache?: { paths: string[] };
 }
 
+// Pipeline Node type for API communication
+export interface PipelineNode {
+  label: string;
+  blockType: string;
+  groupType: string;
+  blockId: string;
+  onSuccess?: string | null;
+  onFailed?: string | null;
+  [key: string]: unknown; // For additional block-specific properties
+}
+
+export interface PipelineEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+}
+
 // Build types
 export interface BuildRequest {
-  version: string;
-  runtime: string;
   blocks: PipelineNode[];
-  environment_variables?: Record<string, string>;
 }
 
 export interface BuildStatus {
