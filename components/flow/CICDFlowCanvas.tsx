@@ -50,7 +50,7 @@ import { edgeTypes, cicdEdgeOptions } from "./edges";
  * crypto.randomUUID()를 사용하여 고유한 ID 생성
  */
 const getId = () => {
-  return `cicd_node_${crypto.randomUUID()}`;
+  return `${crypto.randomUUID()}`;
 };
 
 /**
@@ -72,30 +72,96 @@ function CICDDropZone({
   const { screenToFlowPosition } = useReactFlow();
   const initializedRef = useRef(false);
 
-  // localStorage에서 파이프라인 데이터 불러오기
+  // 파이프라인 데이터 불러오기 (localStorage -> 서버 순으로 시도)
   useEffect(() => {
     if (!initializedRef.current && projectId && pipelineId) {
-      const storageKey = `pipeline-${projectId}-${pipelineId}`;
-      const savedData = localStorage.getItem(storageKey);
+      const initializePipeline = async () => {
+        const storageKey = `pipeline-${projectId}-${pipelineId}`;
+        const savedData = localStorage.getItem(storageKey);
 
-      if (savedData) {
+        if (savedData) {
+          try {
+            const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedData);
+            console.log(`📁 Loading pipeline from localStorage (${storageKey}):`, { nodes: savedNodes.length, edges: savedEdges.length });
+
+            setNodes(savedNodes);
+            setEdges(savedEdges);
+            return;
+          } catch (error) {
+            console.error("❌ Failed to parse saved pipeline data:", error);
+          }
+        }
+
+        // 로컬스토리지에 데이터가 없거나 파싱 실패시 서버에서 불러오기
         try {
-          const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedData);
-          console.log(`📁 Loading pipeline from localStorage (${storageKey}):`, { nodes: savedNodes.length, edges: savedEdges.length });
+          console.log(`🌐 Loading pipeline from server: ${pipelineId}`);
+          
+          const response = await fetch(`/api/pipelines/${pipelineId}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch pipeline: ${response.status}`);
+          }
 
-
-          setNodes(savedNodes);
-          setEdges(savedEdges);
+          const serverData = await response.json();
+          console.log("🌐 Server response:", serverData);
+          
+          console.log("🔍 Analyzing server response for pipeline ID:", pipelineId);
+          
+          // 서버 응답 형태 확인
+          if (serverData.pipelines) {
+            // 파이프라인 목록 응답
+            console.log("📋 Server returned pipeline list with", serverData.pipelines.length, "pipelines");
+            const targetPipeline = serverData.pipelines.find((p: any) => p.pipeline_id === pipelineId);
+            
+            if (targetPipeline?.data?.nodes && targetPipeline?.data?.edges) {
+              console.log(`📁 Loading pipeline from server list:`, { 
+                nodes: targetPipeline.data.nodes.length, 
+                edges: targetPipeline.data.edges.length 
+              });
+              
+              setNodes(targetPipeline.data.nodes);
+              setEdges(targetPipeline.data.edges);
+              
+              localStorage.setItem(storageKey, JSON.stringify({
+                nodes: targetPipeline.data.nodes,
+                edges: targetPipeline.data.edges
+              }));
+              console.log(`💾 Server data saved to localStorage (${storageKey})`);
+              return;
+            }
+          } else if (serverData.id === pipelineId && serverData.flowData) {
+            // 개별 파이프라인 응답 (현재 케이스)
+            console.log("📝 Server returned individual pipeline");
+            
+            if (serverData.flowData.nodes && serverData.flowData.edges) {
+              console.log(`📁 Loading pipeline from server:`, { 
+                nodes: serverData.flowData.nodes.length, 
+                edges: serverData.flowData.edges.length 
+              });
+              
+              setNodes(serverData.flowData.nodes);
+              setEdges(serverData.flowData.edges);
+              
+              // 서버에서 불러온 데이터를 로컬스토리지에도 저장
+              localStorage.setItem(storageKey, JSON.stringify({
+                nodes: serverData.flowData.nodes,
+                edges: serverData.flowData.edges
+              }));
+              console.log(`💾 Server data saved to localStorage (${storageKey})`);
+              return;
+            }
+          }
+          
+          // 데이터를 찾지 못했으면 기본 노드 생성
+          console.log("🏁 No valid server data found, creating default node");
+          createDefaultPipelineStart();
         } catch (error) {
-          console.error("❌ Failed to parse saved pipeline data:", error);
-          // 파싱 실패시 기본 노드 생성
+          console.error("❌ Failed to load pipeline from server:", error);
+          // 서버 로드 실패시 기본 노드 생성
           createDefaultPipelineStart();
         }
-      } else {
-        // 저장된 데이터가 없으면 기본 노드 생성
-        createDefaultPipelineStart();
-      }
+      };
 
+      initializePipeline();
       initializedRef.current = true;
     }
   }, [projectId, pipelineId]);

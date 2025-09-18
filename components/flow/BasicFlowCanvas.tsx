@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { RotateCcw, Play } from "lucide-react";
+import { RotateCcw, Play, Save } from "lucide-react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -185,16 +185,66 @@ interface BasicFlowCanvasProps {
 }
 
 function FlowCanvasWithButtons({
-  projectId: _projectId,
-  pipelineId: _pipelineId,
+  projectId,
+  pipelineId,
 }: BasicFlowCanvasProps) {
   const [handleInitialize, setHandleInitialize] = useState<(() => void) | null>(
     null
   );
+  const [isSaving, setIsSaving] = useState(false);
 
   const onInitializeReady = useCallback((fn: () => void) => {
     setHandleInitialize(() => fn);
   }, []);
+
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      // 로컬스토리지에서 저장된 플로우 데이터 가져오기
+      const storageKey = `pipeline-${projectId}-${pipelineId}`;
+      const savedData = localStorage.getItem(storageKey);
+      
+      if (!savedData) {
+        alert("저장할 데이터가 없습니다.");
+        return;
+      }
+
+      const flowData = JSON.parse(savedData);
+
+      // 서버에 저장
+      const response = await fetch(`/api/pipelines/${pipelineId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ flowData }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save pipeline");
+      }
+
+      alert("파이프라인이 저장되었습니다!");
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("저장에 실패했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [projectId, pipelineId]);
+
+  const handleRun = useCallback(async () => {
+    try {
+      // 먼저 저장
+      await handleSave();
+      
+      // 그 다음 실행
+      alert("Pipeline triggered!");
+    } catch (error) {
+      console.error("Run error:", error);
+      alert("실행에 실패했습니다.");
+    }
+  }, [handleSave]);
 
   return (
     <div className="h-screen w-full relative">
@@ -207,9 +257,16 @@ function FlowCanvasWithButtons({
           <RotateCcw className="w-4 h-6" />
         </button>
         <button
-          onClick={() => {
-            alert("Pipeline triggered!");
-          }}
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          title="파이프라인 저장"
+        >
+          <Save className="w-4 h-6" />
+          {isSaving ? "저장 중..." : "저장"}
+        </button>
+        <button
+          onClick={handleRun}
           className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 shadow-sm font-medium text-sm"
           title="파이프라인 실행"
         >

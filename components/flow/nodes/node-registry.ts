@@ -11,6 +11,7 @@ import {
   DeveloperNodeData,
 } from "@/types/node.types";
 import {
+  BaseCICDNodeData,
   OSPackageNodeData,
   BuildWebpackNodeData,
   TestJestNodeData,
@@ -264,7 +265,7 @@ export const nodeRegistry: NodeRegistry = {
       blockType: CICDBlockType.ENVIRONMENT_SETUP,
       groupType: CICDBlockGroup.PREBUILD,
       blockId: crypto.randomUUID(),
-      environmentVariables: { NODE_ENV: "production" },
+      environmentVariables: { },
     } as Partial<any>,
     inputs: { count: 1, position: "top" },
     outputs: { count: 1, position: "bottom" },
@@ -753,20 +754,15 @@ export const createNodeInstance = (
     throw new Error(`Unknown node type: ${type}`);
   }
 
-  const nodeData: any = { ...config.defaultData, label: config.label };
+  // camelCase 형태로 nodeData 생성 (snake_case 변환 제거)
+  const nodeData: Partial<BaseCICDNodeData> = { 
+    ...config.defaultData, 
+    label: config.label 
+  };
 
-  // camelCase를 snake_case로 변환 (CI/CD 노드들을 위해)
-  if (nodeData.blockType) {
-    nodeData.block_type = nodeData.blockType;
-    delete nodeData.blockType;
-  }
-  if (nodeData.groupType) {
-    nodeData.group_type = nodeData.groupType;
-    delete nodeData.groupType;
-  }
-  if (nodeData.blockId) {
-    nodeData.block_id = nodeData.blockId;
-    delete nodeData.blockId;
+  // blockId가 없는 경우 생성된 노드 ID 사용
+  if (!nodeData.blockId) {
+    nodeData.blockId = id || crypto.randomUUID();
   }
 
   return {

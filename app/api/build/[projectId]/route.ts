@@ -4,11 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
   try {
+    const { projectId } = await params;
     const body = await request.json();
 
-    console.log("🚀 Forwarding pipeline creation to otto-server:", body);
+    console.log("🚀 Starting build for project:", projectId, body);
 
     // Get Supabase session for authentication
     const supabase = await createClient();
@@ -23,7 +27,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/pipelines`, {
+    // Forward build request to otto-server
+    const response = await fetch(`${API_BASE_URL}/api/v1/codebuild/${projectId}/start-flow`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -33,34 +38,31 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error(`Otto-server responded with status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Otto-server responded with status: ${response.status} - ${errorData.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
+    console.log("✅ Build started successfully:", data);
+    
     return NextResponse.json(data);
   } catch (error) {
-    console.error("❌ Failed to create pipeline:", error);
+    console.error("❌ Failed to start build:", error);
     return NextResponse.json(
-      { error: "Failed to create pipeline" },
+      { error: error instanceof Error ? error.message : "Failed to start build" },
       { status: 500 }
     );
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
   try {
-    const { searchParams } = new URL(request.url);
-    const projectId = searchParams.get("projectId");
-    const activeOnly = searchParams.get("activeOnly");
+    const { projectId } = await params;
 
-    if (!projectId) {
-      return NextResponse.json(
-        { error: "projectId is required" },
-        { status: 400 }
-      );
-    }
-
-    console.log("📁 Fetching pipelines for project:", projectId);
+    console.log("📊 Fetching builds for project:", projectId);
 
     // Get Supabase session for authentication
     const supabase = await createClient();
@@ -75,19 +77,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const queryString = new URLSearchParams();
-    if (activeOnly) queryString.append("activeOnly", activeOnly);
-
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/pipelines/project/${projectId}?${queryString}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      }
-    );
+    // Get project builds from otto-server
+    const response = await fetch(`${API_BASE_URL}/api/v1/builds/projects/${projectId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`Otto-server responded with status: ${response.status}`);
@@ -96,9 +93,9 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("❌ Failed to fetch pipelines:", error);
+    console.error("❌ Failed to fetch builds:", error);
     return NextResponse.json(
-      { error: "Failed to fetch pipelines" },
+      { error: "Failed to fetch builds" },
       { status: 500 }
     );
   }
